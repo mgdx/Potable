@@ -115,7 +115,7 @@ class UdiViewModel(
         selecting = true
         viewModelScope.launch {
             try {
-                preferences.rememberUdi(communeCode, udi.code)
+                preferences.rememberUdi(communeCode, udi.code, udi.name)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {

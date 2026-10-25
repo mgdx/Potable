@@ -93,6 +93,8 @@
     <string name="search_postal_codes_more">%1$s +%2$d</string>
     <!-- Under a former or delegated commune in the results. %1$s: name of the commune under which Hub'Eau publishes its data (its INSEE code if the name is unknown). -->
     <string name="search_published_under">Water data published under the parent commune: %1$s</string>
+    <!-- Under a “commune, unit” row of the results: the unit is followed (see sheet_following). Short: about 15 characters. -->
+    <string name="search_unit_followed">Followed</string>
     <!-- Button of the search screen that finds the commune of the device position. Short: about 20 characters. Quoted in about_privacy. -->
     <string name="nearby_action">Near me</string>
     <string name="nearby_locating">Finding the commune you are in…</string>

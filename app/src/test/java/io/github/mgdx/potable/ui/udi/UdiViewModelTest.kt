@@ -146,6 +146,8 @@ class UdiViewModelTest {
         viewModel.select(north)
         advanceUntilIdle()
         assertEquals(mapOf("45234" to north.code), preferences.remembered)
+        // With its name, for the search to offer it (SearchViewModel.knownUdis).
+        assertEquals(mapOf("45234" to north.name), preferences.rememberedNames)
     }
 
     @Test

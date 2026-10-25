@@ -132,6 +132,58 @@ class DataStoreAppPreferencesTest {
     }
 
     @Test
+    fun `the name of the unit chosen is kept with it`() = runBlocking {
+        val file = storeFile()
+        preferences(file).apply {
+            rememberUdi("75056", "075000221", "PARIS CENTRE")
+            rememberUdi("13055", "013000001", "MARSEILLE NORD")
+            // Written without a name: no name of another unit is left behind.
+            rememberUdi("13055", "013000002")
+        }
+        closeAll()
+
+        val preferences = preferences(file)
+        assertEquals("075000221", preferences.rememberedUdi("75056"))
+        assertEquals(
+            mapOf(
+                "75056" to RememberedUdi("075000221", "PARIS CENTRE"),
+                "13055" to RememberedUdi("013000002", null),
+            ),
+            preferences.rememberedUdis.first(),
+        )
+    }
+
+    @Test
+    fun `a unit remembered before names were kept reads without a name`() = runBlocking {
+        val file = storeFile()
+        val store = store(file)
+        store.edit { it[stringPreferencesKey("udi_75056")] = "075000221" }
+        val preferences = DataStoreAppPreferences(store)
+        assertEquals(
+            mapOf("75056" to RememberedUdi("075000221", null)),
+            preferences.rememberedUdis.first(),
+        )
+        assertEquals("075000221", preferences.rememberedUdi("75056"))
+    }
+
+    @Test
+    fun `forgetting the remembered units forgets their names, but the kept ones`() = runBlocking {
+        val preferences = preferences(storeFile())
+        preferences.rememberUdi("75056", "075000221", "PARIS CENTRE")
+        preferences.rememberUdi("13055", "013000001", "MARSEILLE NORD")
+
+        preferences.forgetRememberedUdis(keep = setOf("13055"))
+
+        assertEquals(
+            mapOf("13055" to RememberedUdi("013000001", "MARSEILLE NORD")),
+            preferences.rememberedUdis.first(),
+        )
+        // Remembered again without a name: none from before comes back.
+        preferences.rememberUdi("75056", "075000221")
+        assertNull(preferences.rememberedUdis.first().getValue("75056").name)
+    }
+
+    @Test
     fun `alerts are off by default, weekly`() = runBlocking {
         val preferences = preferences(storeFile())
         assertFalse(preferences.alertNewAnalysis.first())

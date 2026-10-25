@@ -11,10 +11,12 @@ import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
+import io.github.mgdx.potable.data.preferences.RememberedUdi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -145,8 +147,22 @@ class FakeFollowRepository(initial: List<Follow> = emptyList()) : FollowReposito
     private fun List<Follow>.renumbered() = mapIndexed { index, it -> it.copy(position = index) }
 }
 
-class FakeAppPreferences(remembered: Map<String, String> = emptyMap()) : AppPreferences {
+class FakeAppPreferences(
+    remembered: Map<String, String> = emptyMap(),
+    rememberedNames: Map<String, String> = emptyMap(),
+) : AppPreferences {
     val remembered = remembered.toMutableMap()
+
+    /** Names of the units in [remembered], when stored with one. */
+    val rememberedNames = rememberedNames.toMutableMap()
+
+    private val writes = MutableStateFlow(0)
+
+    override val rememberedUdis: Flow<Map<String, RememberedUdi>> = writes.map {
+        this.remembered.mapValues { (commune, code) ->
+            RememberedUdi(code, this.rememberedNames[commune])
+        }
+    }
 
     override val disclaimerAccepted: Flow<Boolean> = MutableStateFlow(true)
 
@@ -156,6 +172,14 @@ class FakeAppPreferences(remembered: Map<String, String> = emptyMap()) : AppPref
 
     override suspend fun rememberUdi(communeCode: String, udiCode: String) {
         remembered[communeCode] = udiCode
+        rememberedNames.remove(communeCode)
+        writes.value++
+    }
+
+    override suspend fun rememberUdi(communeCode: String, udiCode: String, udiName: String) {
+        remembered[communeCode] = udiCode
+        rememberedNames[communeCode] = udiName
+        writes.value++
     }
 }
 

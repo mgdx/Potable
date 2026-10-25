@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,7 +62,8 @@ import io.github.mgdx.potable.ui.settings.OverflowMenu
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
-    onCommuneSelected: (Commune) -> Unit,
+    onCommuneSelected: (commune: Commune, choose: Boolean) -> Unit,
+    onKnownUdiSelected: (commune: Commune, communeName: String, udi: KnownUdi) -> Unit,
     onMyCommunes: () -> Unit,
     onSettings: () -> Unit,
     onAbout: () -> Unit,
@@ -69,6 +71,7 @@ fun SearchScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val nearby by viewModel.nearby.collectAsStateWithLifecycle()
+    val knownUdis by viewModel.knownUdis.collectAsStateWithLifecycle()
     val context = LocalContext.current
     // The permission is asked for here, when "near me" is tapped, and never
     // at launch (SPEC §5 F1).
@@ -81,8 +84,13 @@ fun SearchScreen(
         query = query,
         state = state,
         nearby = nearby,
+        knownUdis = knownUdis,
         onQueryChange = viewModel::onQueryChange,
         onCommuneSelected = onCommuneSelected,
+        onKnownUdiSelected = { commune, communeName, udi ->
+            viewModel.rememberChoice(commune.queryCode, udi)
+            onKnownUdiSelected(commune, communeName, udi)
+        },
         onNearby = {
             val granted = ContextCompat.checkSelfPermission(
                 context,
@@ -106,8 +114,10 @@ private fun SearchContent(
     query: String,
     state: SearchUiState,
     nearby: NearbyState,
+    knownUdis: Map<String, List<KnownUdi>>,
     onQueryChange: (String) -> Unit,
-    onCommuneSelected: (Commune) -> Unit,
+    onCommuneSelected: (Commune, Boolean) -> Unit,
+    onKnownUdiSelected: (Commune, String, KnownUdi) -> Unit,
     onNearby: () -> Unit,
     onMyCommunes: () -> Unit,
     onSettings: () -> Unit,
@@ -168,7 +178,9 @@ private fun SearchContent(
             NearbySection(
                 nearby = nearby,
                 onNearby = onNearby,
-                onCommuneSelected = onCommuneSelected,
+                onCommuneSelected = { commune ->
+                    onCommuneSelected(commune, commune.queryCode in knownUdis)
+                },
             )
             when (state) {
                 SearchUiState.Idle -> if (nearby !is NearbyState.Found) {
@@ -178,14 +190,35 @@ private fun SearchContent(
                 is SearchUiState.NoResults -> EmptyState(
                     stringResource(R.string.search_no_results, bidiWrap(state.query)),
                 )
-                is SearchUiState.Results -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(state.communes, key = { it.code }) { commune ->
-                        CommuneRow(
-                            commune = commune,
-                            parentName = commune.hubEauCode?.let { state.parentNames[it] },
-                            onClick = { onCommuneSelected(commune) },
-                        )
-                        HorizontalDivider()
+                is SearchUiState.Results -> {
+                    val rows = remember(state.communes, knownUdis) {
+                        searchRows(state.communes, knownUdis)
+                    }
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(rows, key = { it.key() }) { row ->
+                            val commune = row.commune
+                            val parentName = commune.hubEauCode?.let { state.parentNames[it] }
+                            when (row) {
+                                is SearchRow.Place -> CommuneRow(
+                                    commune = commune,
+                                    parentName = parentName,
+                                    onClick = { onCommuneSelected(commune, row.choose) },
+                                )
+                                is SearchRow.KnownUnit -> {
+                                    // The city the unit serves, rather than an
+                                    // arrondissement or a delegated commune.
+                                    val communeName = parentName ?: commune.name
+                                    KnownUdiRow(
+                                        communeName = communeName,
+                                        udi = row.udi,
+                                        onClick = {
+                                            onKnownUdiSelected(commune, communeName, row.udi)
+                                        },
+                                    )
+                                }
+                            }
+                            HorizontalDivider()
+                        }
                     }
                 }
             }
@@ -280,6 +313,40 @@ private fun CommuneRow(commune: Commune, parentName: String?, onClick: () -> Uni
                     )
                 }
             }
+        },
+    )
+}
+
+/** Commune codes have no "/": the key of a unit row never equals a commune's. */
+private fun SearchRow.key(): String = when (this) {
+    is SearchRow.Place -> commune.code
+    is SearchRow.KnownUnit -> "${commune.queryCode}/${udi.code}"
+}
+
+/** "Commune, unit": a unit of the commune the user already knows, opened directly. */
+@Composable
+private fun KnownUdiRow(communeName: String, udi: KnownUdi, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        headlineContent = {
+            Text(
+                stringResource(
+                    R.string.commune_and_unit,
+                    bidiWrap(communeName),
+                    bidiWrap(udi.name),
+                ),
+            )
+        },
+        supportingContent = if (udi.isFollowed) {
+            {
+                Text(
+                    text = stringResource(R.string.search_unit_followed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            null
         },
     )
 }
