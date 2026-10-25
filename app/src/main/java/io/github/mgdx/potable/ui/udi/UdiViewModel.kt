@@ -35,9 +35,9 @@ sealed interface UdiUiState {
     data class Resolved(val udi: Udi) : UdiUiState
 
     /**
-     * Several units, one of which is followed or was chosen last time and is
-     * still listed: the screen goes straight on to its sheet, from which the
-     * user can come back to the choice.
+     * Several units, one of which is followed, was chosen last time and is
+     * still listed, or has just been picked and remembered: the screen goes
+     * on to its sheet in its place, and the sheet offers to change the unit.
      */
     data class Remembered(val udi: Udi) : UdiUiState
 
@@ -70,6 +70,9 @@ class UdiViewModel(
 
     private val _query = MutableStateFlow("")
 
+    /** Whether a picked unit is being written ([select]). */
+    private var selecting = false
+
     /** What the user typed in the filter of a long choice ([showsUdiFilter]). */
     val query: StateFlow<String> = _query.asStateFlow()
 
@@ -101,9 +104,26 @@ class UdiViewModel(
         }
     }
 
-    /** Remembers the unit the user picked, for their next visit. */
+    /**
+     * Remembers the unit the user picked, for their next visit, then moves to
+     * [UdiUiState.Remembered]: the screen leaves only once the choice is
+     * written, since leaving clears this ViewModel and would cancel the write.
+     */
     fun select(udi: Udi) {
-        viewModelScope.launch { preferences.rememberUdi(communeCode, udi.code) }
+        // A second tap while the first choice is written is ignored.
+        if (_state.value !is UdiUiState.Choice || selecting) return
+        selecting = true
+        viewModelScope.launch {
+            try {
+                preferences.rememberUdi(communeCode, udi.code)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Unwritable local data: the sheet still opens, the choice
+                // will simply be offered again next time.
+            }
+            _state.value = UdiUiState.Remembered(udi)
+        }
     }
 
     private suspend fun multiple(udis: List<Udi>): UdiUiState {
