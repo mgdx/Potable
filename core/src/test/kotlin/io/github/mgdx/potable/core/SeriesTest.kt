@@ -22,6 +22,7 @@ class SeriesTest {
         label: String? = "Nitrates (en NO3)",
         unit: String? = "mg/L",
         limit: String? = "<=50 mg/L",
+        reference: String? = null,
         place: String? = null,
     ) = ResultRow(
         codePrelevement = sample,
@@ -33,6 +34,7 @@ class SeriesTest {
         resultatNumerique = value,
         libelleUnite = unit,
         limiteQualiteParametre = limit,
+        referenceQualiteParametre = reference,
         codeLieuAnalyse = place,
     )
 
@@ -83,6 +85,49 @@ class SeriesTest {
         assertNull(series.limitText)
         assertNull(series.limit)
         assertEquals(2, series.points.size)
+    }
+
+    @Test
+    fun `Paris anthraquinone keeps the limit published on one of the sample's two rows`() {
+        // Real page (2026-10-25): each sample may publish the parameter twice
+        // under the same code, "(HAP)" without limit and "(pesticide)" with
+        // one, in either order; the newest sample lists the HAP row first.
+        val rows = HubEauParser
+            .parseResultats(Fixtures.hubeau("resultats_dis_75056_anthraquinone.json"))
+            .data
+        assertEquals(12, rows.size)
+        val series = Series.parameterSeries(rows, setOf("2013"))!!
+        assertEquals(7, series.points.size)
+        assertEquals("<=0,1 µg/L", series.limitText)
+        assertEquals(Threshold(null, 0.1, "µg/L"), series.limit)
+        assertEquals("Anthraquinone (pesticide)", series.label)
+
+        // A window holding that sample alone: a single measure, same limit.
+        val single = Series.parameterSeries(rows.take(2), setOf("2013"))!!
+        assertEquals(1, single.points.size)
+        assertEquals("<=0,1 µg/L", single.limitText)
+    }
+
+    @Test
+    fun `thresholds published on another row of the newest sample are kept`() {
+        val series = Series.parameterSeries(
+            listOf(
+                row("P1", "2026-01-01T00:00:00Z", limit = null, place = "L"),
+                row(
+                    "P1",
+                    "2026-01-01T00:00:00Z",
+                    limit = "<=50 mg/L",
+                    reference = "<=25 mg/L",
+                    place = "T",
+                    value = 9.0,
+                ),
+            ),
+            setOf("1340"),
+        )!!
+        // The laboratory value is kept, the thresholds of the on-site row too.
+        assertEquals(listOf(4.4), series.points.map { it.value })
+        assertEquals("<=50 mg/L", series.limitText)
+        assertEquals("<=25 mg/L", series.referenceText)
     }
 
     @Test

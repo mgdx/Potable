@@ -232,6 +232,16 @@ des valeurs différentes (`07500217014` : 7,3 et 7,58). Paris CENTRE, pH sur
 `code_prelevement`, celui du laboratoire s'il existe (`Series.parameterSeries`,
 fixture `resultats_dis_75056_ph.json`).
 
+Un même prélèvement peut aussi publier **deux lignes du même code, au même
+lieu**, dont une seule porte le seuil. Paris, UDI `075000227`, anthraquinone
+(`2013`), relevé du 2026-10-25 : `Anthraquinone (HAP)` sans limite et
+`Anthraquinone (pesticide)` avec `<=0,1 µg/L`, dans un ordre variable. Garder la
+première ligne lue faisait perdre la limite (visible surtout quand la fenêtre ne
+contient qu'une mesure). La série préfère donc, à lieu égal, la ligne qui publie
+une limite ou une référence, et complète les seuils du dernier point par les
+autres lignes du même prélèvement, jamais par un prélèvement plus ancien
+(fixture `resultats_dis_75056_anthraquinone.json`).
+
 ### Série : mesures
 
 `fields=code_prelevement,code_commune,date_prelevement,code_parametre,libelle_parametre,code_lieu_analyse,resultat_alphanumerique,resultat_numerique,libelle_unite,limite_qualite_parametre,reference_qualite_parametre`
