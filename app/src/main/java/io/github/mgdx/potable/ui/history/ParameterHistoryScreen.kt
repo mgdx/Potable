@@ -59,7 +59,9 @@ import java.util.Locale
 /**
  * The history of one parameter (SPEC §5 F5): [label] is the API label, shown
  * as published until the series brings its own. Values are restituted as
- * published and never compared with the limit (SPEC §14).
+ * published and never compared with the limit (SPEC §14). Touching and
+ * holding a measure of the chart opens the report of its sample
+ * ([onOpenSample], a `code_prelevement`).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +69,7 @@ fun ParameterHistoryScreen(
     viewModel: ParameterHistoryViewModel,
     label: String,
     onBack: () -> Unit,
+    onOpenSample: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val years by viewModel.years.collectAsStateWithLifecycle()
@@ -118,7 +121,7 @@ fun ParameterHistoryScreen(
                         LoadingState(stringResource(R.string.history_loading), slow = isSlow)
                     is HistoryUiState.Error -> ErrorState(current.error, viewModel::retry)
                     HistoryUiState.Empty -> EmptyState(stringResource(R.string.history_empty))
-                    is HistoryUiState.Loaded -> HistoryContent(current.series)
+                    is HistoryUiState.Loaded -> HistoryContent(current.series, onOpenSample)
                 }
             }
         }
@@ -157,7 +160,7 @@ private fun RefreshFailed() {
 }
 
 @Composable
-private fun HistoryContent(series: ParameterSeries) {
+private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Unit) {
     val model = remember(series) { ChartModel.of(series) }
     var selected by rememberSaveable(series) { mutableStateOf<Int?>(null) }
     var showList by rememberSaveable { mutableStateOf(false) }
@@ -182,9 +185,16 @@ private fun HistoryContent(series: ParameterSeries) {
                     model = model,
                     selected = selected,
                     onSelect = { selected = it },
+                    onOpenSample = onOpenSample,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
                 Legend(series, model)
+                Text(
+                    text = stringResource(R.string.history_gesture_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
                 TextButton(
                     onClick = { showList = !showList },
                     modifier = Modifier.padding(horizontal = 8.dp),

@@ -33,6 +33,8 @@ import io.github.mgdx.potable.ui.history.ParameterHistoryViewModel
 import io.github.mgdx.potable.ui.history.historyCodes
 import io.github.mgdx.potable.ui.sample.SampleDetailScreen
 import io.github.mgdx.potable.ui.sample.SampleDetailViewModel
+import io.github.mgdx.potable.ui.sample.SampleReportScreen
+import io.github.mgdx.potable.ui.sample.SampleReportViewModel
 import io.github.mgdx.potable.ui.search.SearchScreen
 import io.github.mgdx.potable.ui.search.SearchViewModel
 import io.github.mgdx.potable.ui.settings.SettingsScreen
@@ -93,6 +95,12 @@ object Routes {
     const val HISTORY =
         "history/{$ARG_COMMUNE}/{$ARG_UDI}?$ARG_CODES={$ARG_CODES}&$ARG_LABEL={$ARG_LABEL}"
 
+    /**
+     * The full report of any sample of a unit, loaded by its code (SPEC §5
+     * F4), opened from a parameter's history; see [report].
+     */
+    const val REPORT = "report/{$ARG_COMMUNE}/{$ARG_UDI}/{$ARG_SAMPLE}"
+
     fun udis(communeCode: String, name: String, choose: Boolean = false) =
         "udis/${Uri.encode(communeCode)}?$ARG_NAME=${Uri.encode(name)}&$ARG_CHOOSE=$choose"
 
@@ -109,6 +117,10 @@ object Routes {
         sheet(follow.communeCode, follow.udiCode, follow.communeName, follow.udiName)
 
     fun sample(sampleCode: String) = "sample/${Uri.encode(sampleCode)}"
+
+    /** The report of the sample [sampleCode] of the unit [udiCode] serving [communeCode]. */
+    fun report(communeCode: String, udiCode: String, sampleCode: String) =
+        "report/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}/${Uri.encode(sampleCode)}"
 
     fun timeline(communeCode: String, udiCode: String, name: String) =
         "timeline/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}?$ARG_NAME=${Uri.encode(name)}"
@@ -434,17 +446,54 @@ private fun PotableNavGraph(
                 .split(',')
                 .filter { it.isNotBlank() }
                 .toSet()
+            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
+            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
             ParameterHistoryScreen(
                 viewModel = viewModel(
                     factory = ParameterHistoryViewModel.factory(
                         container,
-                        communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty(),
-                        udiCode = entry.string(Routes.ARG_UDI).orEmpty(),
+                        communeCode = communeCode,
+                        udiCode = udiCode,
                         parameterCodes = codes,
                     ),
                 ),
                 label = entry.string(Routes.ARG_LABEL).orEmpty(),
                 onBack = { navController.navigateUp() },
+                onOpenSample = { sampleCode ->
+                    navController.navigate(Routes.report(communeCode, udiCode, sampleCode))
+                },
+            )
+        }
+        composable(
+            route = Routes.REPORT,
+            arguments = listOf(
+                requiredString(Routes.ARG_COMMUNE),
+                requiredString(Routes.ARG_UDI),
+                requiredString(Routes.ARG_SAMPLE),
+            ),
+        ) { entry ->
+            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
+            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
+            SampleReportScreen(
+                viewModel = viewModel(
+                    factory = SampleReportViewModel.factory(
+                        container,
+                        communeCode = communeCode,
+                        udiCode = udiCode,
+                        sampleCode = entry.string(Routes.ARG_SAMPLE).orEmpty(),
+                    ),
+                ),
+                onBack = { navController.navigateUp() },
+                onOpenHistory = { result ->
+                    navController.navigate(
+                        Routes.parameterHistory(
+                            communeCode = communeCode,
+                            udiCode = udiCode,
+                            parameterCodes = historyCodes(result.parameterCode),
+                            label = result.parameterLabel,
+                        ),
+                    )
+                },
             )
         }
         composable(

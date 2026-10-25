@@ -20,37 +20,47 @@ object Series {
      *
      * One point per `code_prelevement`: a sample can publish the same
      * parameter twice (Paris: pH measured on site, `code_lieu_analyse` "T",
-     * and in the laboratory, "L"), or under two of its codes. The laboratory
-     * measure is kept, otherwise the first row read. Points are oldest first
+     * and in the laboratory, "L"; anthraquinone as "(HAP)" without limit and
+     * as "(pesticide)" with one, same code, same place), or under two of its
+     * codes. The laboratory measure is kept, then one that publishes a limit
+     * or a reference, otherwise the first row read. Points are oldest first
      * (then by sample code). Label, unit, limit and reference are those of
      * the newest point's row: they follow the regulation as it is now
-     * published.
+     * published. A limit or reference that row lacks is taken from another
+     * row of the same sample, never from an older sample.
      *
      * @throws HubEauFormatException if a kept row has a missing or unreadable date.
      */
     fun parameterSeries(rows: List<ResultRow>, parameterCodes: Set<String>): ParameterSeries? {
-        val kept = LinkedHashMap<String, ResultRow>()
+        val bySample = LinkedHashMap<String, MutableList<ResultRow>>()
         for (row in rows) {
             if (row.codeParametre == null || row.codeParametre !in parameterCodes) continue
-            val previous = kept[row.codePrelevement]
-            if (previous == null || (!previous.isLaboratory() && row.isLaboratory())) {
-                kept[row.codePrelevement] = row
-            }
+            bySample.getOrPut(row.codePrelevement) { mutableListOf() } += row
         }
-        if (kept.isEmpty()) return null
-        val dated = kept.values
-            .map { Dated(it, publishedDate(it)) }
-            .sortedWith(compareBy({ it.date }, { it.row.codePrelevement }))
+        if (bySample.isEmpty()) return null
+        val dated = bySample.values
+            .map { sampleRows ->
+                // maxWith keeps the first of equal rows: API order breaks ties.
+                val kept = sampleRows.maxWith(PREFERRED_ROW)
+                Dated(kept, publishedDate(kept))
+            }.sortedWith(compareBy({ it.date }, { it.row.codePrelevement }))
         val newest = dated.last().row
+        val newestRows = bySample.getValue(newest.codePrelevement)
+        val limitText = newest.limiteQualiteParametre.orPublished(
+            newestRows.map { it.limiteQualiteParametre },
+        )
+        val referenceText = newest.referenceQualiteParametre.orPublished(
+            newestRows.map { it.referenceQualiteParametre },
+        )
         val code = checkNotNull(newest.codeParametre)
         return ParameterSeries(
             parameterCode = code,
             label = newest.libelleParametre ?: code,
             unit = newest.libelleUnite,
-            limitText = newest.limiteQualiteParametre,
-            referenceText = newest.referenceQualiteParametre,
-            limit = Thresholds.parse(newest.limiteQualiteParametre),
-            reference = Thresholds.parse(newest.referenceQualiteParametre),
+            limitText = limitText,
+            referenceText = referenceText,
+            limit = Thresholds.parse(limitText),
+            reference = Thresholds.parse(referenceText),
             points = dated.map { (row, date) ->
                 SeriesPoint(
                     date = date,
@@ -92,7 +102,18 @@ object Series {
 
     private fun ResultRow.isLaboratory() = codeLieuAnalyse == LABORATORY
 
+    private fun ResultRow.hasThreshold() =
+        !limiteQualiteParametre.isNullOrBlank() || !referenceQualiteParametre.isNullOrBlank()
+
+    /** This text if published, otherwise the first published one of [others]. */
+    private fun String?.orPublished(others: List<String?>): String? =
+        takeUnless { it.isNullOrBlank() } ?: others.firstOrNull { !it.isNullOrBlank() } ?: this
+
     private const val LABORATORY = "L"
+
+    /** The row a sample's point is read from: laboratory first, then one with a threshold. */
+    private val PREFERRED_ROW: Comparator<ResultRow> =
+        compareBy<ResultRow> { it.isLaboratory() }.thenBy { it.hasThreshold() }
 
     /** Same reading as [Samples.group]: ISO instant, with offset, or date only (UTC). */
     private fun publishedDate(row: ResultRow): Instant {

@@ -186,6 +186,92 @@ fun timeAxis(days: List<Long>): TimeAxis {
     }
 }
 
+/**
+ * The part of a [TimeAxis] the chart shows, from [start] to [end] in epoch
+ * days, fractional while the user zooms; [end] > [start].
+ */
+data class ChartWindow(val start: Double, val end: Double) {
+    val span: Double get() = end - start
+
+    /** True when [day] (epoch day) is within the window. */
+    operator fun contains(day: Long): Boolean = day.toDouble() in start..end
+}
+
+/** Smallest span a window can be zoomed down to, in days (the whole axis if shorter). */
+const val MIN_WINDOW_DAYS = 14.0
+
+/** The window showing the whole of [time]. */
+fun fullWindow(time: TimeAxis): ChartWindow =
+    ChartWindow(time.startDay.toDouble(), time.endDay.toDouble())
+
+/** True when [window] shows less than the whole of [time]. */
+fun isZoomed(window: ChartWindow, time: TimeAxis): Boolean =
+    window.span < fullWindow(time).span - WINDOW_EPSILON
+
+/**
+ * [window] zoomed by [factor] (above 1 zooms in, below 1 zooms out) around
+ * [focus], a fraction of the plot's width from its left edge: the day under
+ * the focus stays under it. The span stays between [MIN_WINDOW_DAYS] and the
+ * whole of [time], and the window inside [time].
+ */
+fun zoomWindow(window: ChartWindow, time: TimeAxis, factor: Double, focus: Double): ChartWindow {
+    if (!(factor > 0) || !factor.isFinite()) return window
+    val full = fullWindow(time)
+    val minSpan = min(MIN_WINDOW_DAYS, full.span)
+    val span = (window.span / factor).coerceIn(minSpan, full.span)
+    val at = if (focus.isFinite()) focus.coerceIn(0.0, 1.0) else 0.5
+    val anchor = window.start + at * window.span
+    return placeWindow(anchor - at * span, span, full)
+}
+
+/** [window] moved by [days] (positive: later), kept inside [time]. */
+fun panWindow(window: ChartWindow, time: TimeAxis, days: Double): ChartWindow =
+    if (days.isFinite()) placeWindow(window.start + days, window.span, fullWindow(time)) else window
+
+/**
+ * The days a horizontal drag of [dx] pixels moves [window] by, on a plot
+ * [plotWidth] pixels wide: dragging to the right shows earlier days.
+ */
+fun dragDays(dx: Float, plotWidth: Float, window: ChartWindow): Double =
+    if (plotWidth > 0f) -dx.toDouble() / plotWidth * window.span else 0.0
+
+/**
+ * [window] moved as little as possible to show [day] (epoch day), within
+ * [time]; unchanged when it already does.
+ */
+fun revealDay(window: ChartWindow, time: TimeAxis, day: Long): ChartWindow {
+    val at = day.toDouble()
+    return when {
+        at < window.start -> panWindow(window, time, at - window.start)
+        at > window.end -> panWindow(window, time, at - window.end)
+        else -> window
+    }
+}
+
+/** A window of [span] days starting at [start], moved back inside [full]. */
+private fun placeWindow(start: Double, span: Double, full: ChartWindow): ChartWindow {
+    val clamped = start.coerceIn(full.start, max(full.start, full.end - span))
+    return ChartWindow(clamped, min(full.end, clamped + span))
+}
+
+private const val WINDOW_EPSILON = 1e-6
+
+/**
+ * The whole days of [window], first to last, that date graduations may
+ * stand on: never outside the window. A window shorter than a day gives its
+ * nearest day.
+ */
+fun windowDays(window: ChartWindow): Pair<LocalDate, LocalDate> {
+    val first = ceil(window.start - WINDOW_EPSILON).toLong()
+    val last = floor(window.end + WINDOW_EPSILON).toLong()
+    return if (first <= last) {
+        LocalDate.ofEpochDay(first) to LocalDate.ofEpochDay(last)
+    } else {
+        val day = LocalDate.ofEpochDay(((window.start + window.end) / 2).roundToLong())
+        day to day
+    }
+}
+
 /** What the date graduations stand for, which decides how they are written. */
 enum class DateTickUnit { DAY, MONTH, YEAR }
 
@@ -242,10 +328,18 @@ fun project(value: Double, from: Double, to: Double, start: Float, end: Float): 
  * The index in [xs] (ascending positions of the points) of the point nearest
  * to [x]; on a tie, the earlier one. Null when there is no point.
  */
-fun nearestIndex(xs: List<Float>, x: Float): Int? {
+fun nearestIndex(xs: List<Float>, x: Float): Int? =
+    nearestVisibleIndex(xs, x, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY)
+
+/**
+ * [nearestIndex] among the points whose position in [xs] lies within
+ * [from]..[to] (the visible plot); null when none does.
+ */
+fun nearestVisibleIndex(xs: List<Float>, x: Float, from: Float, to: Float): Int? {
     var best: Int? = null
     var bestDistance = Float.MAX_VALUE
     xs.forEachIndexed { index, position ->
+        if (position < from || position > to) return@forEachIndexed
         val distance = abs(position - x)
         if (distance < bestDistance) {
             best = index

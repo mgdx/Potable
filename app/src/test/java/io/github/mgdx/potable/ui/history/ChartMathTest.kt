@@ -3,6 +3,7 @@ package io.github.mgdx.potable.ui.history
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.core.model.Threshold
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -197,6 +198,113 @@ class ChartMathTest {
         assertEquals("12,5 mg/L", pointValueText(point("2026-01-01", 12.5, null), "mg/L", locale))
         assertEquals("7,8", pointValueText(point("2026-01-01", 7.8, null), "SANS OBJET", locale))
         assertNull(pointValueText(point("2026-01-01", null, null), "mg/L", locale))
+    }
+
+    private val year = TimeAxis(0, 365)
+
+    private fun assertWindow(start: Double, end: Double, window: ChartWindow) {
+        assertEquals(start, window.start, 1e-9)
+        assertEquals(end, window.end, 1e-9)
+    }
+
+    @Test
+    fun `the full window shows the whole axis, unzoomed`() {
+        val window = fullWindow(year)
+        assertWindow(0.0, 365.0, window)
+        assertFalse(isZoomed(window, year))
+        assertTrue(isZoomed(ChartWindow(0.0, 200.0), year))
+    }
+
+    @Test
+    fun `zooming keeps the day under the fingers in place`() {
+        val zoomed = zoomWindow(fullWindow(year), year, factor = 2.0, focus = 0.5)
+        assertWindow(91.25, 273.75, zoomed)
+        // Focus at a quarter of the width: day 91.25 stays at a quarter.
+        val again = zoomWindow(fullWindow(year), year, factor = 4.0, focus = 0.25)
+        assertWindow(91.25 - 0.25 * 91.25, 91.25 + 0.75 * 91.25, again)
+        assertTrue(isZoomed(zoomed, year))
+    }
+
+    @Test
+    fun `zoom stops at the minimum span and at the whole axis`() {
+        val deep = zoomWindow(fullWindow(year), year, factor = 1000.0, focus = 0.5)
+        assertEquals(MIN_WINDOW_DAYS, deep.span, 1e-9)
+        assertEquals(182.5, (deep.start + deep.end) / 2, 1e-9)
+        val out = zoomWindow(deep, year, factor = 0.0001, focus = 0.1)
+        assertWindow(0.0, 365.0, out)
+        assertFalse(isZoomed(out, year))
+        // A series shorter than the minimum span cannot be zoomed at all.
+        val short = TimeAxis(10, 15)
+        assertWindow(10.0, 15.0, zoomWindow(fullWindow(short), short, 3.0, 0.5))
+    }
+
+    @Test
+    fun `zooming near an edge stays inside the axis`() {
+        val zoomed = zoomWindow(fullWindow(year), year, factor = 2.0, focus = 0.0)
+        assertWindow(0.0, 182.5, zoomed)
+        val end = zoomWindow(fullWindow(year), year, factor = 2.0, focus = 1.0)
+        assertWindow(182.5, 365.0, end)
+    }
+
+    @Test
+    fun `invalid zoom factors leave the window as it is`() {
+        val window = ChartWindow(100.0, 200.0)
+        assertEquals(window, zoomWindow(window, year, Double.NaN, 0.5))
+        assertEquals(window, zoomWindow(window, year, 0.0, 0.5))
+        assertEquals(window, zoomWindow(window, year, Double.POSITIVE_INFINITY, 0.5))
+    }
+
+    @Test
+    fun `panning moves the window and stops at the ends`() {
+        val window = ChartWindow(100.0, 200.0)
+        assertWindow(130.0, 230.0, panWindow(window, year, 30.0))
+        assertWindow(0.0, 100.0, panWindow(window, year, -500.0))
+        assertWindow(265.0, 365.0, panWindow(window, year, 500.0))
+        // The whole axis cannot move.
+        assertWindow(0.0, 365.0, panWindow(fullWindow(year), year, 50.0))
+    }
+
+    @Test
+    fun `dragging right shows earlier days`() {
+        val window = ChartWindow(100.0, 200.0)
+        assertEquals(-25.0, dragDays(250f, 1000f, window), 1e-9)
+        assertEquals(10.0, dragDays(-100f, 1000f, window), 1e-9)
+        assertEquals(0.0, dragDays(100f, 0f, window), 1e-9)
+    }
+
+    @Test
+    fun `a selected day out of the window brings it into view`() {
+        val window = ChartWindow(100.0, 200.0)
+        assertEquals(window, revealDay(window, year, 150))
+        assertWindow(50.0, 150.0, revealDay(window, year, 50))
+        assertWindow(200.0, 300.0, revealDay(window, year, 300))
+        assertTrue(150L in window)
+        assertFalse(201L in window)
+    }
+
+    @Test
+    fun `date graduations stay inside the window`() {
+        assertEquals(
+            LocalDate.ofEpochDay(101) to LocalDate.ofEpochDay(199),
+            windowDays(ChartWindow(100.4, 199.6)),
+        )
+        assertEquals(
+            LocalDate.ofEpochDay(100) to LocalDate.ofEpochDay(200),
+            windowDays(ChartWindow(100.0, 200.0)),
+        )
+        // The zoomed window's own dates graduate it, not the whole axis.
+        val (start, end) = windowDays(ChartWindow(20_089.0, 20_120.0))
+        val ticks = dateTicks(start, end, maxTicks = 6)
+        assertTrue(ticks.dates.all { it in start..end })
+    }
+
+    @Test
+    fun `only visible points can be touched`() {
+        val xs = listOf(-50f, 10f, 100f, 400f)
+        assertEquals(1, nearestVisibleIndex(xs, -60f, 0f, 300f))
+        assertEquals(2, nearestVisibleIndex(xs, 390f, 0f, 300f))
+        assertNull(nearestVisibleIndex(xs, 10f, 500f, 600f))
+        assertEquals(0, nearestIndex(xs, -60f))
     }
 
     @Test

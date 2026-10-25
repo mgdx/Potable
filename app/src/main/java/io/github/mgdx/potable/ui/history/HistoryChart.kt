@@ -4,8 +4,14 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,13 +22,17 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -31,14 +41,18 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -137,8 +151,14 @@ private fun dateFormatter(unit: DateTickUnit, locale: Locale): DateTimeFormatter
             .withDigitsOf(locale)
 }
 
+/**
+ * The layout of [model] for one size, showing [window] of its time axis: the
+ * value axis covers the whole series, so that it stays still while the user
+ * zooms; the date graduations are those of the window.
+ */
 private fun computeGeometry(
     model: ChartModel,
+    window: ChartWindow,
     width: Float,
     height: Float,
     measurer: TextMeasurer,
@@ -161,19 +181,15 @@ private fun computeGeometry(
     }
     val plotLeft = (yTexts.maxOfOrNull { it.size.width } ?: 0) + gap * 2
     val plotRight = width - radius - gap
-    val startDay = model.time.startDay.toDouble()
-    val endDay = model.time.endDay.toDouble()
-    fun xOf(day: Long) = project(day.toDouble(), startDay, endDay, plotLeft, plotRight)
+    fun xOf(day: Long) = project(day.toDouble(), window.start, window.end, plotLeft, plotRight)
     fun yOf(value: Double) = project(value, axis.min, axis.max, plotBottom, plotTop)
 
     val measured = mutableMapOf<Pair<LocalDate, DateTickUnit>, TextLayoutResult>()
     fun label(date: LocalDate, unit: DateTickUnit) = measured.getOrPut(date to unit) {
         measurer.measure(dateFormatter(unit, locale).format(date), style)
     }
-    val ticks = dateTicks(
-        LocalDate.ofEpochDay(model.time.startDay),
-        LocalDate.ofEpochDay(model.time.endDay),
-    ) { candidate ->
+    val (firstDay, lastDay) = windowDays(window)
+    val ticks = dateTicks(firstDay, lastDay) { candidate ->
         // Consecutive labels, centred on their graduation, must not touch.
         candidate.dates.zipWithNext().all { (a, b) ->
             val room = xOf(b.toEpochDay()) - xOf(a.toEpochDay())
@@ -199,6 +215,12 @@ private fun computeGeometry(
     )
 }
 
+/** Saves a [ChartWindow] across configuration changes and process death. */
+private val WindowSaver = listSaver<ChartWindow, Double>(
+    save = { listOf(it.start, it.end) },
+    restore = { ChartWindow(it[0], it[1]) },
+)
+
 /**
  * The line chart of a parameter (SPEC §5 F5): measures joined in date order,
  * censored values as hollow markers, the quality limit as a solid line and
@@ -209,9 +231,13 @@ private fun computeGeometry(
  * plotting area is laid out left to right; the tooltip inside it, like the
  * legend outside, follows the layout of the interface.
  *
- * Touching or dragging selects the nearest measure ([onSelect], an index in
- * [ChartModel.points]); so do the arrow keys once the chart has the focus,
- * and the "previous / next measurement" actions of screen readers.
+ * Touching selects the nearest visible measure ([onSelect], an index in
+ * [ChartModel.points]); so does dragging along the whole chart, the arrow
+ * keys once the chart has the focus, and the "previous / next measurement"
+ * actions of screen readers. Pinching zooms the time axis, dragging then
+ * moves along it, and a double tap shows the whole period again. Touching and
+ * holding a measure opens the full report of its sample ([onOpenSample], a
+ * `code_prelevement`), as does a screen reader action on the selected one.
  */
 @Composable
 fun HistoryChart(
@@ -219,17 +245,23 @@ fun HistoryChart(
     model: ChartModel,
     selected: Int?,
     onSelect: (Int) -> Unit,
+    onOpenSample: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = currentLocale()
     val uiDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
     val colors = MaterialTheme.colorScheme
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(
         color = colors.onSurfaceVariant,
         textDirection = TextDirection.Ltr,
     )
+    var window by rememberSaveable(model, stateSaver = WindowSaver) {
+        mutableStateOf(fullWindow(model.time))
+    }
+    val zoomed = isZoomed(window, model.time)
     val description = chartDescription(series, model, locale)
     val selectedPoint = selected?.let {
         model.points.getOrNull(it)
@@ -243,11 +275,24 @@ fun HistoryChart(
     } else {
         null
     }
+    val zoomState = if (zoomed) {
+        val (first, last) = windowDays(window)
+        stringResource(
+            R.string.history_zoomed_state,
+            mediumDate(first, locale),
+            mediumDate(last, locale),
+        )
+    } else {
+        null
+    }
     val currentOnSelect by rememberUpdatedState(onSelect)
+    val currentOnOpenSample by rememberUpdatedState(onOpenSample)
     val currentSelected by rememberUpdatedState(selected)
     val previousLabel = stringResource(R.string.history_previous_measurement)
     val nextLabel = stringResource(R.string.history_next_measurement)
-    // Screen readers cannot touch a point: they step through the measures.
+    val openLabel = stringResource(R.string.history_open_report)
+    // Screen readers cannot touch a point: they step through the measures,
+    // and open the report of the selected one.
     val stepActions = remember(previousLabel, nextLabel, model) {
         listOf(previousLabel to -1, nextLabel to 1).map { (label, delta) ->
             CustomAccessibilityAction(label) {
@@ -257,15 +302,35 @@ fun HistoryChart(
             }
         }
     }
+    val openAction = selectedPoint?.let { point ->
+        CustomAccessibilityAction(openLabel) {
+            currentOnOpenSample(point.sampleCode)
+            true
+        }
+    }
     var focused by remember { mutableStateOf(false) }
+
+    // A measure selected out of view (keys, screen reader) is brought into it.
+    LaunchedEffect(selected, model) {
+        val day = selected?.let { model.points.getOrNull(it) }?.day ?: return@LaunchedEffect
+        window = revealDay(window, model.time, day)
+    }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
             val width = constraints.maxWidth.toFloat()
             val height = with(density) { CHART_HEIGHT.toPx() }
-            val geometry = remember(model, width, height, labelStyle, locale, density) {
-                computeGeometry(model, width, height, measurer, labelStyle, locale, density)
+            val geometry = remember(model, window, width, height, labelStyle, locale, density) {
+                computeGeometry(model, window, width, height, measurer, labelStyle, locale, density)
             }
+            // Read by the gesture detectors, which outlive a change of window.
+            val currentGeometry by rememberUpdatedState(geometry)
+            val currentZoomed by rememberUpdatedState(zoomed)
+
+            fun visibleIndex(x: Float): Int? = currentGeometry.let {
+                nearestVisibleIndex(it.pointXs, x, it.plotLeft, it.plotRight)
+            }
+
             Column {
                 SelectionStrip(
                     x = selected?.let { geometry.pointXs.getOrNull(it) },
@@ -296,20 +361,69 @@ fun HistoryChart(
                             },
                             shape = MaterialTheme.shapes.small,
                         )
-                        .pointerInput(geometry) {
-                            detectTapGestures { offset ->
-                                nearestIndex(geometry.pointXs, offset.x)?.let(currentOnSelect)
+                        .pointerInput(model) {
+                            // Two fingers zoom and move the time axis. Read
+                            // before the other detectors (initial pass), which
+                            // then see the events consumed and stand down.
+                            awaitEachGesture {
+                                awaitFirstDown(requireUnconsumed = false, PointerEventPass.Initial)
+                                do {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    if (event.changes.count { it.pressed } >= 2) {
+                                        val g = currentGeometry
+                                        val plotWidth = g.plotRight - g.plotLeft
+                                        val focus = (event.calculateCentroid().x - g.plotLeft) /
+                                            plotWidth
+                                        var next = zoomWindow(
+                                            window,
+                                            model.time,
+                                            event.calculateZoom().toDouble(),
+                                            focus.toDouble(),
+                                        )
+                                        next = panWindow(
+                                            next,
+                                            model.time,
+                                            dragDays(event.calculatePan().x, plotWidth, next),
+                                        )
+                                        window = next
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                } while (event.changes.any { it.pressed })
                             }
                         }
-                        .pointerInput(geometry) {
+                        .pointerInput(model) {
+                            detectTapGestures(
+                                onTap = { offset -> visibleIndex(offset.x)?.let(currentOnSelect) },
+                                onDoubleTap = { window = fullWindow(model.time) },
+                                onLongPress = { offset ->
+                                    visibleIndex(offset.x)?.let { index ->
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        currentOnSelect(index)
+                                        val point = series.points[model.points[index].index]
+                                        currentOnOpenSample(point.sampleCode)
+                                    }
+                                },
+                            )
+                        }
+                        .pointerInput(model) {
+                            // Zoomed, dragging moves along the time axis;
+                            // otherwise it selects the measures it passes.
                             detectHorizontalDragGestures(
                                 onDragStart = { offset ->
-                                    nearestIndex(geometry.pointXs, offset.x)?.let(currentOnSelect)
+                                    if (!currentZoomed) visibleIndex(offset.x)?.let(currentOnSelect)
                                 },
-                            ) { change, _ ->
+                            ) { change, dragAmount ->
                                 change.consume()
-                                nearestIndex(geometry.pointXs, change.position.x)
-                                    ?.let(currentOnSelect)
+                                if (currentZoomed) {
+                                    val g = currentGeometry
+                                    window = panWindow(
+                                        window,
+                                        model.time,
+                                        dragDays(dragAmount, g.plotRight - g.plotLeft, window),
+                                    )
+                                } else {
+                                    visibleIndex(change.position.x)?.let(currentOnSelect)
+                                }
                             }
                         }
                         .onFocusChanged { focused = it.isFocused }
@@ -330,11 +444,22 @@ fun HistoryChart(
                         .focusable()
                         .semantics {
                             contentDescription = description
-                            if (selectedState != null) stateDescription = selectedState
-                            customActions = stepActions
+                            val state = listOfNotNull(selectedState, zoomState)
+                            if (state.isNotEmpty()) stateDescription = state.joinToString(". ")
+                            customActions = stepActions + listOfNotNull(openAction)
                         },
                 ) {
                     drawChart(geometry, model, selected, colors)
+                }
+                if (zoomed) {
+                    // At the start of the interface's layout, like the legend.
+                    CompositionLocalProvider(LocalLayoutDirection provides uiDirection) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            TextButton(onClick = { window = fullWindow(model.time) }) {
+                                Text(stringResource(R.string.history_zoom_reset))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -401,27 +526,36 @@ private fun DrawScope.drawChart(
         drawLine(colors.onSurface, Offset(left, y), Offset(right, y), 1.5.dp.toPx())
     }
 
-    // Selection guide, below the series.
-    selected?.let { geometry.pointXs.getOrNull(it) }?.let { x ->
-        drawLine(colors.outline, Offset(x, geometry.plotTop), Offset(x, geometry.plotBottom), thin)
-    }
-
-    val series = colors.primary
-    val path = Path()
-    geometry.pointXs.forEachIndexed { i, x ->
-        if (i == 0) path.moveTo(x, geometry.pointYs[i]) else path.lineTo(x, geometry.pointYs[i])
-    }
-    drawPath(path, series, style = Stroke(width = 2.dp.toPx()))
-    model.points.forEachIndexed { i, point ->
-        val center = Offset(geometry.pointXs[i], geometry.pointYs[i])
-        if (point.censored) {
-            drawCircle(colors.surface, radius, center)
-            drawCircle(series, radius, center, style = Stroke(width = 1.5.dp.toPx()))
-        } else {
-            drawCircle(series, radius, center)
+    // Zoomed in, measures out of the window are cut at the plot's edges; a
+    // marker on an edge keeps its full width.
+    clipRect(left = left - radius, top = 0f, right = right + radius, bottom = size.height) {
+        // Selection guide, below the series.
+        selected?.let { geometry.pointXs.getOrNull(it) }?.let { x ->
+            drawLine(
+                colors.outline,
+                Offset(x, geometry.plotTop),
+                Offset(x, geometry.plotBottom),
+                thin,
+            )
         }
-        if (i == selected) {
-            drawCircle(series, radius * 2, center, style = Stroke(width = 2.dp.toPx()))
+
+        val series = colors.primary
+        val path = Path()
+        geometry.pointXs.forEachIndexed { i, x ->
+            if (i == 0) path.moveTo(x, geometry.pointYs[i]) else path.lineTo(x, geometry.pointYs[i])
+        }
+        drawPath(path, series, style = Stroke(width = 2.dp.toPx()))
+        model.points.forEachIndexed { i, point ->
+            val center = Offset(geometry.pointXs[i], geometry.pointYs[i])
+            if (point.censored) {
+                drawCircle(colors.surface, radius, center)
+                drawCircle(series, radius, center, style = Stroke(width = 1.5.dp.toPx()))
+            } else {
+                drawCircle(series, radius, center)
+            }
+            if (i == selected) {
+                drawCircle(series, radius * 2, center, style = Stroke(width = 2.dp.toPx()))
+            }
         }
     }
 }
