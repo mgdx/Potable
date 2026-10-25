@@ -267,10 +267,10 @@
     <string name="settings_clear_cache_done">Cache vidé.</string>
     <string name="settings_cached_communes_title">Communes en cache</string>
     <string name="settings_cached_communes_empty">Aucune commune en cache.</string>
-    <string name="settings_clear_commune_description">Vider le cache de %1$s</string>
-    <string name="settings_clear_commune_confirm_title">Vider le cache de %1$s ?</string>
+    <string name="settings_clear_commune_description">Vider le cache pour %1$s</string>
+    <string name="settings_clear_commune_confirm_title">Vider le cache pour %1$s ?</string>
     <string name="settings_clear_commune_confirm_text">Les résultats d’analyse enregistrés sur ce téléphone pour cette commune seront supprimés. Si vous ne la suivez pas, l’unité de distribution choisie pour elle sera aussi oubliée. Vos communes restent dans votre liste.</string>
-    <string name="settings_clear_commune_done">Cache de %1$s vidé.</string>
+    <string name="settings_clear_commune_done">Cache vidé pour %1$s.</string>
     <string name="settings_alerts_description">Potable vérifie vos communes en arrière-plan et vous avertit des nouveaux résultats. Les données de Hub\'Eau ne changent qu’une fois par mois : des vérifications plus fréquentes n’en trouveraient pas davantage.</string>
     <string name="alert_new_analyses">Nouvelles analyses</string>
     <string name="settings_alert_new_description">Chaque nouvelle analyse de vos communes, quelle que soit sa conclusion.</string>
