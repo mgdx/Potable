@@ -1,9 +1,8 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/potable_wordmark_dark.svg">
-    <img src="docs/brand/potable_wordmark.svg" alt="Potable" width="280">
-  </picture>
+  <img src="docs/brand/potable_icon.svg" alt="" width="128">
 </p>
+
+<h1 align="center">Potable</h1>
 
 <p align="center">
   L’eau du robinet de votre commune : les analyses officielles, sans traqueur.

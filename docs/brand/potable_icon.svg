@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72" width="128" height="128">
+  <title>Potable</title>
+  <!-- The visible 72-unit area of docs/brand/potable_logo.svg, as a rounded square. -->
+  <rect x="18" y="18" width="72" height="72" rx="9" fill="#2350B5"/>
+  <g transform="translate(4 0)" fill="#FFFFFF">
+    <rect x="34" y="24" width="16" height="4" rx="2"/>
+    <rect x="39" y="27" width="6" height="7"/>
+    <rect x="28" y="33" width="34" height="9" rx="3"/>
+    <rect x="52" y="38" width="10" height="10" rx="2"/>
+    <path d="M57 52 C60 59,71 64,71 72 A14 14 0 1 1 43 72 C43 64,54 59,57 52Z"/>
+  </g>
+  <polyline transform="translate(4 0)" points="48,75 53,69 58,73 63,65 67,68" fill="none" stroke="#2350B5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
