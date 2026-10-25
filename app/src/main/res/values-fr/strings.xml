@@ -102,10 +102,20 @@
     <string name="sheet_sample_number">Prélèvement %1$d sur %2$d</string>
     <string name="sheet_details_of_latest">Les paramètres clés et la conformité ci-dessous sont ceux du prélèvement le plus récent.</string>
     <string name="sheet_recent_unfavourable_title">12 derniers mois</string>
-    <plurals name="sheet_recent_unfavourable_count">
-        <item quantity="one">%d prélèvement a un résultat publié défavorable.</item>
-        <item quantity="many">%d prélèvements ont un résultat publié défavorable.</item>
-        <item quantity="other">%d prélèvements ont un résultat publié défavorable.</item>
+    <plurals name="sheet_recent_limits">
+        <item quantity="one">%d prélèvement non conforme aux limites de qualité</item>
+        <item quantity="many">%d prélèvements non conformes aux limites de qualité</item>
+        <item quantity="other">%d prélèvements non conformes aux limites de qualité</item>
+    </plurals>
+    <plurals name="sheet_recent_references_only">
+        <item quantity="one">%d prélèvement non conforme aux seules références de qualité</item>
+        <item quantity="many">%d prélèvements non conformes aux seules références de qualité</item>
+        <item quantity="other">%d prélèvements non conformes aux seules références de qualité</item>
+    </plurals>
+    <plurals name="sheet_recent_conclusion_only">
+        <item quantity="one">%d prélèvement dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
+        <item quantity="many">%d prélèvements dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
+        <item quantity="other">%d prélèvements dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
     </plurals>
     <string name="sheet_recent_unfavourable_latest">Le plus récent, prélevé le %1$s :</string>
     <string name="sheet_key_parameters_title">Paramètres clés</string>

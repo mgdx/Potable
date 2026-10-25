@@ -155,10 +155,20 @@
     <string name="sheet_details_of_latest">The key parameters and compliance below are those of the most recent sample.</string>
     <!-- Heading of a small box on the sheet, shown only when samples of the last 12 months have an unfavourable published result (non-compliance, consumption advised against or forbidden). Tapping it opens the sample history. -->
     <string name="sheet_recent_unfavourable_title">Last 12 months</string>
-    <!-- %d: number of samples of the last 12 months with an unfavourable published result, 1 or more. -->
-    <plurals name="sheet_recent_unfavourable_count">
-        <item quantity="one">%d sample has an unfavourable published result.</item>
-        <item quantity="other">%d samples have an unfavourable published result.</item>
+    <!-- Line of the box. %d: samples of the last 12 months published non-compliant with a quality limit (bacteriological or physico-chemical). -->
+    <plurals name="sheet_recent_limits">
+        <item quantity="one">%d sample not compliant with the quality limits</item>
+        <item quantity="other">%d samples not compliant with the quality limits</item>
+    </plurals>
+    <!-- Line of the box. %d: samples published non-compliant with a quality reference, and with no quality limit. -->
+    <plurals name="sheet_recent_references_only">
+        <item quantity="one">%d sample not compliant with the quality references only</item>
+        <item quantity="other">%d samples not compliant with the quality references only</item>
+    </plurals>
+    <!-- Line of the box. %d: samples published compliant everywhere, whose conclusion still mentions a restriction or a consumption advised against. -->
+    <plurals name="sheet_recent_conclusion_only">
+        <item quantity="one">%d sample whose conclusion alone mentions a restriction or a consumption advised against</item>
+        <item quantity="other">%d samples whose conclusion alone mentions a restriction or a consumption advised against</item>
     </plurals>
     <!-- Followed by the conclusion of that sample, as published, in French. %1$s: the date it was taken, formatted for the language. -->
     <string name="sheet_recent_unfavourable_latest">Most recent, sampled on %1$s:</string>
