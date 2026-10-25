@@ -101,7 +101,7 @@ relève des
 [conditions générales d’utilisation de Hub’Eau](https://hubeau.eaufrance.fr/page/conditions-generales).
 
 Les liens de l’écran « À propos » (conditions de Hub’Eau, geo.api.gouv.fr,
-texte de la licence, code source) s’ouvrent dans votre navigateur, à votre
+texte de la licence, code source, page de dons Liberapay) s’ouvrent dans votre navigateur, à votre
 demande ; l’application elle-même ne les charge pas.
 
 ## Notifications

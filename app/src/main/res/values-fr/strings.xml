@@ -276,5 +276,8 @@
     <string name="about_license">Potable est un logiciel libre, distribué sous la licence publique générale GNU (GNU GPL), version 3.</string>
     <string name="about_license_link">Texte de la licence GNU GPL v3</string>
     <string name="about_source_code_link">Code source</string>
+    <string name="about_donate_title">Soutien</string>
+    <string name="about_donate">Potable est un logiciel libre et gratuit, sans publicité ni pistage. S’il vous est utile, vous pouvez soutenir son développement par un don, entièrement facultatif.</string>
+    <string name="about_donate_link">Faire un don sur Liberapay</string>
     <string name="about_open_link_failed">Aucune application ne permet d’ouvrir ce lien.</string>
 </resources>
