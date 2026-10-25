@@ -4,6 +4,8 @@ import io.github.mgdx.potable.core.model.Commune
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.location.LocationOutcome
 import io.github.mgdx.potable.location.Locator
+import io.github.mgdx.potable.ui.FakeAppPreferences
+import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.commune
 import kotlinx.coroutines.CompletableDeferred
@@ -29,7 +31,11 @@ class SearchViewModelTest {
     /** Never called by these tests unless "near me" is used. */
     private val noLocator = Locator { error("not expected") }
 
-    private fun viewModel(locator: Locator = noLocator) = SearchViewModel(repository, locator)
+    private val follows = FakeFollowRepository()
+    private val preferences = FakeAppPreferences()
+
+    private fun viewModel(locator: Locator = noLocator) =
+        SearchViewModel(repository, locator, follows, preferences)
 
     @Test
     fun `starts idle and preloads the referential`() = runTest(main.dispatcher) {
@@ -141,7 +147,8 @@ class SearchViewModelTest {
             val paris = commune("75056", "Paris")
             val paris15 = commune("75115", "Paris 15e Arrondissement").copy(hubEauCode = "75056")
             val repository = GatedCommuneRepository(listOf(paris, paris15), nearest = paris15)
-            val viewModel = SearchViewModel(repository) { LocationOutcome.Position(48.84, 2.29) }
+            val locator = Locator { LocationOutcome.Position(48.84, 2.29) }
+            val viewModel = SearchViewModel(repository, locator, follows, preferences)
             viewModel.onQueryChange("15e")
             advanceUntilIdle()
             assertEquals(
@@ -153,6 +160,86 @@ class SearchViewModelTest {
             advanceUntilIdle()
             assertEquals(NearbyState.Found(paris15, "Paris"), viewModel.nearby.value)
         }
+
+    private fun known(code: String, name: String = "UDI $code", followed: Boolean = false) =
+        KnownUdi(code, name, followed)
+
+    @Test
+    fun `a commune with a followed unit and another chosen last time lists both`() =
+        runTest(main.dispatcher) {
+            follows.follow("75056", "Paris", "075000221", "PARIS CENTRE")
+            val preferences = FakeAppPreferences(
+                remembered = mapOf("75056" to "075000222"),
+                rememberedNames = mapOf("75056" to "PARIS SUD"),
+            )
+            val viewModel = SearchViewModel(repository, noLocator, follows, preferences)
+            advanceUntilIdle()
+            assertEquals(
+                mapOf(
+                    "75056" to listOf(
+                        known("075000221", "PARIS CENTRE", followed = true),
+                        known("075000222", "PARIS SUD"),
+                    ),
+                ),
+                viewModel.knownUdis.value,
+            )
+        }
+
+    @Test
+    fun `a single known unit, or a remembered one without a name, lists nothing`() =
+        runTest(main.dispatcher) {
+            follows.follow("75056", "Paris", "075000221", "PARIS CENTRE")
+            follows.follow("13055", "Marseille", "013000001", "MARSEILLE NORD")
+            val preferences = FakeAppPreferences(
+                // Paris: stored before names were kept. Marseille: the followed unit.
+                remembered = mapOf("75056" to "075000222", "13055" to "013000001"),
+                rememberedNames = mapOf("13055" to "MARSEILLE NORD"),
+            )
+            val viewModel = SearchViewModel(repository, noLocator, follows, preferences)
+            advanceUntilIdle()
+            assertEquals(emptyMap<String, List<KnownUdi>>(), viewModel.knownUdis.value)
+        }
+
+    @Test
+    fun `a unit picked from the results is remembered with its name`() = runTest(main.dispatcher) {
+        follows.follow("75056", "Paris", "075000221", "PARIS CENTRE")
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        assertEquals(emptyMap<String, List<KnownUdi>>(), viewModel.knownUdis.value)
+
+        viewModel.rememberChoice("75056", known("075000222", "PARIS SUD"))
+        advanceUntilIdle()
+        assertEquals(mapOf("75056" to "075000222"), preferences.remembered)
+        assertEquals(mapOf("75056" to "PARIS SUD"), preferences.rememberedNames)
+        // Back on the results, both units are offered.
+        assertEquals(2, viewModel.knownUdis.value.getValue("75056").size)
+    }
+
+    @Test
+    fun `the known units follow the first row of their commune, once`() {
+        val paris = commune("75056", "Paris")
+        val paris15 = commune("75115", "Paris 15e Arrondissement").copy(hubEauCode = "75056")
+        val units = listOf(known("075000221", followed = true), known("075000222"))
+        val rows = searchRows(listOf(paris15, paris, orleans), mapOf("75056" to units))
+        assertEquals(
+            listOf(
+                SearchRow.Place(paris15, choose = true),
+                SearchRow.KnownUnit(paris15, units[0]),
+                SearchRow.KnownUnit(paris15, units[1]),
+                SearchRow.Place(paris, choose = true),
+                SearchRow.Place(orleans, choose = false),
+            ),
+            rows,
+        )
+    }
+
+    @Test
+    fun `without known units each commune is one row`() {
+        assertEquals(
+            listOf(SearchRow.Place(orleans, false), SearchRow.Place(olivet, false)),
+            searchRows(listOf(orleans, olivet), emptyMap()),
+        )
+    }
 
     @Test
     fun `a refused permission says so and leaves the search usable`() = runTest(main.dispatcher) {

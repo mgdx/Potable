@@ -278,9 +278,22 @@ private fun PotableNavGraph(
         composable(Routes.SEARCH) {
             SearchScreen(
                 viewModel = viewModel(factory = SearchViewModel.factory(container)),
-                onCommuneSelected = { commune ->
+                onCommuneSelected = { commune, choose ->
                     // Hub'Eau is queried under the code it publishes the place under.
-                    navController.navigate(Routes.udis(commune.queryCode, commune.name))
+                    // With several known units, the full choice opens (choose).
+                    navController.navigate(Routes.udis(commune.queryCode, commune.name, choose))
+                },
+                onKnownUdiSelected = { commune, communeName, udi ->
+                    // Like a remembered unit: its sheet offers to change it.
+                    navController.navigate(
+                        Routes.sheet(
+                            commune.queryCode,
+                            udi.code,
+                            communeName,
+                            udi.name,
+                            change = true,
+                        ),
+                    )
                 },
                 onMyCommunes = { navController.navigate(Routes.FOLLOWS) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },

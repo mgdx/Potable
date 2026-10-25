@@ -47,6 +47,16 @@ interface AppPreferences {
     suspend fun rememberUdi(communeCode: String, udiCode: String) {}
 
     /**
+     * Remembers the unit chosen for a commune with its name as published, so
+     * that the search can offer it by name without a request.
+     */
+    suspend fun rememberUdi(communeCode: String, udiCode: String, udiName: String) =
+        rememberUdi(communeCode, udiCode)
+
+    /** Every remembered unit, by commune code. */
+    val rememberedUdis: Flow<Map<String, RememberedUdi>> get() = flowOf(emptyMap())
+
+    /**
      * Forgets the unit remembered for every commune whose code is not in
      * [keep] (the followed ones): "Clear cached data" leaves no trace of the
      * communes looked at without being followed.
@@ -84,6 +94,12 @@ interface AppPreferences {
 }
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+/**
+ * The unit remembered for a commune; [name] is null for a choice stored
+ * before names were kept.
+ */
+data class RememberedUdi(val code: String, val name: String?)
 
 /** [AppPreferences] stored in a Preferences DataStore. Use one instance per process. */
 class DataStoreAppPreferences internal constructor(private val store: DataStore<Preferences>) :
@@ -125,14 +141,44 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         data.first()[udiKey(communeCode)]
 
     override suspend fun rememberUdi(communeCode: String, udiCode: String) {
-        store.edit { it[udiKey(communeCode)] = udiCode }
+        store.edit {
+            it[udiKey(communeCode)] = udiCode
+            // A name kept for another unit would no longer match.
+            it.remove(udiNameKey(communeCode))
+        }
     }
+
+    override suspend fun rememberUdi(communeCode: String, udiCode: String, udiName: String) {
+        store.edit {
+            it[udiKey(communeCode)] = udiCode
+            it[udiNameKey(communeCode)] = udiName
+        }
+    }
+
+    override val rememberedUdis: Flow<Map<String, RememberedUdi>> = data
+        .map { prefs ->
+            prefs.asMap().mapNotNull { (key, value) ->
+                val communeCode = key.name.takeIf { it.startsWith(UDI_PREFIX) }
+                    ?.removePrefix(UDI_PREFIX)
+                val code = value as? String
+                if (communeCode == null || code == null) {
+                    null
+                } else {
+                    communeCode to RememberedUdi(code, prefs[udiNameKey(communeCode)])
+                }
+            }.toMap()
+        }
+        .distinctUntilChanged()
 
     override suspend fun forgetRememberedUdis(keep: Set<String>) {
         store.edit { prefs ->
             prefs.asMap().keys
                 .map { it.name }
-                .filter { it.startsWith(UDI_PREFIX) && it.removePrefix(UDI_PREFIX) !in keep }
+                .filter { name ->
+                    listOf(UDI_PREFIX, UDI_NAME_PREFIX).any { prefix ->
+                        name.startsWith(prefix) && name.removePrefix(prefix) !in keep
+                    }
+                }
                 .forEach { prefs.remove(stringPreferencesKey(it)) }
         }
     }
@@ -191,7 +237,13 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         /** One key per commune with several units: only its code and the chosen unit's. */
         fun udiKey(communeCode: String) = stringPreferencesKey("$UDI_PREFIX$communeCode")
 
+        /** The name of the unit under [udiKey], as published; absent for older choices. */
+        fun udiNameKey(communeCode: String) = stringPreferencesKey("$UDI_NAME_PREFIX$communeCode")
+
         const val UDI_PREFIX = "udi_"
+
+        /** Does not start with [UDI_PREFIX]: no name key reads as a commune's unit. */
+        const val UDI_NAME_PREFIX = "udiname_"
     }
 }
 
