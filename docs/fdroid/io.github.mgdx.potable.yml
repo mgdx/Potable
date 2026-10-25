@@ -32,10 +32,9 @@ Builds:
     # Once a signed APK is published by the project (docs/release.md):
     # binary: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
-# The signing key does not exist yet. Uncomment with the SHA-256 of the
-# release certificate (keytool -list -v ... | grep SHA256, lowercase, no
-# colons) together with `binary:` above, at the first submission only.
-# AllowedAPKSigningKeys: <sha256 of the release certificate>
+# SHA-256 of the release certificate (docs/release.md). Uncomment together
+# with `binary:` above, once a signed APK is published on the releases page.
+# AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
 
 AutoUpdateMode: Version
 # No UpdateCheckData: checkupdates reads the literal versionCode/versionName

@@ -37,6 +37,17 @@ chacun puisse vérifier un APK téléchargé :
 keytool -list -v -keystore potable-release.jks -alias <alias> | grep SHA256
 ```
 
+La clé de Potable existe (créée le 2026-10-25, RSA 4096, `CN=Potable, C=FR`,
+alias `potable`, valable 10 000 jours). Empreinte SHA-256 de son certificat :
+
+```
+1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
+```
+
+Pour vérifier un APK téléchargé :
+`apksigner verify --print-certs potable.apk | grep "SHA-256 digest"` doit
+afficher cette empreinte sur la ligne `certificate`.
+
 ### Brancher la clé sur la build
 
 `app/build.gradle.kts` lit `keystore.properties` à la racine du dépôt :
