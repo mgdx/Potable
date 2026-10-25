@@ -10,7 +10,6 @@ import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
-import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.SLOW_LOAD_THRESHOLD
@@ -21,8 +20,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -84,7 +81,6 @@ sealed interface TimelineUiState {
 class TimelineViewModel(
     private val history: HistoryRepository,
     private val preferences: AppPreferences,
-    follows: FollowRepository,
     private val communeCode: String,
     private val udiCode: String,
     private val clock: Clock,
@@ -115,11 +111,6 @@ class TimelineViewModel(
     /** Why the latest pull-to-refresh failed, the data shown being kept; null otherwise. */
     val refreshFailed: StateFlow<LoadError?> = _refreshFailed.asStateFlow()
 
-    private val _isFollowed = MutableStateFlow(false)
-
-    /** Whether this unit is followed. */
-    val isFollowed: StateFlow<Boolean> = _isFollowed.asStateFlow()
-
     private var loadJob: Job? = null
 
     init {
@@ -136,13 +127,6 @@ class TimelineViewModel(
                 _years.value = initial
                 load(force = false)
             }
-        }
-        viewModelScope.launch {
-            follows.follows
-                .map { all -> all.any { it.communeCode == communeCode && it.udiCode == udiCode } }
-                .catch { emit(false) }
-                .distinctUntilChanged()
-                .collect { _isFollowed.value = it }
         }
     }
 
@@ -225,7 +209,6 @@ class TimelineViewModel(
                 TimelineViewModel(
                     container.history,
                     container.preferences,
-                    container.follows,
                     communeCode,
                     udiCode,
                     Clock.systemUTC(),

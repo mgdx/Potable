@@ -6,7 +6,6 @@ import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
-import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.common.LoadError
 import kotlinx.coroutines.CompletableDeferred
@@ -85,7 +84,6 @@ class TimelineViewModelTest {
     val main = MainDispatcherRule()
 
     private val history = FakeHistoryRepository()
-    private val follows = FakeFollowRepository()
 
     // 2026-10-25 in Paris even though it is still the 24th in UTC.
     private val clock = Clock.fixed(Instant.parse("2026-10-24T23:30:00Z"), ZoneOffset.UTC)
@@ -101,7 +99,6 @@ class TimelineViewModelTest {
     private fun viewModel(years: Int = 3) = TimelineViewModel(
         history,
         YearsPreferences(years),
-        follows,
         "45234",
         "045000123",
         clock,
@@ -239,18 +236,6 @@ class TimelineViewModelTest {
         }
 
     @Test
-    fun `pull-to-refresh is offered for a followed unit only`() = runTest(main.dispatcher) {
-        history.answers += Result.success(listOf(older))
-        val viewModel = viewModel()
-        advanceUntilIdle()
-        assertFalse(viewModel.isFollowed.value)
-
-        follows.follow("45234", "Orléans", "045000123", "ORLEANS")
-        advanceUntilIdle()
-        assertTrue(viewModel.isFollowed.value)
-    }
-
-    @Test
     fun `a load longer than the threshold says Hub'Eau is slow`() = runTest(main.dispatcher) {
         history.gate = CompletableDeferred()
         val viewModel = viewModel()
@@ -267,14 +252,5 @@ class TimelineViewModelTest {
         runCurrent()
         assertFalse(viewModel.isSlow.value)
         assertTrue(viewModel.state.value is TimelineUiState.Loaded)
-    }
-
-    @Test
-    fun `a followed unit is detected among the follows`() = runTest(main.dispatcher) {
-        follows.follow("45234", "Orléans", "045000123", "ORLEANS")
-        history.answers += Result.success(listOf(older))
-        val viewModel = viewModel()
-        advanceUntilIdle()
-        assertTrue(viewModel.isFollowed.value)
     }
 }
