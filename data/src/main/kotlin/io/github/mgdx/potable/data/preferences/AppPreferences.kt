@@ -63,7 +63,7 @@ interface AppPreferences {
      */
     suspend fun forgetRememberedUdis(keep: Set<String>) {}
 
-    /** Forgets the unit remembered for [communeCode], if any (its cache was cleared). */
+    /** Forgets the unit remembered for [communeCode], code and name, if any (its cache was cleared). */
     suspend fun forgetRememberedUdi(communeCode: String) {}
 
     // --- Alerts ---
@@ -187,7 +187,10 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
     }
 
     override suspend fun forgetRememberedUdi(communeCode: String) {
-        store.edit { it.remove(udiKey(communeCode)) }
+        store.edit {
+            it.remove(udiKey(communeCode))
+            it.remove(udiNameKey(communeCode))
+        }
     }
 
     override val alertNewAnalysis: Flow<Boolean> = flag(ALERT_NEW_ANALYSIS)
