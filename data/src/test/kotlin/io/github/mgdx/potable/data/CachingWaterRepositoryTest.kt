@@ -41,6 +41,17 @@ class CachingWaterRepositoryTest {
             failure?.let { throw it }
             return samples[communeCode to networkCode]
         }
+
+        /** Several samples of the same day, newest first, when set for a unit. */
+        val sameDay = mutableMapOf<Pair<String, String?>, List<Sample>>()
+
+        override suspend fun latestSamples(
+            communeCode: String,
+            networkCode: String?,
+        ): List<Sample> = sameDay[communeCode to networkCode]?.also {
+            calls++
+            failure?.let { throw it }
+        } ?: listOfNotNull(latestSample(communeCode, networkCode))
     }
 
     private class FakePreferences(years: Int) : AppPreferences {
@@ -200,6 +211,26 @@ class CachingWaterRepositoryTest {
         val latest = cached()!!.sample!!
         assertEquals("P2", latest.code)
         assertEquals(3, latest.results.size)
+        assertEquals(2, database.cache().sampleCount())
+    }
+
+    @Test
+    fun `every sample of the newest day is cached and kept, newest first`() = runTest {
+        preferences.retention.value = 1
+        network.samples["45234" to UDI] = sample("BEFORE", "2024-08-25T09:00:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        // Two samples on 2024-08-26, older than the retention: both stay.
+        network.sameDay["45234" to UDI] = listOf(
+            sample("AFTERNOON", "2024-08-26T15:10:00Z", results = 3),
+            sample("MORNING", "2024-08-26T08:30:00Z", results = 1),
+        )
+        repository.refreshCache("45234", UDI, force = true)
+
+        val cached = cached()!!
+        assertEquals(listOf("AFTERNOON", "MORNING"), cached.samples.map { it.code })
+        assertEquals(listOf(3, 1), cached.samples.map { it.results.size })
+        assertEquals("AFTERNOON", cached.sample!!.code)
+        // The sample of the day before is past the retention and purged.
         assertEquals(2, database.cache().sampleCount())
     }
 

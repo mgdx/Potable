@@ -112,10 +112,11 @@ Le client refuse lui-même (`IllegalArgumentException`) toute URL de plus de
 
 - `communes_udi?code_commune=…&page=N&size=5000`, pages suivies jusqu'à
   `next == null` ou page vide (borne de sécurité : 20 pages).
-- Dernier prélèvement complet :
+- Derniers prélèvements complets (tous ceux du jour du plus récent) :
   `resultats_dis?code_commune=…[&code_reseau=…]&fields=…&sort=desc&page=N&size=500`,
-  pages suivies tant que la dernière ligne lue a la même `date_prelevement` que
-  la toute première (borne : 10 pages, soit 5 000 lignes).
+  pages suivies tant que la dernière ligne lue a été prélevée le même jour
+  publié (date lue en UTC) que la toute première (borne : 10 pages, soit
+  5 000 lignes).
 
 - Série d'un paramètre (`RemoteHistoryRepository`, détail dans « Historique ») :
   `resultats_dis?code_commune=…&code_reseau=…&code_parametre=<codes>&date_min_prelevement=<début>&date_max_prelevement=<lendemain à Paris>&fields=…&sort=desc&page=N&size=5000`,

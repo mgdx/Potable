@@ -35,7 +35,17 @@ sealed interface SheetUiState {
     /** Hub'Eau has no sample for this commune and unit. */
     data object NoSample : SheetUiState
 
-    data class Loaded(val sample: Sample, val age: RelativeAge) : SheetUiState
+    /**
+     * [samples] are those of the latest published day, newest first: usually
+     * one, sometimes more (Hub'Eau publishes several the same day). [age] is
+     * that of the day.
+     */
+    data class Loaded(val samples: List<Sample>, val age: RelativeAge) : SheetUiState {
+        constructor(sample: Sample, age: RelativeAge) : this(listOf(sample), age)
+
+        /** The most recent sample. */
+        val sample: Sample get() = samples.first()
+    }
 }
 
 /**
@@ -187,7 +197,7 @@ class SheetViewModel(
         val cache = cached
         val error = refreshError
         if (cache != null) {
-            _state.value = sampleState(cache.sample)
+            _state.value = sampleState(cache.samples)
             _freshness.value = Freshness(cache.fetchedAt, refreshFailed = error != null)
         } else if (error != null) {
             val shown = _state.value is SheetUiState.Loaded || _state.value is SheetUiState.NoSample
@@ -195,10 +205,10 @@ class SheetViewModel(
         }
     }
 
-    private fun sampleState(sample: Sample?): SheetUiState = if (sample == null) {
+    private fun sampleState(samples: List<Sample>): SheetUiState = if (samples.isEmpty()) {
         SheetUiState.NoSample
     } else {
-        SheetUiState.Loaded(sample, RelativeAge.of(sample.date, clock))
+        SheetUiState.Loaded(samples, RelativeAge.of(samples.first().date, clock))
     }
 
     companion object {

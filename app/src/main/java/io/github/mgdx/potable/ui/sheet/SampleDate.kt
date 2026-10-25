@@ -2,6 +2,7 @@ package io.github.mgdx.potable.ui.sheet
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -39,6 +40,23 @@ fun localizedDateFormatter(style: FormatStyle, locale: Locale): DateTimeFormatte
 /** [publishedDate] in the long date format of [locale]. */
 fun formatSampleDate(date: Instant, locale: Locale): String =
     localizedDateFormatter(FormatStyle.LONG, locale).format(publishedDate(date))
+
+/**
+ * The published time of each of several samples taken the same day, to tell
+ * them apart: the time of [dates] read in UTC, like [publishedDate], when
+ * every one has its own time and none is midnight (a `date_prelevement`
+ * without time reads as midnight); otherwise null for every one, and the
+ * screen numbers them instead.
+ */
+fun distinctSampleTimes(dates: List<Instant>): List<LocalTime?> {
+    val times = dates.map { it.atOffset(ZoneOffset.UTC).toLocalTime() }
+    val distinct = times.toSet().size == times.size && LocalTime.MIDNIGHT !in times
+    return if (distinct) times else times.map { null }
+}
+
+/** A sample's published time in the short time format of [locale], digits included. */
+fun formatSampleTime(time: LocalTime, locale: Locale): String =
+    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withDigitsOf(locale).format(time)
 
 /** When the cache was last filled, as a medium date of [locale] in [zone]. */
 fun formatFetchedDate(fetchedAt: Instant, locale: Locale, zone: ZoneId): String =

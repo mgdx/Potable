@@ -66,6 +66,19 @@ class SheetViewModelTest {
         }
 
     @Test
+    fun `every sample of the latest day is shown, newest first`() = runTest(main.dispatcher) {
+        val afternoon = sample(date = Instant.parse("2026-10-01T15:10:00Z"))
+        val morning = afternoon.copy(code = "00122", date = Instant.parse("2026-10-01T08:30:00Z"))
+        water.refreshedCache = CachedSample(listOf(afternoon, morning), fetchedAt)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        val loaded = viewModel.state.value as SheetUiState.Loaded
+        assertEquals(listOf(afternoon, morning), loaded.samples)
+        assertEquals(afternoon, loaded.sample)
+        assertEquals(RelativeAge.Weeks(3), loaded.age)
+    }
+
+    @Test
     fun `no sample gives the dedicated empty state`() = runTest(main.dispatcher) {
         water.refreshedCache = CachedSample(null, fetchedAt)
         val viewModel = viewModel()

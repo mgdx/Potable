@@ -36,6 +36,32 @@ object Samples {
             .sortedWith(compareByDescending<Sample> { it.date }.thenBy { it.code })
     }
 
+    /**
+     * The calendar day a sample was taken, as Hub'Eau publishes it: the date
+     * read in UTC. The times of `date_prelevement` are most probably French
+     * legal time wrongly suffixed with `Z` (`docs/hubeau-api.md`), so this is
+     * the day in France (`docs/decisions.md`).
+     */
+    fun publishedDay(date: Instant): LocalDate = date.atOffset(ZoneOffset.UTC).toLocalDate()
+
+    /** [publishedDay] of [row]'s `date_prelevement`, or null if it is missing or unreadable. */
+    fun publishedDayOrNull(row: ResultRow): LocalDate? = try {
+        publishedDay(parseDate(row))
+    } catch (_: HubEauFormatException) {
+        null
+    }
+
+    /**
+     * Of [samples], newest first as [group] returns them, every one taken
+     * on the [publishedDay] of the first: the latest samples, when Hub'Eau
+     * publishes several on the same day (newest first). Empty if [samples]
+     * is.
+     */
+    fun latestDay(samples: List<Sample>): List<Sample> {
+        val day = samples.firstOrNull()?.let { publishedDay(it.date) } ?: return emptyList()
+        return samples.filter { publishedDay(it.date) == day }
+    }
+
     private fun toSample(code: String, date: Instant, group: List<ResultRow>): Sample {
         val head = group.first()
         val seen = HashSet<ResultKey>()

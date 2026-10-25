@@ -147,7 +147,7 @@ fun SheetScreen(
                     is SheetUiState.Error -> ErrorState(current.error, viewModel::retry)
                     SheetUiState.NoSample -> EmptyState(stringResource(R.string.sheet_no_sample))
                     is SheetUiState.Loaded -> SampleContent(
-                        sample = current.sample,
+                        samples = current.samples,
                         age = current.age,
                         onShowAllResults = onShowAllResults,
                         onShowHistory = onShowHistory,
@@ -244,9 +244,14 @@ private fun FreshnessBanner(freshness: Freshness) {
     }
 }
 
+/**
+ * The latest sample, or the latest [samples] when several were taken the
+ * same day (newest first): each conclusion is shown, with its own access to
+ * its results; the rest of the sheet is about the most recent one.
+ */
 @Composable
 private fun SampleContent(
-    sample: Sample,
+    samples: List<Sample>,
     age: RelativeAge,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
@@ -261,7 +266,17 @@ private fun SampleContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ConclusionCard(sample.conclusion)
+        val sample = samples.first()
+        if (samples.size == 1) {
+            ConclusionCard(sample.conclusion)
+        } else {
+            SameDayConclusionsCard(samples, onShowAllResults)
+            Text(
+                text = stringResource(R.string.sheet_details_of_latest),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         KeyParametersCard(sample, onParameterHistory)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -282,7 +297,8 @@ private fun SampleContent(
         }
         HorizontalDivider()
         ComplianceSection(sample)
-        if (sample.results.isNotEmpty()) {
+        // With several samples, each has its own button in the conclusions.
+        if (samples.size == 1 && sample.results.isNotEmpty()) {
             OutlinedButton(
                 onClick = { onShowAllResults(sample) },
                 modifier = Modifier.fillMaxWidth(),
@@ -405,28 +421,94 @@ private fun ConclusionCard(conclusion: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.semantics { heading() },
             )
-            if (conclusion.isNullOrBlank()) {
+            ConclusionText(conclusion)
+        }
+    }
+}
+
+/**
+ * The conclusions of the samples taken on the latest day, newest first, each
+ * verbatim (SPEC §14) under its published time, or its number when the times
+ * do not tell them apart, and each with access to its results.
+ */
+@Composable
+private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sample) -> Unit) {
+    val times = remember(samples) { distinctSampleTimes(samples.map { it.date }) }
+    val locale = currentLocale()
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.sheet_conclusions_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = pluralStringResource(
+                    R.plurals.sheet_same_day_samples,
+                    samples.size,
+                    samples.size,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            samples.forEachIndexed { index, sample ->
+                if (index > 0) HorizontalDivider()
+                val time = times[index]
                 Text(
-                    text = stringResource(R.string.sheet_no_conclusion),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontStyle = FontStyle.Italic,
+                    text = if (time != null) {
+                        stringResource(
+                            R.string.sheet_sample_taken_at,
+                            formatSampleTime(time, locale),
+                        )
+                    } else {
+                        stringResource(R.string.sheet_sample_number, index + 1, samples.size)
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.semantics { heading() },
                 )
-            } else {
-                // Tagged as French so that screen readers pronounce it as such.
-                Text(
-                    text = AnnotatedString(
-                        conclusion,
-                        SpanStyle(localeList = LocaleList(FRENCH_LANGUAGE_TAG)),
-                    ),
-                    style = MaterialTheme.typography.titleMedium.asApiText(),
-                )
-                Text(
-                    text = stringResource(R.string.sheet_official_wording),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                ConclusionText(sample.conclusion)
+                if (sample.results.isNotEmpty()) {
+                    TextButton(onClick = { onShowAllResults(sample) }) {
+                        Text(stringResource(R.string.sheet_show_all_results))
+                    }
+                }
             }
         }
+    }
+}
+
+/** One published conclusion, verbatim, or the sentence saying there is none. */
+@Composable
+private fun ConclusionText(conclusion: String?) {
+    if (conclusion.isNullOrBlank()) {
+        Text(
+            text = stringResource(R.string.sheet_no_conclusion),
+            style = MaterialTheme.typography.bodyLarge,
+            fontStyle = FontStyle.Italic,
+        )
+    } else {
+        // Tagged as French so that screen readers pronounce it as such.
+        Text(
+            text = AnnotatedString(
+                conclusion,
+                SpanStyle(localeList = LocaleList(FRENCH_LANGUAGE_TAG)),
+            ),
+            style = MaterialTheme.typography.titleMedium.asApiText(),
+        )
+        Text(
+            text = stringResource(R.string.sheet_official_wording),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

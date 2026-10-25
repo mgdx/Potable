@@ -91,6 +91,15 @@
     <string name="sheet_no_sample">Aucun prélèvement n’a été publié pour cette unité de distribution.</string>
     <string name="sheet_conclusion_title">Conclusion sanitaire du dernier prélèvement</string>
     <string name="sheet_no_conclusion">Aucune conclusion sanitaire n’a été publiée pour ce prélèvement.</string>
+    <string name="sheet_conclusions_title">Conclusions sanitaires des derniers prélèvements</string>
+    <plurals name="sheet_same_day_samples">
+        <item quantity="one">%d prélèvement a été effectué ce jour-là, le plus récent en premier.</item>
+        <item quantity="many">%d prélèvements ont été effectués ce jour-là, le plus récent en premier.</item>
+        <item quantity="other">%d prélèvements ont été effectués ce jour-là, le plus récent en premier.</item>
+    </plurals>
+    <string name="sheet_sample_taken_at">Prélèvement effectué à %1$s</string>
+    <string name="sheet_sample_number">Prélèvement %1$d sur %2$d</string>
+    <string name="sheet_details_of_latest">Les paramètres clés et la conformité ci-dessous sont ceux du prélèvement le plus récent.</string>
     <string name="sheet_key_parameters_title">Paramètres clés</string>
     <string name="featured_nitrates">Nitrates</string>
     <string name="featured_nitrates_explanation">Les nitrates, issus surtout de l’agriculture et des eaux usées, comptent parmi les paramètres les plus surveillés.</string>

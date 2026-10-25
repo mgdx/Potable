@@ -7,11 +7,19 @@ import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 
 /**
- * The latest sample of a unit as held in the local cache, and when it was
+ * The latest samples of a unit as held in the local cache, and when they were
  * last fetched successfully from Hub'Eau (SPEC §7: the cache is the display
- * source; a banner states its freshness).
+ * source; a banner states its freshness). [samples] are those of the newest
+ * published day, newest first ([WaterRepository.latestSamples]); usually one,
+ * none if Hub'Eau has no sample for the unit.
  */
-data class CachedSample(val sample: Sample?, val fetchedAt: Instant)
+data class CachedSample(val samples: List<Sample>, val fetchedAt: Instant) {
+    /** A single latest sample, or none. */
+    constructor(sample: Sample?, fetchedAt: Instant) : this(listOfNotNull(sample), fetchedAt)
+
+    /** The most recent of [samples], the one the alerts work on. */
+    val sample: Sample? get() = samples.firstOrNull()
+}
 
 /**
  * A commune with something in the cache (a latest sample, a series or a
@@ -32,8 +40,19 @@ interface WaterRepository {
     suspend fun latestSample(communeCode: String, networkCode: String?): Sample?
 
     /**
-     * The cached latest sample of any unit looked at, followed or not; emits
-     * null while nothing has been fetched yet, and again after every refresh.
+     * Every sample taken on the published day of the latest one (Hub'Eau
+     * sometimes publishes two the same day), newest first, with their full
+     * results, straight from Hub'Eau; empty if there is none. The first is
+     * [latestSample]. The default asks [latestSample] only.
+     * @throws DataError
+     */
+    suspend fun latestSamples(communeCode: String, networkCode: String?): List<Sample> =
+        listOfNotNull(latestSample(communeCode, networkCode))
+
+    /**
+     * The cached latest samples ([latestSamples]) of any unit looked at,
+     * followed or not; emits null while nothing has been fetched yet, and
+     * again after every refresh.
      */
     fun cachedLatestSample(communeCode: String, udiCode: String): Flow<CachedSample?> = flowOf(null)
 

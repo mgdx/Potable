@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 
 class SamplesTest {
     private val orleans =
@@ -174,6 +175,40 @@ class SamplesTest {
     fun `a missing label falls back on the parameter code`() {
         val rows = listOf(row("A", "2026-01-01T00:00:00Z", label = null))
         assertEquals("1", Samples.group(rows).single().results.single().parameterLabel)
+    }
+
+    @Test
+    fun `the latest day keeps every sample of the newest published day`() {
+        val rows = listOf(
+            row("LATE", "2026-08-26T23:30:00Z"),
+            row("MORNING", "2026-08-26T08:15:00Z"),
+            row("NOON", "2026-08-26T12:50:00Z"),
+            row("BEFORE", "2026-08-25T23:59:00Z"),
+        )
+        assertEquals(
+            listOf("LATE", "NOON", "MORNING"),
+            Samples.latestDay(Samples.group(rows)).map { it.code },
+        )
+        assertEquals(
+            listOf("BEFORE"),
+            Samples.latestDay(Samples.group(listOf(rows.last()))).map { it.code },
+        )
+        assertTrue(Samples.latestDay(emptyList()).isEmpty())
+    }
+
+    @Test
+    fun `the published day is the date read in UTC`() {
+        // 23:30 "Z" is French time: still the 26th, not the 27th in Paris.
+        assertEquals(
+            LocalDate.parse("2026-08-26"),
+            Samples.publishedDay(Instant.parse("2026-08-26T23:30:00Z")),
+        )
+        assertEquals(
+            LocalDate.parse("2026-08-26"),
+            Samples.publishedDayOrNull(row("A", "2026-08-26")),
+        )
+        assertNull(Samples.publishedDayOrNull(row("A", null)))
+        assertNull(Samples.publishedDayOrNull(row("A", "26/08/2026")))
     }
 
     @Test

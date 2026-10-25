@@ -58,14 +58,13 @@ class SampleDetailViewModel(private val sampleCode: String, sheetState: StateFlo
         SheetUiState.Loading -> SampleDetailUiState.Loading
         is SheetUiState.Error -> SampleDetailUiState.Error(sheet.error)
         SheetUiState.NoSample -> SampleDetailUiState.Unavailable
-        is SheetUiState.Loaded -> if (sheet.sample.code == sampleCode) {
+        // Any of the samples of the day shown on the sheet, found by its code.
+        is SheetUiState.Loaded -> sheet.samples.firstOrNull { it.code == sampleCode }?.let {
             SampleDetailUiState.Loaded(
-                sample = sheet.sample,
-                groups = groupByFamily(filterResults(sheet.sample.results, query)),
+                sample = it,
+                groups = groupByFamily(filterResults(it.results, query)),
             )
-        } else {
-            SampleDetailUiState.Unavailable
-        }
+        } ?: SampleDetailUiState.Unavailable
     }
 
     companion object {

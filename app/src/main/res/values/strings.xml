@@ -138,6 +138,19 @@
     <!-- Heading of the card that shows the conclusion of the regional health agency, as published, in French. -->
     <string name="sheet_conclusion_title">Sanitary conclusion of the latest sample</string>
     <string name="sheet_no_conclusion">No sanitary conclusion was published for this sample.</string>
+    <!-- Heading of the same card when Hub'Eau published several samples on the latest day (shown verbatim, in French, one after the other). -->
+    <string name="sheet_conclusions_title">Sanitary conclusions of the latest samples</string>
+    <!-- Under sheet_conclusions_title. %d: number of samples taken on the latest day, 2 or more. -->
+    <plurals name="sheet_same_day_samples">
+        <item quantity="one">%d sample was taken on that day, the most recent first.</item>
+        <item quantity="other">%d samples were taken on that day, the most recent first.</item>
+    </plurals>
+    <!-- Subheading of one of these samples. %1$s: the time it was taken, formatted for the language ("15:10"). -->
+    <string name="sheet_sample_taken_at">Sample taken at %1$s</string>
+    <!-- Subheading of one of these samples when their times are not published. %1$d: its position, the most recent being 1. %2$d: number of samples. -->
+    <string name="sheet_sample_number">Sample %1$d of %2$d</string>
+    <!-- Under the card of several samples. -->
+    <string name="sheet_details_of_latest">The key parameters and compliance below are those of the most recent sample.</string>
     <!-- Heading of the card of the featured parameters (SPEC §4.3). -->
     <string name="sheet_key_parameters_title">Key parameters</string>
     <!-- Names of the featured parameters, translated (docs/glossary.md), unlike the labels published by Hub'Eau. -->

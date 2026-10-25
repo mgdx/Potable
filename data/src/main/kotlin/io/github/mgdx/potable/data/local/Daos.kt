@@ -36,12 +36,18 @@ internal interface FollowDao {
 
 @Dao
 internal interface CacheDao {
-    /** The newest cached sample of a unit, re-emitted on every change of the table. */
+    /**
+     * The cached samples of a unit taken less than a day before its newest
+     * one, newest first (then by code), re-emitted on every change of the
+     * table: those of the newest published day are among them.
+     */
     @Query(
         "SELECT * FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
-            "ORDER BY date DESC, code_prelevement DESC LIMIT 1",
+            "AND date > (SELECT MAX(p.date) FROM prelevement AS p " +
+            "WHERE p.code_commune = :communeCode AND p.code_reseau = :udiCode) - $DAY_MS " +
+            "ORDER BY date DESC, code_prelevement",
     )
-    fun observeLatestSample(communeCode: String, udiCode: String): Flow<SampleEntity?>
+    fun observeLatestSamples(communeCode: String, udiCode: String): Flow<List<SampleEntity>>
 
     @Query(
         "SELECT * FROM resultat WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
@@ -73,14 +79,15 @@ internal interface CacheDao {
 
     /**
      * Retention purge (SPEC §7): deletes the samples dated before [cutoff]
-     * (epoch ms), except the newest of each unit, so that a unit
-     * always keeps its latest analysis. Results follow by cascade.
+     * (epoch ms), except those taken less than a day before the newest of
+     * their unit, so that a unit always keeps its latest analyses (all of
+     * the newest day). Results follow by cascade.
      */
     @Query(
-        "DELETE FROM prelevement WHERE date < :cutoff AND date < (" +
+        "DELETE FROM prelevement WHERE date < :cutoff AND date <= (" +
             "SELECT MAX(p.date) FROM prelevement AS p " +
             "WHERE p.code_commune = prelevement.code_commune " +
-            "AND p.code_reseau = prelevement.code_reseau)",
+            "AND p.code_reseau = prelevement.code_reseau) - $DAY_MS",
     )
     suspend fun purgeOlderThan(cutoff: Long)
 
@@ -157,6 +164,9 @@ internal interface CacheDao {
     @Query("DELETE FROM synchro")
     suspend fun deleteAllSync()
 }
+
+/** A day in milliseconds, for the queries on `prelevement.date`. */
+private const val DAY_MS = 86_400_000L
 
 /** One cache of a unit and its last successful fetch (epoch ms), see [CacheDao.observeCachedUnits]. */
 internal data class CachedUnitRow(

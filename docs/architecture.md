@@ -114,7 +114,7 @@ La base `potable.db` ne contient jamais de jeu national : seulement les
 | Table | Contenu |
 |---|---|
 | `suivi` | commune, unité de distribution, libellés, position dans la liste, principale |
-| `prelevement`, `resultat` | le dernier prélèvement de chaque unité consultée et ses résultats |
+| `prelevement`, `resultat` | les derniers prélèvements de chaque unité consultée (tous ceux du dernier jour) et leurs résultats |
 | `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes |
 | `serie`, `serie_point` | séries de paramètres consultées (historique) |
 | `historique_prelevement`, `historique_synchro` | frise des conclusions |

@@ -10,13 +10,17 @@ class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository 
     override suspend fun udis(communeCode: String): UdiChoice =
         UdiSelection.choose(client.communesUdi(communeCode))
 
+    override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? =
+        latestSamples(communeCode, networkCode).firstOrNull()
+
     /**
      * Reads `resultats_dis` newest first, page after page, while the last row
-     * read still has the date of the very first one: the newest sample is then
-     * complete, whatever its number of results. Date filters are not used, see
+     * read was still taken on the published day of the very first one
+     * ([Samples.publishedDay]): every sample of that day is then complete,
+     * whatever their number of results. Date filters are not used, see
      * `docs/hubeau-api.md`.
      */
-    override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? {
+    override suspend fun latestSamples(communeCode: String, networkCode: String?): List<Sample> {
         val rows = mutableListOf<ResultRow>()
         for (page in 1..MAX_SAMPLE_PAGES) {
             val result =
@@ -29,15 +33,16 @@ class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository 
                     sortDesc = true,
                 )
             rows += result.data
-            val newestDate = rows.firstOrNull()?.datePrelevement
+            val newestDay = rows.firstOrNull()?.let(Samples::publishedDayOrNull)
             if (result.next == null ||
                 result.data.isEmpty() ||
-                result.data.last().datePrelevement != newestDate
+                newestDay == null ||
+                Samples.publishedDayOrNull(result.data.last()) != newestDay
             ) {
                 break
             }
         }
-        return Samples.group(rows).firstOrNull()
+        return Samples.latestDay(Samples.group(rows))
     }
 
     companion object {

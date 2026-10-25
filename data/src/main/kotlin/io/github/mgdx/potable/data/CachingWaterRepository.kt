@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.data
 
 import androidx.room.withTransaction
+import io.github.mgdx.potable.core.Samples
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.local.PotableDatabase
@@ -46,16 +47,20 @@ class CachingWaterRepository(
     override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? =
         network.latestSample(communeCode, networkCode)
 
+    override suspend fun latestSamples(communeCode: String, networkCode: String?): List<Sample> =
+        network.latestSamples(communeCode, networkCode)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun cachedLatestSample(communeCode: String, udiCode: String): Flow<CachedSample?> =
         combine(
             cache.observeSync(communeCode, udiCode),
-            cache.observeLatestSample(communeCode, udiCode),
-        ) { sync, sample -> sync to sample }
-            .mapLatest { (sync, sample) ->
+            cache.observeLatestSamples(communeCode, udiCode),
+        ) { sync, samples -> sync to samples }
+            .mapLatest { (sync, rows) ->
                 val fetchedAt = sync?.lastSuccess ?: return@mapLatest null
+                val samples = rows.map { it.toSample(cache.results(communeCode, udiCode, it.code)) }
                 CachedSample(
-                    sample = sample?.toSample(cache.results(communeCode, udiCode, sample.code)),
+                    samples = Samples.latestDay(samples),
                     fetchedAt = Instant.ofEpochMilli(fetchedAt),
                 )
             }.distinctUntilChanged()
@@ -68,11 +73,11 @@ class CachingWaterRepository(
         if (!force && fetchedToday(cache.sync(communeCode, udiCode))) return@withLock false
 
         // Throws DataError: the cache and the sync state are left as they were.
-        val sample = network.latestSample(communeCode, udiCode)
+        val samples = network.latestSamples(communeCode, udiCode)
         val now = clock.instant()
         val retention = preferences.retentionYears.first()
         database.withTransaction {
-            if (sample != null) {
+            for (sample in samples) {
                 cache.deleteResults(communeCode, udiCode, sample.code)
                 cache.deleteSample(communeCode, udiCode, sample.code)
                 cache.insertSample(sample.toEntity(communeCode, udiCode))
