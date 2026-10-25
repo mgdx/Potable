@@ -2,7 +2,6 @@ package io.github.mgdx.potable.ui.sheet
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -158,20 +157,15 @@ fun SheetScreen(
                     )
                 }
             }
-            val modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-            if (isFollowed == true) {
-                // The cache of a followed unit is refreshed on demand (SPEC §7).
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = viewModel::pullToRefresh,
-                    modifier = modifier,
-                ) {
-                    content()
-                }
-            } else {
-                Box(modifier = modifier) { content() }
+            // The cache of any unit is refreshed on demand (SPEC §7).
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::pullToRefresh,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                content()
             }
         }
     }

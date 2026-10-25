@@ -5,7 +5,7 @@ import io.github.mgdx.potable.data.preferences.AppPreferences
 
 /**
  * The application's [HistoryRepository]: Hub'Eau through [client], cached in
- * [database] for the followed units ([CachingHistoryRepository]).
+ * [database] for every unit looked at ([CachingHistoryRepository]).
  */
 fun HistoryRepository(
     client: HubEauClient,

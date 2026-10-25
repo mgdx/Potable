@@ -25,15 +25,18 @@ autre application ne peut lire :
   thème, la fenêtre d’historique, la durée de conservation du cache, les
   alertes et leur périodicité, et l’unité de distribution choisie pour chaque
   commune où vous en avez choisi une. « Vider le cache » oublie ce choix pour
-  toutes les communes que vous ne suivez pas.
+  toutes les communes que vous ne suivez pas ; vider le cache d’une seule
+  commune l’oublie pour elle si vous ne la suivez pas.
 - **Vos communes suivies**, avec leur unité de distribution, leur ordre et
   celle qui est principale.
-- **Le cache des données publiques de ces communes** : leur dernier
-  prélèvement, les séries des paramètres consultés, la frise de leurs
-  conclusions, et la date du dernier prélèvement vu par les alertes. Ce sont
-  des données publiées par Hub’Eau, les mêmes pour tout le monde. Elles sont
-  purgées au-delà de la durée de conservation choisie (3 ans par défaut), et
-  « Vider le cache », dans les réglages, les efface toutes.
+- **Le cache des données publiques des communes consultées**, suivies ou
+  non : leur dernier prélèvement, les séries des paramètres consultés, la
+  frise de leurs conclusions, et, pour les seules communes suivies, la date
+  du dernier prélèvement vu par les alertes. Ce sont des données publiées par
+  Hub’Eau, les mêmes pour tout le monde. Elles sont purgées au-delà de la
+  durée de conservation choisie (3 ans par défaut) ; dans les réglages,
+  « Vider le cache » les efface toutes, et la liste des communes en cache
+  permet de n’effacer que celles d’une commune.
 
 Désinstaller l’application efface l’ensemble.
 
@@ -45,10 +48,6 @@ appareils.
 
 - **Votre position.**
 - Les recherches que vous tapez.
-- Les données des communes que vous consultez sans les suivre : elles sont
-  lues en direct et ne sont pas mises en cache. Seul le choix de l’unité de
-  distribution est retenu, quand la commune en a plusieurs, jusqu’au prochain
-  « Vider le cache » (voir « Vos réglages » ci-dessus).
 
 ## Votre position
 

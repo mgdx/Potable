@@ -24,7 +24,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
-/** The sheet of a followed unit reads the cache (SPEC §7). */
+/** The sheet of a followed unit reads the cache (SPEC §7), like any other. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FollowedSheetViewModelTest {
     @get:Rule
@@ -158,7 +158,7 @@ class FollowedSheetViewModelTest {
     }
 }
 
-/** Following from the sheet of a unit read from Hub'Eau. */
+/** Following from the sheet of a unit that is not followed. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FollowFromSheetViewModelTest {
     @get:Rule
@@ -169,28 +169,27 @@ class FollowFromSheetViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-25T10:00:00Z"), ZoneOffset.UTC)
 
     @Test
-    fun `following stores the unit and switches the sheet to the cache`() =
-        runTest(main.dispatcher) {
-            val latest = sample()
-            water.sampleAnswers += Result.success(latest)
-            val viewModel =
-                SheetViewModel(water, follows, "45234", "045000123", "Orléans", "ORLEANS", clock)
-            advanceUntilIdle()
-            assertEquals(false, viewModel.isFollowed.value)
-            assertNull(viewModel.freshness.value)
-            assertTrue(water.refreshCalls.isEmpty())
+    fun `following stores the unit and keeps the cache shown`() = runTest(main.dispatcher) {
+        val latest = sample()
+        val fetchedAt = Instant.parse("2026-10-25T09:59:00Z")
+        water.refreshedCache = CachedSample(latest, fetchedAt)
+        val viewModel =
+            SheetViewModel(water, follows, "45234", "045000123", "Orléans", "ORLEANS", clock)
+        advanceUntilIdle()
+        assertEquals(false, viewModel.isFollowed.value)
+        assertEquals(Freshness(fetchedAt, refreshFailed = false), viewModel.freshness.value)
 
-            val fetchedAt = Instant.parse("2026-10-25T09:59:00Z")
-            water.refreshedCache = CachedSample(latest, fetchedAt)
-            viewModel.toggleFollow()
-            advanceUntilIdle()
-            val follow = follows.current.single()
-            assertEquals("45234", follow.communeCode)
-            assertEquals("Orléans", follow.communeName)
-            assertEquals("045000123", follow.udiCode)
-            assertEquals("ORLEANS", follow.udiName)
-            assertEquals(true, viewModel.isFollowed.value)
-            assertEquals(listOf(false), water.refreshCalls)
-            assertEquals(Freshness(fetchedAt, refreshFailed = false), viewModel.freshness.value)
-        }
+        viewModel.toggleFollow()
+        advanceUntilIdle()
+        val follow = follows.current.single()
+        assertEquals("45234", follow.communeCode)
+        assertEquals("Orléans", follow.communeName)
+        assertEquals("045000123", follow.udiCode)
+        assertEquals("ORLEANS", follow.udiName)
+        assertEquals(true, viewModel.isFollowed.value)
+        // The cache was already the source: no second request.
+        assertEquals(listOf(false), water.refreshCalls)
+        assertEquals(Freshness(fetchedAt, refreshFailed = false), viewModel.freshness.value)
+        assertTrue(water.sampleCalls.isEmpty())
+    }
 }

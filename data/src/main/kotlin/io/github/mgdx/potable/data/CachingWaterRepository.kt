@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,8 +24,10 @@ import java.time.ZoneId
 
 /**
  * [WaterRepository] that answers [udis] and [latestSample] from [network]
- * (Hub'Eau, unchanged) and keeps the latest sample of every **followed** unit
- * in [database] (SPEC §7). Units that are not followed are never cached.
+ * (Hub'Eau, unchanged) and keeps in [database] the latest sample of every
+ * unit looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`).
+ * Only the alert state ([lastSeenSampleDate]) is restricted to the followed
+ * units.
  */
 class CachingWaterRepository(
     private val network: WaterRepository,
@@ -57,12 +60,11 @@ class CachingWaterRepository(
                 )
             }.distinctUntilChanged()
 
-    override suspend fun refreshFollowed(
+    override suspend fun refreshCache(
         communeCode: String,
         udiCode: String,
         force: Boolean,
     ): Boolean = refreshing.withLock {
-        if (follows.find(communeCode, udiCode) == null) return@withLock false
         if (!force && fetchedToday(cache.sync(communeCode, udiCode))) return@withLock false
 
         // Throws DataError: the cache and the sync state are left as they were.
@@ -70,8 +72,6 @@ class CachingWaterRepository(
         val now = clock.instant()
         val retention = preferences.retentionYears.first()
         database.withTransaction {
-            // The unit may have been unfollowed while the request ran.
-            if (follows.find(communeCode, udiCode) == null) return@withTransaction
             if (sample != null) {
                 cache.deleteResults(communeCode, udiCode, sample.code)
                 cache.deleteSample(communeCode, udiCode, sample.code)
@@ -104,12 +104,45 @@ class CachingWaterRepository(
     private fun sampleCutoff(now: Instant, years: Int): Long =
         now.atZone(PARIS).minusYears(years.toLong()).toInstant().toEpochMilli()
 
+    override fun cachedCommunes(): Flow<List<CachedCommune>> = cache.observeCachedUnits()
+        .map { rows ->
+            rows.groupBy { it.communeCode }
+                .map { (communeCode, units) ->
+                    CachedCommune(
+                        communeCode = communeCode,
+                        udiCodes = units.mapTo(sortedSetOf()) { it.udiCode },
+                        lastFetched = units.mapNotNull { it.lastSuccess }.maxOrNull()
+                            ?.let(Instant::ofEpochMilli),
+                    )
+                }
+                .sortedBy { it.communeCode }
+        }
+        .distinctUntilChanged()
+
+    override suspend fun purgeCommune(communeCode: String) {
+        val followed = database.withTransaction {
+            cache.deleteCommuneResults(communeCode)
+            cache.deleteCommuneSamples(communeCode)
+            // A followed unit keeps the date its alerts have seen.
+            cache.clearCommuneLastSuccess(communeCode)
+            cache.deleteCommuneSyncWithoutLastSeen(communeCode)
+            val history = database.history()
+            history.deleteCommunePoints(communeCode)
+            history.deleteCommuneSeries(communeCode)
+            history.deleteCommuneTimeline(communeCode)
+            history.deleteCommuneTimelineSync(communeCode)
+            follows.all().any { it.communeCode == communeCode }
+        }
+        // Same rule as purgeCache: a followed commune keeps its choice.
+        if (!followed) preferences.forgetRememberedUdi(communeCode)
+    }
+
     override suspend fun purgeCache() {
         database.withTransaction {
             cache.deleteAllResults()
             cache.deleteAllSamples()
             cache.deleteAllSync()
-            // The history cache too: same follows, same purge.
+            // The history cache too.
             val history = database.history()
             history.deleteAllPoints()
             history.deleteAllSeries()

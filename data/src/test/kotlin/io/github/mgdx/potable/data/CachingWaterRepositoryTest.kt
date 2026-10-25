@@ -5,6 +5,7 @@ import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.follow.RoomFollowRepository
 import io.github.mgdx.potable.data.local.MutableClock
 import io.github.mgdx.potable.data.local.PotableDatabase
+import io.github.mgdx.potable.data.local.TimelineSyncEntity
 import io.github.mgdx.potable.data.local.inMemoryDatabase
 import io.github.mgdx.potable.data.local.sample
 import io.github.mgdx.potable.data.preferences.AppPreferences
@@ -56,6 +57,12 @@ class CachingWaterRepositoryTest {
         override suspend fun forgetRememberedUdis(keep: Set<String>) {
             forgotten += keep
         }
+
+        val forgottenCommunes = mutableListOf<String>()
+
+        override suspend fun forgetRememberedUdi(communeCode: String) {
+            forgottenCommunes += communeCode
+        }
     }
 
     private val database: PotableDatabase = inMemoryDatabase()
@@ -82,18 +89,30 @@ class CachingWaterRepositoryTest {
         assertEquals(UdiChoice.None, repository.udis("45234"))
         assertEquals("P1", repository.latestSample("45234", UDI)?.code)
         assertEquals(1, network.calls)
-        // Not cached: the unit is not followed and this is not a refresh.
+        // Not cached: this is not a refresh.
         assertNull(cached())
     }
 
     @Test
-    fun `a unit that is not followed is neither fetched nor cached`() = runTest {
+    fun `a unit that is not followed is cached too, once a day`() = runTest {
         network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
 
-        assertFalse(repository.refreshFollowed("45234", UDI, force = true))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
+        assertFalse(repository.refreshCache("45234", UDI, force = false))
 
-        assertEquals(0, network.calls)
-        assertNull(cached())
+        assertEquals(1, network.calls)
+        assertEquals("P1", cached()!!.sample!!.code)
+        assertEquals(clock.now, cached()!!.fetchedAt)
+        // Offline the next day: the cache is still there to be shown.
+        clock.now = Instant.parse("2026-10-25T08:00:00Z")
+        network.failure = DataError.Network(IOException("offline"))
+        try {
+            repository.refreshCache("45234", UDI, force = false)
+            fail("DataError expected")
+        } catch (expected: DataError.Network) {
+            // The caller shows the cache with its banner.
+        }
+        assertEquals("P1", cached()!!.sample!!.code)
     }
 
     @Test
@@ -109,7 +128,7 @@ class CachingWaterRepositoryTest {
         val published = sample("P1", "2026-08-26T12:50:00Z", results = 5)
         network.samples["45234" to UDI] = published
 
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
 
         val cached = cached()!!
         assertEquals(published, cached.sample)
@@ -120,7 +139,7 @@ class CachingWaterRepositoryTest {
     fun `a unit without any sample is cached as fetched with no sample`() = runTest {
         followOrleans()
 
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
 
         assertEquals(CachedSample(null, clock.now), cached())
     }
@@ -130,19 +149,19 @@ class CachingWaterRepositoryTest {
         followOrleans()
         network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
 
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
         // 23:30 in Paris, still the same day.
         clock.now = Instant.parse("2026-10-24T21:30:00Z")
-        assertFalse(repository.refreshFollowed("45234", UDI, force = false))
+        assertFalse(repository.refreshCache("45234", UDI, force = false))
         assertEquals(1, network.calls)
 
-        assertTrue(repository.refreshFollowed("45234", UDI, force = true))
+        assertTrue(repository.refreshCache("45234", UDI, force = true))
         assertEquals(2, network.calls)
         assertEquals(clock.now, cached()!!.fetchedAt)
 
         // 00:30 in Paris the next day, although still 2026-10-24 in UTC.
         clock.now = Instant.parse("2026-10-24T22:30:00Z")
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
         assertEquals(3, network.calls)
     }
 
@@ -150,13 +169,13 @@ class CachingWaterRepositoryTest {
     fun `a failed refresh keeps the cache and is tried again`() = runTest {
         followOrleans()
         network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
-        repository.refreshFollowed("45234", UDI, force = false)
+        repository.refreshCache("45234", UDI, force = false)
         val before = cached()
 
         clock.now = Instant.parse("2026-10-26T08:00:00Z")
         network.failure = DataError.Network(IOException("offline"))
         try {
-            repository.refreshFollowed("45234", UDI, force = false)
+            repository.refreshCache("45234", UDI, force = false)
             fail("DataError expected")
         } catch (expected: DataError.Network) {
             // Propagated to the caller, which shows the cache with its banner.
@@ -164,7 +183,7 @@ class CachingWaterRepositoryTest {
 
         assertEquals(before, cached())
         network.failure = null
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
         assertEquals(3, network.calls)
     }
 
@@ -172,11 +191,11 @@ class CachingWaterRepositoryTest {
     fun `a new sample becomes the latest and refetching one does not duplicate it`() = runTest {
         followOrleans()
         network.samples["45234" to UDI] = sample("P1", "2026-08-12T10:54:00Z")
-        repository.refreshFollowed("45234", UDI, force = false)
+        repository.refreshCache("45234", UDI, force = false)
 
         network.samples["45234" to UDI] = sample("P2", "2026-08-26T12:50:00Z", results = 3)
-        repository.refreshFollowed("45234", UDI, force = true)
-        repository.refreshFollowed("45234", UDI, force = true)
+        repository.refreshCache("45234", UDI, force = true)
+        repository.refreshCache("45234", UDI, force = true)
 
         val latest = cached()!!.sample!!
         assertEquals("P2", latest.code)
@@ -191,7 +210,7 @@ class CachingWaterRepositoryTest {
         follows.follow("75056", "Paris", "075000001", "CENTRE")
         // Paris: a single sample, older than the retention window.
         network.samples["75056" to "075000001"] = sample("PARIS", "2024-03-01T10:00:00Z")
-        repository.refreshFollowed("75056", "075000001", force = false)
+        repository.refreshCache("75056", "075000001", force = false)
         // Orléans: three samples, two of them older than one year.
         for ((code, date) in listOf(
             "OLD1" to "2024-01-10T10:00:00Z",
@@ -199,11 +218,11 @@ class CachingWaterRepositoryTest {
             "RECENT" to "2026-01-10T10:00:00Z",
         )) {
             network.samples["45234" to UDI] = sample(code, date)
-            repository.refreshFollowed("45234", UDI, force = true)
+            repository.refreshCache("45234", UDI, force = true)
         }
         // A last refresh that brings nothing new still purges.
         network.samples["45234" to UDI] = sample("OLD1", "2024-01-10T10:00:00Z")
-        repository.refreshFollowed("45234", UDI, force = true)
+        repository.refreshCache("45234", UDI, force = true)
 
         // RECENT stays as the newest; OLD1, written again, is purged.
         assertEquals("RECENT", cached()!!.sample!!.code)
@@ -218,14 +237,14 @@ class CachingWaterRepositoryTest {
         followOrleans()
         follows.follow("75056", "Paris", "075000001", "CENTRE")
         network.samples["75056" to "075000001"] = sample("PARIS", "2024-03-01T10:00:00Z")
-        repository.refreshFollowed("75056", "075000001", force = false)
+        repository.refreshCache("75056", "075000001", force = false)
         for ((code, date) in listOf(
             "OLD1" to "2024-01-10T10:00:00Z",
             "OLD2" to "2025-02-10T10:00:00Z",
             "RECENT" to "2026-01-10T10:00:00Z",
         )) {
             network.samples["45234" to UDI] = sample(code, date)
-            repository.refreshFollowed("45234", UDI, force = true)
+            repository.refreshCache("45234", UDI, force = true)
         }
         // Three years: everything is kept.
         assertEquals(4, database.cache().sampleCount())
@@ -251,7 +270,7 @@ class CachingWaterRepositoryTest {
     fun `purgeCache empties the cache and keeps the follows`() = runTest {
         followOrleans()
         network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
-        repository.refreshFollowed("45234", UDI, force = false)
+        repository.refreshCache("45234", UDI, force = false)
 
         repository.purgeCache()
 
@@ -260,7 +279,7 @@ class CachingWaterRepositoryTest {
         assertEquals(0, resultCount())
         assertEquals(1, follows.follows.first().size)
         // The sync state is gone too: the next display fetches again.
-        assertTrue(repository.refreshFollowed("45234", UDI, force = false))
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
         assertEquals(2, network.calls)
     }
 
@@ -274,24 +293,95 @@ class CachingWaterRepositoryTest {
     }
 
     @Test
-    fun `unfollowing deletes the unit's cache only`() = runTest {
+    fun `unfollowing keeps the cache and forgets the last seen date`() = runTest {
         val orleans = followOrleans()
-        follows.follow("45234", "Orléans", "045000999", "ORLEANS SUD")
-        // The same sample published for both units of the commune.
-        network.samples["45234" to UDI] = sample("SHARED", "2026-08-26T12:50:00Z")
-        network.samples["45234" to "045000999"] = sample("SHARED", "2026-08-26T12:50:00Z")
-        repository.refreshFollowed("45234", UDI, force = false)
-        repository.refreshFollowed("45234", "045000999", force = false)
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        repository.setLastSeenSampleDate("45234", UDI, Instant.parse("2026-08-26T12:50:00Z"))
 
         follows.unfollow(orleans.id)
 
+        assertEquals("P1", cached()!!.sample!!.code)
+        assertNull(repository.lastSeenSampleDate("45234", UDI))
+        // Following it again: the alerts start from a new baseline.
+        followOrleans()
+        assertNull(repository.lastSeenSampleDate("45234", UDI))
+        assertEquals("P1", cached()!!.sample!!.code)
+    }
+
+    @Test
+    fun `the cached communes list every unit with something cached`() = runTest {
+        assertEquals(emptyList<CachedCommune>(), repository.cachedCommunes().first())
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        network.samples["45234" to "045000999"] = sample("P2", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        clock.now = Instant.parse("2026-10-24T09:00:00Z")
+        repository.refreshCache("45234", "045000999", force = false)
+        repository.refreshCache("75056", "075000001", force = false)
+        // A followed unit with only an alert baseline has nothing cached.
+        follows.follow("2A004", "Ajaccio", "020000123", "AJACCIO")
+        repository.setLastSeenSampleDate(
+            "2A004",
+            "020000123",
+            Instant.parse("2026-08-01T10:00:00Z"),
+        )
+        // A history alone counts.
+        database.history().upsertTimelineSync(
+            TimelineSyncEntity("13055", "013000001", depuis = 0, lastSuccess = 1_000),
+        )
+
+        assertEquals(
+            listOf(
+                CachedCommune("13055", setOf("013000001"), Instant.ofEpochMilli(1_000)),
+                CachedCommune("45234", setOf(UDI, "045000999"), clock.now),
+                CachedCommune("75056", setOf("075000001"), clock.now),
+            ),
+            repository.cachedCommunes().first(),
+        )
+    }
+
+    @Test
+    fun `purging a commune deletes its cache only and keeps the follows`() = runTest {
+        followOrleans()
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        network.samples["45234" to "045000999"] = sample("P2", "2026-08-26T12:50:00Z")
+        network.samples["75056" to "075000001"] = sample("P3", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        repository.refreshCache("45234", "045000999", force = false)
+        repository.refreshCache("75056", "075000001", force = false)
+        val seen = Instant.parse("2026-08-26T12:50:00Z")
+        repository.setLastSeenSampleDate("45234", UDI, seen)
+        database.history().upsertTimelineSync(
+            TimelineSyncEntity("45234", UDI, depuis = 0, lastSuccess = 1_000),
+        )
+
+        repository.purgeCommune("45234")
+
         assertNull(cached())
-        assertEquals("SHARED", cached("45234", "045000999")!!.sample!!.code)
+        assertNull(cached("45234", "045000999"))
+        assertNull(database.history().timelineSync("45234", UDI))
+        assertEquals("P3", cached("75056", "075000001")!!.sample!!.code)
         assertEquals(1, database.cache().sampleCount())
         assertEquals(2, resultCount())
-        // Following it again starts from an empty cache.
-        followOrleans()
-        assertNull(cached())
+        assertEquals(listOf("75056"), repository.cachedCommunes().first().map { it.communeCode })
+        // The follow and the date its alerts have seen are untouched...
+        assertEquals(1, follows.follows.first().size)
+        assertEquals(seen, repository.lastSeenSampleDate("45234", UDI))
+        // ...and so is the unit remembered for a followed commune.
+        assertEquals(emptyList<String>(), preferences.forgottenCommunes)
+        // The next display fetches again.
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
+    }
+
+    @Test
+    fun `purging a commune that is not followed forgets its remembered unit`() = runTest {
+        network.samples["75056" to "075000001"] = sample("P3", "2026-08-26T12:50:00Z")
+        repository.refreshCache("75056", "075000001", force = false)
+
+        repository.purgeCommune("75056")
+
+        assertNull(cached("75056", "075000001"))
+        assertEquals(listOf("75056"), preferences.forgottenCommunes)
     }
 
     @Test
@@ -301,7 +391,7 @@ class CachingWaterRepositoryTest {
         repository.setLastSeenSampleDate("45234", UDI, seen)
         network.samples["45234" to UDI] = sample("P2", "2026-08-26T12:50:00Z")
 
-        repository.refreshFollowed("45234", UDI, force = false)
+        repository.refreshCache("45234", UDI, force = false)
 
         assertEquals(seen, repository.lastSeenSampleDate("45234", UDI))
         // Writing the date alone does not count as a fetch.
@@ -316,6 +406,11 @@ class CachingWaterRepositoryTest {
 
         assertNull(repository.lastSeenSampleDate("45234", UDI))
         assertNull(cached())
+        // Nor once the unit is cached: the alerts only concern the followed units.
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        repository.setLastSeenSampleDate("45234", UDI, Instant.parse("2026-08-12T10:54:00Z"))
+        assertNull(repository.lastSeenSampleDate("45234", UDI))
     }
 
     private companion object {

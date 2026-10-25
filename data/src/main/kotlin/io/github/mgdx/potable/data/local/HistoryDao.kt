@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 
-/** History cache of the followed units (tables of `HistoryEntities.kt`). */
+/** History cache of the units looked at (tables of `HistoryEntities.kt`). */
 @Dao
 internal interface HistoryDao {
     @Query(
@@ -76,24 +76,6 @@ internal interface HistoryDao {
     )
     suspend fun deleteTimelineFrom(communeCode: String, udiCode: String, from: Long)
 
-    @Query(
-        "DELETE FROM historique_prelevement " +
-            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
-    )
-    suspend fun deleteUnitTimeline(communeCode: String, udiCode: String)
-
-    @Query(
-        "DELETE FROM historique_synchro " +
-            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
-    )
-    suspend fun deleteUnitTimelineSync(communeCode: String, udiCode: String)
-
-    @Query("DELETE FROM serie_point WHERE code_commune = :communeCode AND code_reseau = :udiCode")
-    suspend fun deleteUnitPoints(communeCode: String, udiCode: String)
-
-    @Query("DELETE FROM serie WHERE code_commune = :communeCode AND code_reseau = :udiCode")
-    suspend fun deleteUnitSeries(communeCode: String, udiCode: String)
-
     /**
      * Retention purge (SPEC §7) of points and samples published before
      * [cutoff] (epoch ms); the coverage of every series and timeline then
@@ -111,6 +93,18 @@ internal interface HistoryDao {
 
     @Query("UPDATE historique_synchro SET depuis = :cutoffDay WHERE depuis < :cutoffDay")
     suspend fun clampTimelineCoverage(cutoffDay: Long)
+
+    @Query("DELETE FROM serie_point WHERE code_commune = :communeCode")
+    suspend fun deleteCommunePoints(communeCode: String)
+
+    @Query("DELETE FROM serie WHERE code_commune = :communeCode")
+    suspend fun deleteCommuneSeries(communeCode: String)
+
+    @Query("DELETE FROM historique_prelevement WHERE code_commune = :communeCode")
+    suspend fun deleteCommuneTimeline(communeCode: String)
+
+    @Query("DELETE FROM historique_synchro WHERE code_commune = :communeCode")
+    suspend fun deleteCommuneTimelineSync(communeCode: String)
 
     @Query("DELETE FROM serie")
     suspend fun deleteAllSeries()

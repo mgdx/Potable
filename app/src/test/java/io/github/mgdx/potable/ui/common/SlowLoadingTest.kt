@@ -35,7 +35,6 @@ import kotlin.time.Duration.Companion.seconds
 /** Every request waits until the test answers it, as a slow Hub'Eau would. */
 private class SlowWaterRepository : WaterRepository {
     var udiAnswer = CompletableDeferred<UdiChoice>()
-    var sampleAnswer = CompletableDeferred<Sample?>()
     var refreshAnswer = CompletableDeferred<Unit>()
     val cache = MutableStateFlow<CachedSample?>(null)
     val refreshCalls = mutableListOf<Boolean>()
@@ -43,12 +42,12 @@ private class SlowWaterRepository : WaterRepository {
     override suspend fun udis(communeCode: String): UdiChoice = udiAnswer.await()
 
     override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? =
-        sampleAnswer.await()
+        error("the sheet reads the cache")
 
     override fun cachedLatestSample(communeCode: String, udiCode: String): Flow<CachedSample?> =
         cache
 
-    override suspend fun refreshFollowed(
+    override suspend fun refreshCache(
         communeCode: String,
         udiCode: String,
         force: Boolean,
@@ -94,7 +93,8 @@ class SlowLoadingTest {
         waitFor(2)
         assertTrue(viewModel.isSlow.value)
 
-        water.sampleAnswer.complete(sample())
+        water.cache.value = CachedSample(sample(), clock.instant())
+        water.refreshAnswer.complete(Unit)
         runCurrent()
         assertTrue(viewModel.state.value is SheetUiState.Loaded)
         assertFalse(viewModel.isSlow.value)
@@ -106,11 +106,11 @@ class SlowLoadingTest {
         runCurrent()
         waitFor(11)
         assertTrue(viewModel.isSlow.value)
-        water.sampleAnswer.completeExceptionally(IllegalStateException())
+        water.refreshAnswer.completeExceptionally(IllegalStateException())
         runCurrent()
         assertFalse(viewModel.isSlow.value)
 
-        water.sampleAnswer = CompletableDeferred()
+        water.refreshAnswer = CompletableDeferred()
         viewModel.retry()
         runCurrent()
         assertEquals(SheetUiState.Loading, viewModel.state.value)
@@ -141,38 +141,37 @@ class SlowLoadingTest {
     }
 
     @Test
-    fun `a followed sheet without cache shows a single indicator on retry`() =
-        runTest(main.dispatcher) {
-            val follows = FakeFollowRepository(listOf(follow(1, isPrimary = true)))
-            water.refreshAnswer.completeExceptionally(IllegalStateException())
-            val viewModel = sheet(follows)
-            advanceUntilIdle()
-            assertEquals(SheetUiState.Error(LoadError.UNEXPECTED), viewModel.state.value)
+    fun `a sheet without cache shows a single indicator on retry`() = runTest(main.dispatcher) {
+        val follows = FakeFollowRepository(listOf(follow(1, isPrimary = true)))
+        water.refreshAnswer.completeExceptionally(IllegalStateException())
+        val viewModel = sheet(follows)
+        advanceUntilIdle()
+        assertEquals(SheetUiState.Error(LoadError.UNEXPECTED), viewModel.state.value)
 
-            // Retry and pull-to-refresh: the loading state shows, not the pull indicator.
-            water.refreshAnswer = CompletableDeferred()
-            viewModel.retry()
-            runCurrent()
-            assertEquals(SheetUiState.Loading, viewModel.state.value)
-            assertFalse(viewModel.isRefreshing.value)
-            viewModel.pullToRefresh()
-            runCurrent()
-            assertFalse(viewModel.isRefreshing.value)
-            assertEquals(listOf(false, true), water.refreshCalls)
+        // Retry and pull-to-refresh: the loading state shows, not the pull indicator.
+        water.refreshAnswer = CompletableDeferred()
+        viewModel.retry()
+        runCurrent()
+        assertEquals(SheetUiState.Loading, viewModel.state.value)
+        assertFalse(viewModel.isRefreshing.value)
+        viewModel.pullToRefresh()
+        runCurrent()
+        assertFalse(viewModel.isRefreshing.value)
+        assertEquals(listOf(false, true), water.refreshCalls)
 
-            water.cache.value = CachedSample(sample(), clock.instant())
-            water.refreshAnswer.complete(Unit)
-            advanceUntilIdle()
-            assertTrue(viewModel.state.value is SheetUiState.Loaded)
+        water.cache.value = CachedSample(sample(), clock.instant())
+        water.refreshAnswer.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value is SheetUiState.Loaded)
 
-            // Data on screen: now the pull indicator is the only one.
-            water.refreshAnswer = CompletableDeferred()
-            viewModel.pullToRefresh()
-            runCurrent()
-            assertTrue(viewModel.isRefreshing.value)
-            assertTrue(viewModel.state.value is SheetUiState.Loaded)
-            water.refreshAnswer.complete(Unit)
-            advanceUntilIdle()
-            assertFalse(viewModel.isRefreshing.value)
-        }
+        // Data on screen: now the pull indicator is the only one.
+        water.refreshAnswer = CompletableDeferred()
+        viewModel.pullToRefresh()
+        runCurrent()
+        assertTrue(viewModel.isRefreshing.value)
+        assertTrue(viewModel.state.value is SheetUiState.Loaded)
+        water.refreshAnswer.complete(Unit)
+        advanceUntilIdle()
+        assertFalse(viewModel.isRefreshing.value)
+    }
 }

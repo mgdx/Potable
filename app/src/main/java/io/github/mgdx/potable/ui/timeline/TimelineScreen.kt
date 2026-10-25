@@ -75,7 +75,6 @@ fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: ()
     val years by viewModel.years.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val refreshFailed by viewModel.refreshFailed.collectAsStateWithLifecycle()
-    val isFollowed by viewModel.isFollowed.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -102,20 +101,15 @@ fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: ()
                     is TimelineUiState.Loaded -> TimelineList(current)
                 }
             }
-            val modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-            if (isFollowed) {
-                // The cache of a followed unit is refreshed on demand (SPEC §7).
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = viewModel::refresh,
-                    modifier = modifier,
-                ) {
-                    content()
-                }
-            } else {
-                Box(modifier = modifier) { content() }
+            // The cache of any unit is refreshed on demand (SPEC §7).
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                content()
             }
         }
     }

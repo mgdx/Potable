@@ -68,7 +68,7 @@ class FakeWaterRepository : WaterRepository {
     override fun cachedLatestSample(communeCode: String, udiCode: String): Flow<CachedSample?> =
         cache
 
-    override suspend fun refreshFollowed(
+    override suspend fun refreshCache(
         communeCode: String,
         udiCode: String,
         force: Boolean,
