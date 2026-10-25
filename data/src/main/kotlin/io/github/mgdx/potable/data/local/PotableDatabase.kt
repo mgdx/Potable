@@ -5,6 +5,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * The local store of SPEC §7: followed units and the cache of the units looked at,
@@ -37,6 +38,17 @@ abstract class PotableDatabase : RoomDatabase() {
     internal abstract fun cache(): CacheDao
 
     internal abstract fun history(): HistoryDao
+
+    /**
+     * Incremented by every purge of the cache, whole or of a commune. A
+     * fetch reads it before calling Hub'Eau and writes its result only if
+     * it has not changed meanwhile ([unchangedSince]): a purge made during
+     * the request is not undone by it.
+     */
+    internal val cacheGeneration = AtomicLong()
+
+    /** Whether no purge happened since [generation] was read from [cacheGeneration]. */
+    internal fun unchangedSince(generation: Long): Boolean = cacheGeneration.get() == generation
 
     companion object {
         const val FILE_NAME = "potable.db"

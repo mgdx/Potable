@@ -62,6 +62,7 @@ class CachingHistoryRepository(
             if (cached != null && !force && isFresh(cached.lastSuccess, cached.depuis, since)) {
                 return@withLock cachedSeries(cached, since)
             }
+            val generation = database.cacheGeneration.get()
             val fetched =
                 try {
                     network.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
@@ -69,7 +70,7 @@ class CachingHistoryRepository(
                     if (cached == null) throw e
                     return@withLock cachedSeries(cached, since)
                 }
-            storeSeries(communeCode, udiCode, key, since, cached, fetched)
+            storeSeries(communeCode, udiCode, key, since, cached, fetched, generation)
             // The fetch is complete since [since]; the cache may already be
             // purged of what predates the retention.
             fetched
@@ -87,6 +88,7 @@ class CachingHistoryRepository(
             if (sync != null && !force && isFresh(sync.lastSuccess, sync.depuis, since)) {
                 return@withLock cachedTimeline(communeCode, udiCode, since)
             }
+            val generation = database.cacheGeneration.get()
             val fetched =
                 try {
                     network.sampleTimeline(communeCode, udiCode, since, force)
@@ -94,7 +96,7 @@ class CachingHistoryRepository(
                     if (sync == null) throw e
                     return@withLock cachedTimeline(communeCode, udiCode, since)
                 }
-            storeTimeline(communeCode, udiCode, since, sync, fetched)
+            storeTimeline(communeCode, udiCode, since, sync, fetched, generation)
             fetched
         }
     }
@@ -104,7 +106,8 @@ class CachingHistoryRepository(
      * the older ones when the cache reaches [since] (it was fetched after
      * that day): the union is then contiguous and the coverage starts at the
      * earlier of both. Otherwise the old points are dropped, so that no gap
-     * reads as an absence of measure.
+     * reads as an absence of measure. Nothing is written if the cache was
+     * purged since [generation] was read (the request ran meanwhile).
      */
     private suspend fun storeSeries(
         communeCode: String,
@@ -113,11 +116,13 @@ class CachingHistoryRepository(
         since: LocalDate,
         cached: SeriesEntity?,
         fetched: ParameterSeries?,
+        generation: Long,
     ) {
         val now = clock.instant()
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
+            if (!database.unchangedSince(generation)) return@withTransaction
             val keepOlder = cached != null && cached.lastSuccess >= from
             val depuis = if (keepOlder) {
                 minOf(
@@ -173,11 +178,13 @@ class CachingHistoryRepository(
         since: LocalDate,
         sync: TimelineSyncEntity?,
         fetched: List<SampleSummary>,
+        generation: Long,
     ) {
         val now = clock.instant()
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
+            if (!database.unchangedSince(generation)) return@withTransaction
             val keepOlder = sync != null && sync.lastSuccess >= from
             history.upsertTimelineSync(
                 TimelineSyncEntity(

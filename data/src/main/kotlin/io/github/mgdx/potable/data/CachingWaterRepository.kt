@@ -73,10 +73,13 @@ class CachingWaterRepository(
         if (!force && fetchedToday(cache.sync(communeCode, udiCode))) return@withLock false
 
         // Throws DataError: the cache and the sync state are left as they were.
+        val generation = database.cacheGeneration.get()
         val samples = network.latestSamples(communeCode, udiCode)
         val now = clock.instant()
         val retention = preferences.retentionYears.first()
         database.withTransaction {
+            // The cache was purged while the request ran: it stays purged.
+            if (!database.unchangedSince(generation)) return@withTransaction
             for (sample in samples) {
                 cache.deleteResults(communeCode, udiCode, sample.code)
                 cache.deleteSample(communeCode, udiCode, sample.code)
@@ -126,6 +129,7 @@ class CachingWaterRepository(
 
     override suspend fun purgeCommune(communeCode: String) {
         val followed = database.withTransaction {
+            database.cacheGeneration.incrementAndGet()
             cache.deleteCommuneResults(communeCode)
             cache.deleteCommuneSamples(communeCode)
             // A followed unit keeps the date its alerts have seen.
@@ -144,6 +148,7 @@ class CachingWaterRepository(
 
     override suspend fun purgeCache() {
         database.withTransaction {
+            database.cacheGeneration.incrementAndGet()
             cache.deleteAllResults()
             cache.deleteAllSamples()
             cache.deleteAllSync()
