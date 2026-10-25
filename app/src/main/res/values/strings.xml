@@ -193,6 +193,8 @@
     <string name="sample_detail_title">Analysed parameters</string>
     <string name="sample_loading">Loading the sample…</string>
     <string name="sample_unavailable">This sample is no longer shown on the sheet. Go back to see the latest one.</string>
+    <!-- Report opened from the history: Hub'Eau has no row of this sample any more. -->
+    <string name="sample_report_not_found">Hub\'Eau no longer publishes this sample.</string>
     <string name="sample_no_results">No analysis result was published for this sample.</string>
     <!-- Label of the search field. -->
     <string name="sample_search_label">Search a parameter</string>
@@ -244,9 +246,17 @@
     <!-- Heading of the list of values. -->
     <string name="history_values_title">Measurements</string>
     <string name="history_touch_hint">Touch or drag along the chart to read a measurement.</string>
+    <!-- Under the chart's legend. -->
+    <string name="history_gesture_hint">Pinch the chart to zoom in on a period, double-tap to see it whole. Touch and hold a measurement to open the full report of its sample.</string>
+    <!-- Text button under a zoomed-in chart. -->
+    <string name="history_zoom_reset">Show the whole period</string>
+    <!-- Read by screen readers. %1$s and %2$s: first and last dates shown, formatted for the language. -->
+    <string name="history_zoomed_state">Zoomed in from %1$s to %2$s</string>
     <!-- Screen reader actions of the chart: select the previous or the next measurement. -->
     <string name="history_previous_measurement">Previous measurement</string>
     <string name="history_next_measurement">Next measurement</string>
+    <!-- Screen reader action of the chart, on the selected measurement. -->
+    <string name="history_open_report">Open the full report of this sample</string>
     <!-- Above the chart. %1$s: date of the measurement, formatted for the language; %2$s: the value as published, with its unit ("12,5 mg/L"). -->
     <string name="history_selected_point">Selected: %1$s, %2$s</string>
     <!-- Read by screen readers for the whole chart. %1$d: number of measurements; %2$s and %3$s: first and last dates, formatted for the language; %4$s and %5$s: lowest and highest values as published, with their unit. -->

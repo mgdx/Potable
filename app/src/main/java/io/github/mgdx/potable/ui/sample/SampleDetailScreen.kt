@@ -67,6 +67,57 @@ fun SampleDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
+    SampleDetailContent(
+        state = state,
+        query = query,
+        onQueryChange = viewModel::onQueryChange,
+        onRetry = onRetry,
+        onBack = onBack,
+        onOpenHistory = onOpenHistory,
+        unavailableText = stringResource(R.string.sample_unavailable),
+    )
+}
+
+/**
+ * The full report of a sample loaded by its code (SPEC §5 F4), opened from
+ * the history of a parameter: the same screen as [SampleDetailScreen].
+ */
+@Composable
+fun SampleReportScreen(
+    viewModel: SampleReportViewModel,
+    onBack: () -> Unit,
+    onOpenHistory: (AnalysisResult) -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
+    SampleDetailContent(
+        state = state,
+        query = query,
+        onQueryChange = viewModel::onQueryChange,
+        onRetry = viewModel::retry,
+        onBack = onBack,
+        onOpenHistory = onOpenHistory,
+        unavailableText = stringResource(R.string.sample_report_not_found),
+        slow = isSlow,
+    )
+}
+
+/**
+ * Every result of a sample in [state], stateless: [unavailableText] says why
+ * there is no sample to show; [slow] when Hub'Eau is slow to answer.
+ */
+@Composable
+fun SampleDetailContent(
+    state: SampleDetailUiState,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onRetry: () -> Unit,
+    onBack: () -> Unit,
+    onOpenHistory: (AnalysisResult) -> Unit,
+    unavailableText: String,
+    slow: Boolean = false,
+) {
     val loaded = state as? SampleDetailUiState.Loaded
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -84,17 +135,16 @@ fun SampleDetailScreen(
         },
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
-        when (val current = state) {
+        when (state) {
             SampleDetailUiState.Loading ->
-                LoadingState(stringResource(R.string.sample_loading), modifier)
-            is SampleDetailUiState.Error -> ErrorState(current.error, onRetry, modifier)
-            SampleDetailUiState.Unavailable ->
-                EmptyState(stringResource(R.string.sample_unavailable), modifier)
+                LoadingState(stringResource(R.string.sample_loading), modifier, slow = slow)
+            is SampleDetailUiState.Error -> ErrorState(state.error, onRetry, modifier)
+            SampleDetailUiState.Unavailable -> EmptyState(unavailableText, modifier)
             is SampleDetailUiState.Loaded ->
-                if (current.sample.results.isEmpty()) {
+                if (state.sample.results.isEmpty()) {
                     EmptyState(stringResource(R.string.sample_no_results), modifier)
                 } else {
-                    ResultList(current, query, viewModel::onQueryChange, onOpenHistory, modifier)
+                    ResultList(state, query, onQueryChange, onOpenHistory, modifier)
                 }
         }
     }

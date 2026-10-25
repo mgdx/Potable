@@ -89,6 +89,8 @@ class HubEauClient(
      * [dateMin] and [dateMax] are sent as plain dates; the API reads them as
      * midnight, [dateMin] inclusive and [dateMax] exclusive. [codeParametre]
      * may be a comma-separated list of codes, which the API reads as "any of".
+     * [codePrelevement] restricts the rows to one sample (a single code: the
+     * API answers nothing to a list).
      */
     suspend fun resultats(
         codeCommune: String,
@@ -100,6 +102,7 @@ class HubEauClient(
         codeParametre: String? = null,
         dateMin: LocalDate? = null,
         dateMax: LocalDate? = null,
+        codePrelevement: String? = null,
     ): Page<ResultRow> {
         require(page >= 1) { "page must be >= 1" }
         require(size in 1..MAX_PAGE_SIZE) { "size must be in 1..$MAX_PAGE_SIZE" }
@@ -109,6 +112,7 @@ class HubEauClient(
                 .apply {
                     codeReseau?.let { addQueryParameter("code_reseau", it) }
                     codeParametre?.let { addQueryParameter("code_parametre", it) }
+                    codePrelevement?.let { addQueryParameter("code_prelevement", it) }
                     dateMin?.let { addQueryParameter("date_min_prelevement", it.toString()) }
                     dateMax?.let { addQueryParameter("date_max_prelevement", it.toString()) }
                     if (!fields.isNullOrEmpty()) {

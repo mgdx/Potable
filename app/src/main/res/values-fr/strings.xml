@@ -135,6 +135,7 @@
     <string name="sample_detail_title">Paramètres analysés</string>
     <string name="sample_loading">Chargement du prélèvement…</string>
     <string name="sample_unavailable">Ce prélèvement n’est plus affiché sur la fiche. Revenez en arrière pour voir le plus récent.</string>
+    <string name="sample_report_not_found">Hub\'Eau ne publie plus ce prélèvement.</string>
     <string name="sample_no_results">Aucun résultat d’analyse n’a été publié pour ce prélèvement.</string>
     <string name="sample_search_label">Rechercher un paramètre</string>
     <string name="sample_no_match">Aucun paramètre ne correspond à « %1$s ».</string>
@@ -174,8 +175,12 @@
     <string name="history_hide_list">Masquer la liste des valeurs</string>
     <string name="history_values_title">Mesures</string>
     <string name="history_touch_hint">Touchez le graphique ou faites glisser le doigt dessus pour lire une mesure.</string>
+    <string name="history_gesture_hint">Pincez le graphique pour zoomer sur une période, touchez-le deux fois pour la voir en entier. Maintenez le doigt sur une mesure pour ouvrir le rapport complet de son prélèvement.</string>
+    <string name="history_zoom_reset">Afficher toute la période</string>
+    <string name="history_zoomed_state">Zoom du %1$s au %2$s</string>
     <string name="history_previous_measurement">Mesure précédente</string>
     <string name="history_next_measurement">Mesure suivante</string>
+    <string name="history_open_report">Ouvrir le rapport complet de ce prélèvement</string>
     <string name="history_selected_point">Sélection : %1$s, %2$s</string>
     <plurals name="history_chart_description">
         <item quantity="one">Graphique de %1$d mesure du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
