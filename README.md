@@ -5,8 +5,6 @@
   </picture>
 </p>
 
-<h1 align="center">Potable</h1>
-
 <p align="center">
   L’eau du robinet de votre commune : les analyses officielles, sans traqueur.
 </p>
