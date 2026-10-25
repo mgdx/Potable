@@ -30,7 +30,8 @@ autre application ne peut lire :
 - **Vos communes suivies**, avec leur unité de distribution, leur ordre et
   celle qui est principale.
 - **Le cache des données publiques des communes consultées**, suivies ou
-  non : leur dernier prélèvement, les séries des paramètres consultés, la
+  non : leur dernier prélèvement, les prélèvements ouverts depuis
+  l’historique, les séries des paramètres consultés, la
   frise de leurs conclusions, et, pour les seules communes suivies, la date
   du dernier prélèvement vu par les alertes. Ce sont des données publiées par
   Hub’Eau, les mêmes pour tout le monde. Elles sont purgées au-delà de la

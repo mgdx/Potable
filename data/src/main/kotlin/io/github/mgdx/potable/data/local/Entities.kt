@@ -57,6 +57,14 @@ internal data class SampleEntity(
     @ColumnInfo(name = "conformite_references_pc") val physicochemicalReferences: String?,
     val distributeur: String?,
     @ColumnInfo(name = "maitre_ouvrage") val owner: String?,
+    /**
+     * True for a sample a refresh wrote, one of the unit's latest at the
+     * time; false for an older sample opened from the history and kept by
+     * [io.github.mgdx.potable.data.CachingSampleRepository], which the
+     * sheet must never take for a latest one. Schema v3; the rows of v2 were
+     * all written by refreshes.
+     */
+    @ColumnInfo(name = "dernier", defaultValue = "1") val latest: Boolean = true,
 )
 
 /** One analysed parameter of a cached sample (table `resultat`). */

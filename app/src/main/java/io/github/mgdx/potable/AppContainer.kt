@@ -8,6 +8,7 @@ import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.alert.SystemNotificationAccess
 import io.github.mgdx.potable.alert.WorkManagerAlertWork
 import io.github.mgdx.potable.data.AssetCommuneRepository
+import io.github.mgdx.potable.data.CachingSampleRepository
 import io.github.mgdx.potable.data.CachingWaterRepository
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.HistoryRepository
@@ -70,8 +71,10 @@ class AppContainer(context: Context) {
     /** History of a unit (SPEC §5 F5). */
     val history: HistoryRepository by lazy { HistoryRepository(hubEau, database, preferences) }
 
-    /** Any sample of a unit by its code, from the history (SPEC §5 F4, F5); never cached. */
-    val samples: SampleRepository by lazy { RemoteSampleRepository(hubEau) }
+    /** Any sample of a unit by its code, from the history (SPEC §5 F4, F5), cached (SPEC §7). */
+    val samples: SampleRepository by lazy {
+        CachingSampleRepository(RemoteSampleRepository(hubEau), database, preferences)
+    }
 
     /** Checks the followed units for new samples (SPEC §5 F7). */
     val alertChecker: AlertChecker by lazy { AlertChecker(hubEau, follows, water) }
