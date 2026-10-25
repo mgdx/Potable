@@ -76,7 +76,7 @@ class SheetViewModelTest {
             water.refreshedCache = CachedSample(sample(), fetchedAt)
             viewModel.retry()
             advanceUntilIdle()
-            assertEquals(UnfavourableDigest(2, recent), viewModel.recentUnfavourable.value)
+            assertEquals(UnfavourableDigest(1, 0, 1, recent), viewModel.recentUnfavourable.value)
             // Twelve months back from today in France; once per sample shown.
             assertEquals(listOf(LocalDate.parse("2025-10-25")), history.timelineCalls)
             viewModel.pullToRefresh()

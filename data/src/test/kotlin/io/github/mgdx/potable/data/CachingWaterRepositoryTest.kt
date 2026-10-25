@@ -405,6 +405,35 @@ class CachingWaterRepositoryTest {
     }
 
     @Test
+    fun `a purge made while a refresh runs is not undone by it`() = runTest {
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        for (purge in listOf<suspend () -> Unit>(
+            { repository.purgeCommune("45234") },
+            { repository.purgeCache() },
+        )) {
+            val purging = object : WaterRepository by network {
+                override suspend fun latestSamples(
+                    communeCode: String,
+                    networkCode: String?,
+                ): List<Sample> {
+                    purge()
+                    return listOf(sample("P2", "2026-09-26T12:50:00Z"))
+                }
+            }
+            val racing = CachingWaterRepository(purging, database, preferences, clock)
+
+            assertTrue(racing.refreshCache("45234", UDI, force = true))
+
+            assertNull(cached())
+            assertEquals(0, database.cache().sampleCount())
+            // The next refresh, with no purge, fills the cache again.
+            repository.refreshCache("45234", UDI, force = false)
+            assertEquals("P1", cached()!!.sample!!.code)
+        }
+    }
+
+    @Test
     fun `purging a commune that is not followed forgets its remembered unit`() = runTest {
         network.samples["75056" to "075000001"] = sample("P3", "2026-08-26T12:50:00Z")
         repository.refreshCache("75056", "075000001", force = false)

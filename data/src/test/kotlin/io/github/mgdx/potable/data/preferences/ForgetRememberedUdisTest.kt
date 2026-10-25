@@ -25,12 +25,15 @@ class ForgetRememberedUdisTest {
     @After
     fun closeStore() = scope.cancel()
 
-    private val preferences by lazy {
+    private val store by lazy {
         val file = folder.newFile("preferences.preferences_pb").apply { delete() }
-        DataStoreAppPreferences(
-            PreferenceDataStoreFactory.create(scope = scope, produceFile = { file }),
-        )
+        PreferenceDataStoreFactory.create(scope = scope, produceFile = { file })
     }
+
+    private val preferences by lazy { DataStoreAppPreferences(store) }
+
+    private suspend fun storedKeys(): Set<String> =
+        store.data.first().asMap().keys.mapTo(mutableSetOf()) { it.name }
 
     @Test
     fun forgetsEveryRememberedUdiButTheKeptCommunes() = runBlocking {
@@ -47,14 +50,20 @@ class ForgetRememberedUdisTest {
 
     @Test
     fun forgetsTheUdiOfOneCommuneOnly() = runBlocking {
-        preferences.rememberUdi("45234", "045000123")
-        preferences.rememberUdi("75056", "075000221")
+        preferences.rememberUdi("45234", "045000123", "ORLEANS")
+        preferences.rememberUdi("75056", "075000221", "PARIS CENTRE")
 
         preferences.forgetRememberedUdi("45234")
         preferences.forgetRememberedUdi("99999")
 
         assertNull(preferences.rememberedUdi("45234"))
         assertEquals("075000221", preferences.rememberedUdi("75056"))
+        // The name goes with the code, and only that commune's.
+        assertEquals(setOf("udi_75056", "udiname_75056"), storedKeys())
+        assertEquals(
+            mapOf("75056" to RememberedUdi("075000221", "PARIS CENTRE")),
+            preferences.rememberedUdis.first(),
+        )
     }
 
     @Test

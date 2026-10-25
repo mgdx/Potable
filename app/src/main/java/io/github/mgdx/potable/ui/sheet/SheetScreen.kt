@@ -493,9 +493,10 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
 }
 
 /**
- * A discreet box: how many samples of the last 12 months have an
- * unfavourable published outcome, and the most recent one's date and
- * conclusion as published (SPEC §14: no verdict, no reassuring message when
+ * A discreet box: how many samples of the last 12 months were published
+ * non-compliant with the quality limits, with the quality references only,
+ * or with a restriction in their conclusion only, and the most recent one's
+ * date and conclusion as published (SPEC §14: no verdict, no reassuring message when
  * there is none, in which case the box is not shown). Opens the timeline.
  */
 @Composable
@@ -521,14 +522,24 @@ private fun RecentUnfavourableCard(digest: UnfavourableDigest, onShowHistory: ()
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                text = pluralStringResource(
-                    R.plurals.sheet_recent_unfavourable_count,
-                    digest.count,
-                    digest.count,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            // What was published, limits and references told apart (SPEC §5 F3).
+            listOf(
+                R.plurals.sheet_recent_limits to digest.limitsCount,
+                R.plurals.sheet_recent_references_only to digest.referencesOnlyCount,
+                R.plurals.sheet_recent_conclusion_only to digest.conclusionOnlyCount,
+            ).filter { it.second > 0 }.forEach { (res, count) ->
+                Text(
+                    text = pluralStringResource(res, count, count),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            if (digest.limitsCount + digest.referencesOnlyCount > 0) {
+                Text(
+                    text = stringResource(R.string.sheet_compliance_explanation),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(
                 text = stringResource(R.string.sheet_recent_unfavourable_latest, date),
                 style = MaterialTheme.typography.bodySmall,

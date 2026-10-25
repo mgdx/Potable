@@ -37,17 +37,27 @@ internal interface FollowDao {
 @Dao
 internal interface CacheDao {
     /**
-     * The cached samples of a unit taken less than a day before its newest
-     * one, newest first (then by code), re-emitted on every change of the
-     * table: those of the newest published day are among them.
+     * The latest samples a refresh cached for a unit ([SampleEntity.latest]),
+     * taken less than a day before the newest of them, newest first (then by
+     * code), re-emitted on every change of the table: those of the newest
+     * published day are among them. A sample kept from the history is never
+     * among them, even if it is newer.
      */
     @Query(
         "SELECT * FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
-            "AND date > (SELECT MAX(p.date) FROM prelevement AS p " +
-            "WHERE p.code_commune = :communeCode AND p.code_reseau = :udiCode) - $DAY_MS " +
+            "AND dernier = 1 AND date > (SELECT MAX(p.date) FROM prelevement AS p " +
+            "WHERE p.code_commune = :communeCode AND p.code_reseau = :udiCode " +
+            "AND p.dernier = 1) - $DAY_MS " +
             "ORDER BY date DESC, code_prelevement",
     )
     fun observeLatestSamples(communeCode: String, udiCode: String): Flow<List<SampleEntity>>
+
+    /** One cached sample of a unit, latest or kept from the history, or null. */
+    @Query(
+        "SELECT * FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
+            "AND code_prelevement = :sampleCode",
+    )
+    suspend fun sample(communeCode: String, udiCode: String, sampleCode: String): SampleEntity?
 
     @Query(
         "SELECT * FROM resultat WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
@@ -79,15 +89,17 @@ internal interface CacheDao {
 
     /**
      * Retention purge (SPEC §7): deletes the samples dated before [cutoff]
-     * (epoch ms), except those taken less than a day before the newest of
-     * their unit, so that a unit always keeps its latest analyses (all of
-     * the newest day). Results follow by cascade.
+     * (epoch ms), except those taken less than a day before the newest
+     * latest sample of their unit ([SampleEntity.latest]), so that a unit
+     * always keeps its latest analyses (all of the newest day). A sample
+     * kept from the history is purged like any other. Results follow by
+     * cascade.
      */
     @Query(
-        "DELETE FROM prelevement WHERE date < :cutoff AND date <= (" +
+        "DELETE FROM prelevement WHERE date < :cutoff AND date <= COALESCE((" +
             "SELECT MAX(p.date) FROM prelevement AS p " +
             "WHERE p.code_commune = prelevement.code_commune " +
-            "AND p.code_reseau = prelevement.code_reseau) - $DAY_MS",
+            "AND p.code_reseau = prelevement.code_reseau AND p.dernier = 1) - $DAY_MS, :cutoff)",
     )
     suspend fun purgeOlderThan(cutoff: Long)
 
@@ -126,13 +138,16 @@ internal interface CacheDao {
     /**
      * Every unit with something cached, and the last successful fetch of
      * each of its caches (latest sample, series, timeline), one row per
-     * cache; re-emitted on every change of these tables.
+     * cache, plus one row without date per cached sample (a sample kept
+     * from the history has no sync row); re-emitted on every change of
+     * these tables.
      */
     @Query(
         "SELECT code_commune, code_reseau, dernier_succes FROM synchro " +
             "WHERE dernier_succes IS NOT NULL " +
             "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM serie " +
-            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM historique_synchro",
+            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM historique_synchro " +
+            "UNION ALL SELECT code_commune, code_reseau, NULL FROM prelevement",
     )
     fun observeCachedUnits(): Flow<List<CachedUnitRow>>
 

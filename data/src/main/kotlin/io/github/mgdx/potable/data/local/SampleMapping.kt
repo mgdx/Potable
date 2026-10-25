@@ -20,20 +20,22 @@ internal fun Compliance.toCode(): String? = when (this) {
     Compliance.UNKNOWN -> null
 }
 
-internal fun Sample.toEntity(communeCode: String, udiCode: String) = SampleEntity(
-    communeCode = communeCode,
-    udiCode = udiCode,
-    code = code,
-    sampleNetworkCode = networkCode,
-    date = date.toEpochMilli(),
-    conclusion = conclusion,
-    bacteriologicalLimits = bacteriologicalLimits.toCode(),
-    physicochemicalLimits = physicochemicalLimits.toCode(),
-    bacteriologicalReferences = bacteriologicalReferences.toCode(),
-    physicochemicalReferences = physicochemicalReferences.toCode(),
-    distributeur = distributor,
-    owner = owner,
-)
+internal fun Sample.toEntity(communeCode: String, udiCode: String, latest: Boolean = true) =
+    SampleEntity(
+        communeCode = communeCode,
+        udiCode = udiCode,
+        code = code,
+        sampleNetworkCode = networkCode,
+        date = date.toEpochMilli(),
+        conclusion = conclusion,
+        bacteriologicalLimits = bacteriologicalLimits.toCode(),
+        physicochemicalLimits = physicochemicalLimits.toCode(),
+        bacteriologicalReferences = bacteriologicalReferences.toCode(),
+        physicochemicalReferences = physicochemicalReferences.toCode(),
+        distributeur = distributor,
+        owner = owner,
+        latest = latest,
+    )
 
 internal fun Sample.resultEntities(communeCode: String, udiCode: String) =
     results.mapIndexed { index, result ->

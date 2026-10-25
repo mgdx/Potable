@@ -3,6 +3,7 @@ package io.github.mgdx.potable.data.local
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -69,6 +70,37 @@ class MigrationTest {
             assertNull(database.history().series("45234", "045000474", "1340"))
             assertEquals(0, database.history().pointCount())
             assertEquals(0, database.history().timelineCount())
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun `v2 to v3 keeps the cached samples as latest ones`() = runTest {
+        helper.createDatabase(NAME, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO prelevement (code_commune, code_reseau, code_prelevement, " +
+                    "reseau_prelevement, date, conclusion, conformite_limites_bact, " +
+                    "conformite_limites_pc, conformite_references_bact, " +
+                    "conformite_references_pc, " +
+                    "distributeur, maitre_ouvrage) VALUES ('45234', '045000474', 'P1', " +
+                    "'045000474', 1787741400000, 'Eau conforme.', 'C', 'C', 'C', 'C', 'D', 'M')",
+            )
+        }
+
+        // Validates the migrated schema against 3.json.
+        helper.runMigrationsAndValidate(NAME, 3, true).close()
+
+        val database = Room
+            .databaseBuilder(RuntimeEnvironment.getApplication(), PotableDatabase::class.java, NAME)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            assertEquals(true, database.cache().sample("45234", "045000474", "P1")!!.latest)
+            assertEquals(
+                listOf("P1"),
+                database.cache().observeLatestSamples("45234", "045000474").first().map { it.code },
+            )
         } finally {
             database.close()
         }

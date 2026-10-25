@@ -102,10 +102,20 @@
     <string name="sheet_sample_number">Prélèvement %1$d sur %2$d</string>
     <string name="sheet_details_of_latest">Les paramètres clés et la conformité ci-dessous sont ceux du prélèvement le plus récent.</string>
     <string name="sheet_recent_unfavourable_title">12 derniers mois</string>
-    <plurals name="sheet_recent_unfavourable_count">
-        <item quantity="one">%d prélèvement a un résultat publié défavorable.</item>
-        <item quantity="many">%d prélèvements ont un résultat publié défavorable.</item>
-        <item quantity="other">%d prélèvements ont un résultat publié défavorable.</item>
+    <plurals name="sheet_recent_limits">
+        <item quantity="one">%d prélèvement non conforme aux limites de qualité</item>
+        <item quantity="many">%d prélèvements non conformes aux limites de qualité</item>
+        <item quantity="other">%d prélèvements non conformes aux limites de qualité</item>
+    </plurals>
+    <plurals name="sheet_recent_references_only">
+        <item quantity="one">%d prélèvement non conforme aux seules références de qualité</item>
+        <item quantity="many">%d prélèvements non conformes aux seules références de qualité</item>
+        <item quantity="other">%d prélèvements non conformes aux seules références de qualité</item>
+    </plurals>
+    <plurals name="sheet_recent_conclusion_only">
+        <item quantity="one">%d prélèvement dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
+        <item quantity="many">%d prélèvements dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
+        <item quantity="other">%d prélèvements dont seule la conclusion mentionne une restriction ou une consommation déconseillée</item>
     </plurals>
     <string name="sheet_recent_unfavourable_latest">Le plus récent, prélevé le %1$s :</string>
     <string name="sheet_key_parameters_title">Paramètres clés</string>
@@ -229,7 +239,7 @@
     <string name="follows_set_primary_description">Définir %1$s comme commune principale</string>
     <string name="follows_remove">Ne plus suivre %1$s</string>
     <string name="follows_remove_title">Ne plus suivre %1$s ?</string>
-    <string name="follows_remove_text">Les données de %1$s enregistrées sur ce téléphone seront supprimées.</string>
+    <string name="follows_remove_text">Les alertes s’arrêtent pour %1$s. Ses données enregistrées sur ce téléphone restent jusqu’à ce que vous vidiez le cache dans les paramètres.</string>
     <string name="follows_remove_confirm">Ne plus suivre</string>
 
     <!-- ===== Settings (SPEC §5 F8) ===== -->
@@ -257,10 +267,10 @@
     <string name="settings_clear_cache_done">Cache vidé.</string>
     <string name="settings_cached_communes_title">Communes en cache</string>
     <string name="settings_cached_communes_empty">Aucune commune en cache.</string>
-    <string name="settings_clear_commune_description">Vider le cache de %1$s</string>
-    <string name="settings_clear_commune_confirm_title">Vider le cache de %1$s ?</string>
+    <string name="settings_clear_commune_description">Vider le cache pour %1$s</string>
+    <string name="settings_clear_commune_confirm_title">Vider le cache pour %1$s ?</string>
     <string name="settings_clear_commune_confirm_text">Les résultats d’analyse enregistrés sur ce téléphone pour cette commune seront supprimés. Si vous ne la suivez pas, l’unité de distribution choisie pour elle sera aussi oubliée. Vos communes restent dans votre liste.</string>
-    <string name="settings_clear_commune_done">Cache de %1$s vidé.</string>
+    <string name="settings_clear_commune_done">Cache vidé pour %1$s.</string>
     <string name="settings_alerts_description">Potable vérifie vos communes en arrière-plan et vous avertit des nouveaux résultats. Les données de Hub\'Eau ne changent qu’une fois par mois : des vérifications plus fréquentes n’en trouveraient pas davantage.</string>
     <string name="alert_new_analyses">Nouvelles analyses</string>
     <string name="settings_alert_new_description">Chaque nouvelle analyse de vos communes, quelle que soit sa conclusion.</string>

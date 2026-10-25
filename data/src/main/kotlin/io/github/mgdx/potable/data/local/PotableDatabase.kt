@@ -5,6 +5,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * The local store of SPEC §7: followed units and the cache of the units looked at,
@@ -14,7 +15,9 @@ import androidx.room.RoomDatabase
  * Versions: 1, follows and latest-sample cache; 2, adds the
  * history cache (`serie`, `serie_point`, `historique_prelevement`,
  * `historique_synchro`), new tables only, hence an automatic
- * migration that keeps every v1 row.
+ * migration that keeps every v1 row; 3, adds `prelevement.dernier` (1 by
+ * default: every v2 row was written by a refresh) so that a sample kept from
+ * the history is never taken for a latest one, automatic migration too.
  */
 @Database(
     entities = [
@@ -27,9 +30,9 @@ import androidx.room.RoomDatabase
         TimelineSampleEntity::class,
         TimelineSyncEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class PotableDatabase : RoomDatabase() {
     internal abstract fun follows(): FollowDao
@@ -37,6 +40,17 @@ abstract class PotableDatabase : RoomDatabase() {
     internal abstract fun cache(): CacheDao
 
     internal abstract fun history(): HistoryDao
+
+    /**
+     * Incremented by every purge of the cache, whole or of a commune. A
+     * fetch reads it before calling Hub'Eau and writes its result only if
+     * it has not changed meanwhile ([unchangedSince]): a purge made during
+     * the request is not undone by it.
+     */
+    internal val cacheGeneration = AtomicLong()
+
+    /** Whether no purge happened since [generation] was read from [cacheGeneration]. */
+    internal fun unchangedSince(generation: Long): Boolean = cacheGeneration.get() == generation
 
     companion object {
         const val FILE_NAME = "potable.db"

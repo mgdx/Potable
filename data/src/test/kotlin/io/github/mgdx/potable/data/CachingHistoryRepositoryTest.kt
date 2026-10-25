@@ -433,6 +433,45 @@ class CachingHistoryRepositoryTest {
     }
 
     @Test
+    fun `a purge made while a fetch runs is not undone by it`() = runTest {
+        givenHistory()
+        val purging = object : HistoryRepository by network {
+            override suspend fun parameterSeries(
+                communeCode: String,
+                udiCode: String,
+                parameterCodes: Set<String>,
+                since: LocalDate,
+                force: Boolean,
+            ): ParameterSeries? {
+                water.purgeCommune(communeCode)
+                return network.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
+            }
+
+            override suspend fun sampleTimeline(
+                communeCode: String,
+                udiCode: String,
+                since: LocalDate,
+                force: Boolean,
+            ): List<SampleSummary> {
+                water.purgeCache()
+                return network.sampleTimeline(communeCode, udiCode, since, force)
+            }
+        }
+        val racing = CachingHistoryRepository(purging, database, preferences, clock)
+
+        // The fetch itself is returned, but not cached.
+        assertEquals(
+            2,
+            racing.parameterSeries("45234", UDI, setOf("1340"), threeYears)?.points?.size,
+        )
+        assertEquals(2, racing.sampleTimeline("45234", UDI, threeYears).size)
+        assertEquals(0, database.history().pointCount())
+        assertEquals(0, database.history().timelineCount())
+        assertNull(database.history().series("45234", UDI, "1340"))
+        assertNull(database.history().timelineSync("45234", UDI))
+    }
+
+    @Test
     fun `the cache key is the set of codes, in any order`() = runTest {
         followOrleans()
         givenHistory()
