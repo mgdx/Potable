@@ -239,7 +239,7 @@
     <string name="follows_set_primary_description">Définir %1$s comme commune principale</string>
     <string name="follows_remove">Ne plus suivre %1$s</string>
     <string name="follows_remove_title">Ne plus suivre %1$s ?</string>
-    <string name="follows_remove_text">Les données de %1$s enregistrées sur ce téléphone seront supprimées.</string>
+    <string name="follows_remove_text">Les alertes s’arrêtent pour %1$s. Ses données enregistrées sur ce téléphone restent jusqu’à ce que vous vidiez le cache dans les paramètres.</string>
     <string name="follows_remove_confirm">Ne plus suivre</string>
 
     <!-- ===== Settings (SPEC §5 F8) ===== -->

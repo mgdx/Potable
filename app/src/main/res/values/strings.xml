@@ -343,7 +343,7 @@
     <!-- Dialog title. %1$s: commune name, as published. -->
     <string name="follows_remove_title">Stop following %1$s?</string>
     <!-- Dialog text. %1$s: distribution unit name, as published. -->
-    <string name="follows_remove_text">The data of %1$s saved on this phone will be deleted.</string>
+    <string name="follows_remove_text">Alerts stop for %1$s. Its data saved on this phone stay until you clear the cache in Settings.</string>
     <!-- Dialog button. Short: about 20 characters. -->
     <string name="follows_remove_confirm">Stop following</string>
 
