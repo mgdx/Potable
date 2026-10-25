@@ -2,13 +2,17 @@ package io.github.mgdx.potable.ui.udi
 
 import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.DataError
+import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.FakeWaterRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.udi
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -142,6 +146,61 @@ class UdiViewModelTest {
         viewModel.select(north)
         advanceUntilIdle()
         assertEquals(mapOf("45234" to north.code), preferences.remembered)
+    }
+
+    @Test
+    fun `the unit picked is taken once remembered, without offering the choice again`() =
+        runTest(main.dispatcher) {
+            water.udiAnswers += Result.success(UdiChoice.Multiple(listOf(north, south)))
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            viewModel.select(south)
+            advanceUntilIdle()
+            // The screen goes on to the sheet in its place: back from the
+            // sheet does not show the list again.
+            assertEquals(UdiUiState.Remembered(south), viewModel.state.value)
+            assertEquals(mapOf("45234" to south.code), preferences.remembered)
+        }
+
+    @Test
+    fun `a unit picked after asking to change is taken once remembered`() =
+        runTest(main.dispatcher) {
+            preferences.remembered["45234"] = south.code
+            water.udiAnswers += Result.success(UdiChoice.Multiple(listOf(north, south)))
+            val viewModel = viewModel(forceChoice = true)
+            advanceUntilIdle()
+            viewModel.select(north)
+            advanceUntilIdle()
+            assertEquals(UdiUiState.Remembered(north), viewModel.state.value)
+            assertEquals(mapOf("45234" to north.code), preferences.remembered)
+        }
+
+    @Test
+    fun `the screen goes on only once the choice is written`() = runTest(main.dispatcher) {
+        val written = CompletableDeferred<Unit>()
+        val stored = mutableMapOf<String, String>()
+        val slowPreferences = object : AppPreferences {
+            override val disclaimerAccepted: Flow<Boolean> = flowOf(true)
+
+            override suspend fun acceptDisclaimer() = Unit
+
+            override suspend fun rememberUdi(communeCode: String, udiCode: String) {
+                written.await()
+                stored[communeCode] = udiCode
+            }
+        }
+        water.udiAnswers += Result.success(UdiChoice.Multiple(listOf(north, south)))
+        val viewModel = UdiViewModel(water, slowPreferences, follows, communeCode = "45234")
+        advanceUntilIdle()
+        viewModel.select(north)
+        advanceUntilIdle()
+        // Leaving now would clear the ViewModel and cancel the write.
+        assertEquals(UdiUiState.Choice(listOf(north, south)), viewModel.state.value)
+
+        written.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(UdiUiState.Remembered(north), viewModel.state.value)
+        assertEquals(mapOf("45234" to north.code), stored)
     }
 
     @Test

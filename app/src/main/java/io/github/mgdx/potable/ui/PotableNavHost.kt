@@ -333,15 +333,12 @@ private fun PotableNavGraph(
                 },
                 onUdiRemembered = { udi ->
                     // Same as above, but the sheet offers to change the unit.
+                    // A unit just picked goes this way too: back from its
+                    // sheet does not offer the choice again (SPEC §5 F2).
                     val route = Routes.sheet(communeCode, udi.code, name, udi.name, change = true)
                     navController.navigate(route) {
                         popUpTo(Routes.UDIS) { inclusive = true }
                     }
-                },
-                onUdiSelected = { udi ->
-                    navController.navigate(
-                        Routes.sheet(communeCode, udi.code, name, udi.name, change = true),
-                    )
                 },
             )
         }
@@ -363,16 +360,10 @@ private fun PotableNavGraph(
             val isRoot = remember(entry) { navController.previousBackStackEntry == null }
             val onChangeUdi: (() -> Unit)? = if (entry.flag(Routes.ARG_CHANGE)) {
                 {
-                    val previous = navController.previousBackStackEntry?.destination?.route
-                    if (previous == Routes.UDIS) {
-                        // The choice this sheet was picked from.
-                        navController.navigateUp()
-                    } else {
-                        val route = Routes.udis(communeCode, communeName, choose = true)
-                        navController.navigate(route) {
-                            // Back from the choice returns where this sheet did.
-                            popUpTo(Routes.SHEET) { inclusive = true }
-                        }
+                    val route = Routes.udis(communeCode, communeName, choose = true)
+                    navController.navigate(route) {
+                        // Back from the choice returns where this sheet did.
+                        popUpTo(Routes.SHEET) { inclusive = true }
                     }
                 }
             } else {

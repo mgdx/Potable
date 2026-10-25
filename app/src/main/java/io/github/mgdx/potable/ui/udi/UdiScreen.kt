@@ -51,7 +51,6 @@ fun UdiScreen(
     onBack: () -> Unit,
     onUdiResolved: (Udi) -> Unit,
     onUdiRemembered: (Udi) -> Unit,
-    onUdiSelected: (Udi) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
@@ -61,7 +60,7 @@ fun UdiScreen(
     val forward = state
     LaunchedEffect(forward) {
         // A single unit is chosen without asking, and so is the unit followed
-        // or chosen last time among several (SPEC §5 F2).
+        // or chosen last time among several (SPEC §5 F2), or just picked.
         when (forward) {
             is UdiUiState.Resolved -> currentOnUdiResolved(forward.udi)
             is UdiUiState.Remembered -> currentOnUdiRemembered(forward.udi)
@@ -83,10 +82,7 @@ fun UdiScreen(
                 currentCode = current.currentCode,
                 query = query,
                 onQueryChange = viewModel::onQueryChange,
-                onUdiSelected = { udi ->
-                    viewModel.select(udi)
-                    onUdiSelected(udi)
-                },
+                onUdiSelected = viewModel::select,
                 modifier = modifier,
             )
         }
