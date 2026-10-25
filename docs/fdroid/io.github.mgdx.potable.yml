@@ -1,0 +1,45 @@
+# Draft of metadata/io.github.mgdx.potable.yml for fdroiddata.
+# Review: docs/audits/fdroid-2026-10-25.md. Before the merge request:
+# - publish https://github.com/mgdx/Potable and push the v0.1.0 tag;
+# - replace `commit: v0.1.0` with the full hash of the tagged commit;
+# - run `fdroid rewritemeta io.github.mgdx.potable` and `fdroid lint`.
+# Name, Summary and Description are left out on purpose: they come from
+# fastlane/metadata/android/ in the source repository.
+
+Categories:
+  - Science & Education
+  - Sports & Health
+License: GPL-3.0-only
+AuthorName: mgdx
+WebSite: https://github.com/mgdx/Potable
+SourceCode: https://github.com/mgdx/Potable
+IssueTracker: https://github.com/mgdx/Potable/issues
+Liberapay: mgdx
+
+AutoName: Potable
+
+RepoType: git
+Repo: https://github.com/mgdx/Potable.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: app
+    gradle:
+      - yes
+    ndk: r28c
+    # Once a signed APK is published by the project (docs/release.md):
+    # binary: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
+
+# The signing key does not exist yet. Uncomment with the SHA-256 of the
+# release certificate (keytool -list -v ... | grep SHA256, lowercase, no
+# colons) together with `binary:` above, at the first submission only.
+# AllowedAPKSigningKeys: <sha256 of the release certificate>
+
+AutoUpdateMode: Version
+# No UpdateCheckData: checkupdates reads the literal versionCode/versionName
+# of app/build.gradle.kts (subdir) at the tagged commit.
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

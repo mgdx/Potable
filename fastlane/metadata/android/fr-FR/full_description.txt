@@ -1,0 +1,40 @@
+Potable affiche les résultats du contrôle sanitaire de l’eau du robinet en France : la conclusion sanitaire du dernier prélèvement fait sur le réseau qui dessert votre commune, le détail de chaque paramètre analysé, et leur évolution dans le temps.
+
+Ces résultats sont établis par les agences régionales de santé (ARS) et publiés par le ministère de la Santé via Hub'Eau. Potable les restitue tels quels : il n’y ajoute ni score, ni note, ni avis de son cru.
+
+<b>Fonctionnalités</b>
+
+• Trouver sa commune sans réseau, par son nom ou son code postal : le référentiel des communes est embarqué dans l’application. « Autour de moi » est facultatif : la permission de localisation n’est demandée qu’au moment où vous touchez le bouton.
+• La bonne unité de distribution : quand une commune en compte plusieurs, Potable les liste avec leur nom de quartier, explique en une phrase ce qu’est une unité de distribution, et retient votre choix.
+• Le dernier prélèvement : la conclusion sanitaire telle que l’ARS l’a publiée, la date du prélèvement, le distributeur et la collectivité responsable, les conformités bactériologique et physico-chimique, limites de qualité et références de qualité distinguées, et quelques paramètres clés expliqués en une phrase : dureté, nitrates, pH, chlore libre.
+• Tous les paramètres analysés, regroupés par famille, avec leur valeur, leur unité et la limite de qualité quand elle est publiée, et une recherche dans la liste.
+• L’historique : la courbe d’un paramètre sur 1, 3, 5 ou 10 ans, avec la limite réglementaire tracée quand elle existe, et la frise des conclusions sanitaires des prélèvements successifs.
+• Plusieurs communes suivies, consultables hors ligne avec la date de leurs données ; la commune principale s’ouvre au démarrage.
+• Des alertes facultatives, désactivées par défaut : une vérification chaque semaine (ou toutes les deux ou quatre semaines), qui signale chaque nouvelle analyse, ou seulement les conclusions défavorables.
+• En anglais et en français. Les libellés officiels (paramètres, unités, conclusions) restent en français dans les deux langues : ce sont des données, pas de l’interface.
+• Thème clair, sombre ou celui du système.
+
+<b>Ce que Potable ne fait pas</b>
+
+• Aucun score, aucune note, aucun classement : Potable montre les conclusions des ARS, avec leurs mots.
+• Aucun avis sanitaire : l’application ne vous dit pas si vous pouvez boire votre eau. En cas de doute, adressez-vous à votre agence régionale de santé (ARS) ou à votre distributeur d’eau.
+• Votre robinet n’est pas couvert : les analyses portent sur l’unité de distribution, et l’état des canalisations privées de votre immeuble n’y apparaît pas.
+• Les données sont mises à jour une fois par mois : un résultat affiché peut dater de plusieurs semaines.
+
+<b>Vie privée</b>
+
+• Un seul serveur contacté : hubeau.eaufrance.fr, uniquement en HTTPS. Les requêtes contiennent les codes de la commune et de l’unité de distribution consultées, et aucun identifiant.
+• Votre position n’est jamais transmise ni enregistrée : si vous utilisez « Autour de moi », elle sert une fois, sur le téléphone, à trouver la commune la plus proche, puis elle est écartée.
+• Aucune télémétrie, aucun rapport de plantage, aucune publicité, aucun compte. Vos communes suivies restent sur votre téléphone.
+
+<b>Sources</b>
+
+Résultats du contrôle sanitaire : API « Qualité de l’eau potable » de Hub'Eau, données du ministère de la Santé et des agences régionales de santé (ARS). Communes : Découpage administratif communal (geo.api.gouv.fr) et Code officiel géographique (INSEE), sous Licence Ouverte Etalab 2.0.
+
+Potable est une application indépendante, sans lien avec Hub'Eau, le ministère ou les ARS.
+
+Logiciel libre sous licence GNU GPL v3.
+
+<b>Traductions</b>
+
+La traduction française a été produite par IA et attend la relecture d’un locuteur natif. Les corrections sont bienvenues sur le dépôt du projet.

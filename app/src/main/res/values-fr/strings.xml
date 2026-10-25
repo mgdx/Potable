@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    French translation of Potable (values-fr). AI translation, to be reviewed
+    by a native speaker: see docs/translations.md. Vocabulary and typography
+    follow docs/glossary.md, section Français. Same order and sections as
+    values/strings.xml, where the context comments are (in English).
+-->
+<resources>
+    <!-- ===== Shared actions ===== -->
+
+    <string name="action_back">Retour</string>
+    <string name="action_retry">Réessayer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_clear_search">Effacer la recherche</string>
+    <string name="action_more_options">Plus d’options</string>
+    <string name="action_search_commune">Rechercher une commune</string>
+    <string name="commune_and_unit">%1$s, %2$s</string>
+
+    <!-- ===== Loading and errors ===== -->
+
+    <string name="error_network">Impossible de joindre Hub\'Eau. Vérifiez votre connexion.</string>
+    <string name="error_too_slow">Hub\'Eau a mis trop de temps à répondre. Réessayez plus tard.</string>
+    <string name="error_unavailable">Hub\'Eau est indisponible pour le moment.</string>
+    <string name="error_unexpected_response">Hub\'Eau a envoyé une réponse inattendue.</string>
+    <string name="error_unexpected">Un problème est survenu. Réessayez.</string>
+    <string name="loading_slow">Hub\'Eau tarde à répondre, merci de patienter…</string>
+
+    <!-- ===== Compliance and quality thresholds ===== -->
+
+    <string name="compliance_compliant">Conforme</string>
+    <string name="compliance_compliant_under_derogation">Conforme dans le cadre d’une dérogation</string>
+    <string name="compliance_not_compliant">Non conforme</string>
+    <string name="compliance_not_assessed">Sans objet</string>
+    <string name="compliance_unknown">Inconnu</string>
+    <string name="sheet_limits_bacteriological">Limites de qualité bactériologiques</string>
+    <string name="sheet_limits_physicochemical">Limites de qualité physico-chimiques</string>
+    <string name="sheet_references_bacteriological">Références de qualité bactériologiques</string>
+    <string name="sheet_references_physicochemical">Références de qualité physico-chimiques</string>
+    <string name="quality_limit">Limite de qualité : %1$s</string>
+    <string name="quality_reference">Référence de qualité : %1$s</string>
+    <string name="sample_no_value">Aucune valeur publiée</string>
+    <string name="sheet_official_wording">Libellé officiel</string>
+    <string name="sample_official_labels">Libellés officiels, tels que publiés par Hub\'Eau.</string>
+
+    <!-- ===== First-launch notice (SPEC §14) ===== -->
+
+    <string name="disclaimer_title">Avant de commencer</string>
+    <string name="disclaimer_point_source">Les résultats sont issus du contrôle sanitaire officiel mené par les agences régionales de santé (ARS) et publiés par le ministère de la Santé via Hub\'Eau.</string>
+    <string name="disclaimer_point_freshness">Les données sont mises à jour une fois par mois : un résultat affiché ici peut dater de plusieurs semaines.</string>
+    <string name="disclaimer_point_scope">Les analyses portent sur l’unité de distribution, pas sur votre propre robinet : l’état des canalisations privées de votre immeuble n’est pas pris en compte.</string>
+    <string name="disclaimer_point_no_advice">Potable ne donne aucun avis sanitaire. En cas de doute, contactez votre agence régionale de santé (ARS) ou votre distributeur d’eau.</string>
+    <string name="disclaimer_point_no_score">Potable n’ajoute ni score, ni note, ni classement qui lui soit propre : l’application affiche les conclusions officielles telles qu’elles sont publiées.</string>
+    <string name="disclaimer_accept">J’ai compris</string>
+
+    <!-- ===== Search for a commune (SPEC §5 F1) ===== -->
+
+    <string name="search_label">Commune ou code postal</string>
+    <string name="search_hint">Recherchez votre commune par son nom ou son code postal pour consulter les derniers résultats d’analyse de l’eau du robinet.</string>
+    <string name="search_loading">Chargement de la liste des communes…</string>
+    <string name="search_no_results">Aucune commune ne correspond à « %1$s ».</string>
+    <string name="search_postal_codes_more">%1$s +%2$d</string>
+    <string name="search_published_under">Résultats publiés pour la commune de rattachement : %1$s</string>
+    <string name="nearby_action">Autour de moi</string>
+    <string name="nearby_locating">Recherche de la commune où vous vous trouvez…</string>
+    <string name="nearby_found_title">Près de vous</string>
+    <string name="nearby_permission_denied">Sans accès à votre position, Potable ne peut pas trouver votre commune. Vous pouvez toujours la rechercher par son nom ou son code postal.</string>
+    <string name="nearby_disabled">La localisation est désactivée sur cet appareil. Activez-la, ou recherchez votre commune par son nom ou son code postal.</string>
+    <string name="nearby_unavailable">Impossible de déterminer votre position à temps. Réessayez, ou recherchez votre commune par son nom ou son code postal.</string>
+    <string name="nearby_no_commune">Aucune commune française n’a été trouvée près de vous. Recherchez la vôtre par son nom ou son code postal.</string>
+
+    <!-- ===== Choice of the distribution unit (SPEC §5 F2) ===== -->
+
+    <string name="udi_loading">Recherche des unités de distribution de cette commune…</string>
+    <string name="udi_none">Aucune unité de distribution n’est répertoriée pour cette commune.</string>
+    <string name="udi_choice_title">Choisissez votre unité de distribution</string>
+    <string name="udi_explanation">Une unité de distribution est la partie du réseau d’eau qui distribue une eau de même qualité. Plusieurs desservent cette commune : choisissez celle de votre secteur.</string>
+    <string name="udi_current_choice">Votre choix actuel</string>
+    <string name="udi_search_label">Rechercher une unité de distribution</string>
+    <string name="udi_no_match">Aucune unité de distribution ne correspond à « %1$s ».</string>
+
+    <!-- ===== "My water" sheet (SPEC §5 F3) ===== -->
+
+    <string name="sheet_follow">Suivre</string>
+    <string name="sheet_following">Suivie</string>
+    <string name="sheet_follow_description">Suivre cette unité de distribution</string>
+    <string name="sheet_unfollow_description">Suivie. Appuyez pour ne plus suivre cette unité de distribution</string>
+    <string name="sheet_change_udi">Changer d’unité de distribution</string>
+    <string name="sheet_data_from">Données du %1$s</string>
+    <string name="sheet_refresh_failed">Impossible d’actualiser — données du %1$s</string>
+    <string name="sheet_loading">Chargement du dernier prélèvement…</string>
+    <string name="sheet_no_sample">Aucun prélèvement n’a été publié pour cette unité de distribution.</string>
+    <string name="sheet_conclusion_title">Conclusion sanitaire du dernier prélèvement</string>
+    <string name="sheet_no_conclusion">Aucune conclusion sanitaire n’a été publiée pour ce prélèvement.</string>
+    <string name="sheet_key_parameters_title">Paramètres clés</string>
+    <string name="featured_nitrates">Nitrates</string>
+    <string name="featured_nitrates_explanation">Les nitrates, issus surtout de l’agriculture et des eaux usées, comptent parmi les paramètres les plus surveillés.</string>
+    <string name="featured_hardness">Dureté</string>
+    <string name="featured_hardness_explanation">La dureté, utile pour régler un lave-vaisselle ou un adoucisseur d’eau.</string>
+    <string name="featured_ph">pH</string>
+    <string name="featured_ph_explanation">Le pH indique le degré d’acidité ou d’alcalinité de l’eau.</string>
+    <string name="featured_free_chlorine">Chlore libre</string>
+    <string name="featured_free_chlorine_explanation">Le chlore libre est le désinfectant qui reste dans l’eau tout au long de son trajet dans le réseau.</string>
+    <string name="sheet_parameter_history_action">afficher l’historique du paramètre %1$s</string>
+    <string name="sheet_sampled_on">Prélevé le %1$s</string>
+    <string name="age_today">Aujourd’hui</string>
+    <plurals name="age_days">
+        <item quantity="one">Il y a %d jour</item>
+        <item quantity="many">Il y a %d jours</item>
+        <item quantity="other">Il y a %d jours</item>
+    </plurals>
+    <plurals name="age_weeks">
+        <item quantity="one">Il y a %d semaine</item>
+        <item quantity="many">Il y a %d semaines</item>
+        <item quantity="other">Il y a %d semaines</item>
+    </plurals>
+    <plurals name="age_months">
+        <item quantity="one">Il y a %d mois</item>
+        <item quantity="many">Il y a %d mois</item>
+        <item quantity="other">Il y a %d mois</item>
+    </plurals>
+    <plurals name="age_years">
+        <item quantity="one">Il y a %d an</item>
+        <item quantity="many">Il y a %d ans</item>
+        <item quantity="other">Il y a %d ans</item>
+    </plurals>
+    <string name="sheet_distributor">Distributeur : %1$s</string>
+    <string name="sheet_owner">Collectivité responsable : %1$s</string>
+    <string name="sheet_compliance_title">Conformité</string>
+    <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>
+    <string name="sheet_show_all_results">Voir tous les paramètres analysés</string>
+    <string name="sheet_source_notice">Source : Hub\'Eau — ministère de la Santé, contrôle sanitaire des ARS. Données mises à jour chaque mois.</string>
+
+    <!-- ===== Sample detail (SPEC §5 F4) ===== -->
+
+    <string name="sample_detail_title">Paramètres analysés</string>
+    <string name="sample_loading">Chargement du prélèvement…</string>
+    <string name="sample_unavailable">Ce prélèvement n’est plus affiché sur la fiche. Revenez en arrière pour voir le plus récent.</string>
+    <string name="sample_no_results">Aucun résultat d’analyse n’a été publié pour ce prélèvement.</string>
+    <string name="sample_search_label">Rechercher un paramètre</string>
+    <string name="sample_no_match">Aucun paramètre ne correspond à « %1$s ».</string>
+    <string name="sample_values_as_published">Les valeurs, limites et références sont affichées telles qu’elles sont publiées. Potable ne les compare pas.</string>
+    <string name="sample_open_history">afficher l’historique</string>
+    <string name="family_microbiology">Microbiologie</string>
+    <string name="family_physicochemistry">Physico-chimie</string>
+    <string name="family_disinfection">Désinfection</string>
+    <string name="family_pesticides">Pesticides</string>
+    <string name="family_metals">Métaux</string>
+    <string name="family_organic_compounds">Composés organiques</string>
+    <string name="family_radioactivity">Radioactivité</string>
+    <string name="family_other">Autres</string>
+
+    <!-- ===== Sample history (SPEC §5 F5) ===== -->
+
+    <string name="timeline_title">Historique des prélèvements</string>
+    <string name="timeline_loading">Chargement des prélèvements…</string>
+    <string name="timeline_empty">Aucun prélèvement n’a été publié pour cette unité de distribution depuis le %1$s.</string>
+    <plurals name="timeline_summary">
+        <item quantity="one">%1$d prélèvement depuis le %2$s</item>
+        <item quantity="many">%1$d prélèvements depuis le %2$s</item>
+        <item quantity="other">%1$d prélèvements depuis le %2$s</item>
+    </plurals>
+    <string name="timeline_non_compliance">%1$s : %2$s</string>
+    <string name="timeline_refresh_failed">Impossible de mettre à jour l’historique. %1$s</string>
+
+    <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
+
+    <string name="history_refresh">Actualiser</string>
+    <string name="history_loading">Chargement de l’historique…</string>
+    <string name="history_empty">Aucune mesure sur cette période.</string>
+    <string name="history_single">Une seule mesure sur cette période :</string>
+    <string name="history_not_numeric">Ces résultats ne sont pas des nombres : ils sont présentés sous forme de liste plutôt que de graphique.</string>
+    <string name="history_refresh_failed">Impossible d’actualiser. Les données affichées ont été chargées précédemment.</string>
+    <string name="history_show_list">Afficher les valeurs sous forme de liste</string>
+    <string name="history_hide_list">Masquer la liste des valeurs</string>
+    <string name="history_values_title">Mesures</string>
+    <string name="history_touch_hint">Touchez le graphique ou faites glisser le doigt dessus pour lire une mesure.</string>
+    <string name="history_previous_measurement">Mesure précédente</string>
+    <string name="history_next_measurement">Mesure suivante</string>
+    <string name="history_selected_point">Sélection : %1$s, %2$s</string>
+    <plurals name="history_chart_description">
+        <item quantity="one">Graphique de %1$d mesure du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
+        <item quantity="many">Graphique de %1$d mesures du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
+        <item quantity="other">Graphique de %1$d mesures du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
+    </plurals>
+    <string name="history_legend_measure">Valeur mesurée</string>
+    <string name="history_legend_censored">Marqueur creux : valeur publiée sous forme de borne, comme « &lt;0,01 » (sous une limite de détection ou de quantification). Il est placé à cette borne.</string>
+    <string name="history_legend_limit_above">Limite de qualité : %1$s, au-dessus de la zone affichée</string>
+    <string name="history_legend_limit_below">Limite de qualité : %1$s, en dessous de la zone affichée</string>
+    <string name="history_legend_limit_partly">Limite de qualité : %1$s, en partie hors de la zone affichée</string>
+    <string name="history_legend_limit_not_drawn">Limite de qualité : %1$s (non tracée)</string>
+    <string name="history_legend_reference">Référence de qualité (en pointillés) : %1$s</string>
+    <string name="history_legend_reference_above">Référence de qualité : %1$s, au-dessus de la zone affichée</string>
+    <string name="history_legend_reference_below">Référence de qualité : %1$s, en dessous de la zone affichée</string>
+    <string name="history_legend_reference_partly">Référence de qualité (en pointillés) : %1$s, en partie hors de la zone affichée</string>
+    <string name="history_legend_reference_not_drawn">Référence de qualité : %1$s (non tracée)</string>
+
+    <!-- ===== My communes (SPEC §5 F6) ===== -->
+
+    <string name="follows_title">Mes communes</string>
+    <string name="follows_loading">Chargement de vos communes…</string>
+    <string name="follows_empty">Vous ne suivez encore aucune commune. Recherchez la vôtre, puis appuyez sur Suivre dans sa fiche : elle s’ouvrira au démarrage de Potable et restera consultable hors connexion.</string>
+    <string name="follows_explanation">La commune principale s’ouvre au démarrage de Potable. Les données des communes que vous suivez restent consultables hors connexion.</string>
+    <string name="follows_primary">Principale</string>
+    <string name="follows_set_primary">Définir comme principale</string>
+    <string name="follows_move_up">Déplacer %1$s vers le haut</string>
+    <string name="follows_move_down">Déplacer %1$s vers le bas</string>
+    <string name="follows_set_primary_description">Définir %1$s comme commune principale</string>
+    <string name="follows_remove">Ne plus suivre %1$s</string>
+    <string name="follows_remove_title">Ne plus suivre %1$s ?</string>
+    <string name="follows_remove_text">Les données de %1$s enregistrées sur ce téléphone seront supprimées.</string>
+    <string name="follows_remove_confirm">Ne plus suivre</string>
+
+    <!-- ===== Settings (SPEC §5 F8) ===== -->
+
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_appearance_title">Apparence</string>
+    <string name="settings_history_title">Historique</string>
+    <string name="settings_storage_title">Stockage</string>
+    <string name="settings_alerts_title">Alertes</string>
+    <string name="settings_theme_system">Valeur par défaut du système</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_history_description">Période affichée par défaut dans l’historique d’une commune.</string>
+    <string name="settings_retention_description">Les résultats de vos communes sont conservés sur ce téléphone pendant :</string>
+    <plurals name="settings_years">
+        <item quantity="one">%d an</item>
+        <item quantity="many">%d ans</item>
+        <item quantity="other">%d ans</item>
+    </plurals>
+    <string name="settings_clear_cache_description">Vos communes sont conservées ; leurs résultats seront de nouveau téléchargés la prochaine fois que vous les ouvrirez.</string>
+    <string name="settings_clear_cache">Vider le cache</string>
+    <string name="settings_clear_cache_confirm_title">Vider le cache ?</string>
+    <string name="settings_clear_cache_confirm_text">Les résultats d’analyse enregistrés sur ce téléphone seront supprimés, ainsi que l’unité de distribution choisie pour les communes que vous ne suivez pas. Vos communes restent dans votre liste.</string>
+    <string name="settings_clear_cache_confirm">Vider</string>
+    <string name="settings_clear_cache_done">Cache vidé.</string>
+    <string name="settings_alerts_description">Potable vérifie vos communes en arrière-plan et vous avertit des nouveaux résultats. Les données de Hub\'Eau ne changent qu’une fois par mois : des vérifications plus fréquentes n’en trouveraient pas davantage.</string>
+    <string name="alert_new_analyses">Nouvelles analyses</string>
+    <string name="settings_alert_new_description">Chaque nouvelle analyse de vos communes, quelle que soit sa conclusion.</string>
+    <string name="settings_alert_unfavourable">Conclusions défavorables uniquement</string>
+    <string name="settings_alert_unfavourable_description">Uniquement les nouvelles analyses dont la conclusion publiée est défavorable.</string>
+    <string name="settings_alert_unfavourable_included">Déjà incluses dans « Nouvelles analyses » : désactivez cette option pour ne recevoir que les conclusions défavorables.</string>
+    <string name="settings_alert_period">Vérifier les nouveaux résultats :</string>
+    <string name="settings_alert_weekly">Chaque semaine</string>
+    <plurals name="settings_alert_weeks">
+        <item quantity="one">Toutes les %d semaines</item>
+        <item quantity="many">Toutes les %d semaines</item>
+        <item quantity="other">Toutes les %d semaines</item>
+    </plurals>
+    <string name="settings_notifications_denied">Potable n’a pas l’autorisation d’afficher des notifications : cette alerte reste donc désactivée. Vous pouvez autoriser les notifications dans les paramètres du système.</string>
+    <string name="settings_notifications_blocked">Les notifications de Potable sont désactivées : vos communes ne sont plus vérifiées tant que vous ne les réactivez pas.</string>
+    <string name="settings_notifications_open">Ouvrir les paramètres de notification</string>
+
+    <!-- ===== Notifications (SPEC §5 F7) ===== -->
+
+    <string name="alert_channel_new_description">Une nouvelle analyse a été publiée pour l’une de vos communes.</string>
+    <string name="alert_channel_unfavourable">Conclusions défavorables</string>
+    <string name="alert_channel_unfavourable_description">La conclusion publiée d’une nouvelle analyse de l’une de vos communes est défavorable.</string>
+    <string name="alert_notification_new">Nouvelle analyse publiée : prélèvement du %1$s</string>
+    <string name="alert_notification_date">Prélèvement du %1$s</string>
+    <string name="alert_summary_title">Nouvelles analyses pour vos communes</string>
+
+    <!-- ===== About (SPEC §5 F8) ===== -->
+
+    <string name="about_title">À propos</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_presentation">Potable affiche les derniers résultats officiels d’analyse de l’eau du robinet de votre commune, en France.</string>
+    <string name="about_notice_title">Bon à savoir</string>
+    <string name="about_sources_title">Sources des données</string>
+    <string name="about_privacy_title">Confidentialité</string>
+    <string name="about_license_title">Licence</string>
+    <string name="about_libraries_title">Bibliothèques open source</string>
+    <string name="about_source_hubeau">Résultats sur la qualité de l’eau : API « Qualité de l’eau potable » de Hub\'Eau, ministère de la Santé et agences régionales de santé (ARS).</string>
+    <string name="about_source_hubeau_terms">Conditions d’utilisation de Hub\'Eau</string>
+    <string name="about_source_communes">Communes : Découpage administratif communal — geo.api.gouv.fr, Licence Ouverte Etalab 2.0.</string>
+    <string name="about_privacy">Aucun traceur, aucune mesure d’audience, aucun compte. Potable se connecte uniquement à Hub\'Eau. Si vous utilisez « Autour de moi », votre position reste sur votre téléphone : elle sert une seule fois à trouver votre commune, puis elle est effacée.</string>
+    <string name="about_license">Potable est un logiciel libre, distribué sous la licence publique générale GNU (GNU GPL), version 3.</string>
+    <string name="about_license_link">Texte de la licence GNU GPL v3</string>
+    <string name="about_source_code_link">Code source</string>
+    <string name="about_open_link_failed">Aucune application ne permet d’ouvrir ce lien.</string>
+</resources>

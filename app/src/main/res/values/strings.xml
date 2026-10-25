@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Reference strings of Potable, in English (SPEC §11). Read
+    docs/translations.md, "For translators", and docs/glossary.md before
+    translating.
+
+    - Strings are grouped by screen, in the order the user meets them.
+    - A comment above a string gives its context: what each parameter
+      (%1$s, %1$d) stands for, and the room available for short labels
+      (chips, buttons, titles). Comments are not translated.
+    - Parameters that receive data from Hub'Eau (commune and unit names,
+      labels, values with their unit) are isolated by the code for
+      right-to-left languages: never add RLM, LRM or isolate marks here.
+    - Labels published by Hub'Eau (parameters, units, sanitary conclusions,
+      limits such as "<=50 mg/L") are data, shown in French in every
+      language: they never appear in this file.
+-->
+<resources>
+    <!-- Name of the app, never translated (docs/glossary.md). -->
+    <string name="app_name" translatable="false">Potable</string>
+
+    <!-- ===== Shared actions ===== -->
+
+    <!-- Screen reader label of the back arrow of every screen. -->
+    <string name="action_back">Back</string>
+    <!-- Button under an error message. Short: about 15 characters. -->
+    <string name="action_retry">Retry</string>
+    <!-- Dismiss button of the confirmation dialogs. Short: about 15 characters. -->
+    <string name="action_cancel">Cancel</string>
+    <!-- Screen reader label of the cross that empties a search field (communes, parameters). -->
+    <string name="action_clear_search">Clear search</string>
+    <!-- Screen reader label of the ⋮ menu of the top bar. -->
+    <string name="action_more_options">More options</string>
+    <!-- Screen reader label of the search icon of the sheet, and button of the empty "My communes" screen. -->
+    <string name="action_search_commune">Search for a commune</string>
+    <!-- A followed place, read by screen readers and used as notification title. %1$s: commune name; %2$s: distribution unit name, both as published. -->
+    <string name="commune_and_unit">%1$s, %2$s</string>
+
+    <!-- ===== Loading and errors, on every screen that loads data from Hub'Eau ===== -->
+
+    <string name="error_network">Can’t reach Hub\'Eau. Check your connection.</string>
+    <string name="error_too_slow">Hub\'Eau took too long to answer. Try again later.</string>
+    <string name="error_unavailable">Hub\'Eau is unavailable right now.</string>
+    <string name="error_unexpected_response">Hub\'Eau sent an unexpected response.</string>
+    <string name="error_unexpected">Something went wrong. Try again.</string>
+    <!-- Shown under a loading message after a few seconds. -->
+    <string name="loading_slow">Hub\'Eau is slow to answer, still waiting…</string>
+
+    <!-- ===== Compliance and quality thresholds, shared by the sheet, the sample detail, the history ===== -->
+
+    <!-- Compliance codes published by Hub'Eau (docs/glossary.md: compliant, derogation, not_assessed). Shown alone under a heading. -->
+    <string name="compliance_compliant">Compliant</string>
+    <string name="compliance_compliant_under_derogation">Compliant under a derogation</string>
+    <string name="compliance_not_compliant">Not compliant</string>
+    <string name="compliance_not_assessed">Not assessed</string>
+    <string name="compliance_unknown">Unknown</string>
+    <!-- Headings of the four compliance codes of a sample. -->
+    <string name="sheet_limits_bacteriological">Quality limits, bacteriological</string>
+    <string name="sheet_limits_physicochemical">Quality limits, physico-chemical</string>
+    <string name="sheet_references_bacteriological">Quality references, bacteriological</string>
+    <string name="sheet_references_physicochemical">Quality references, physico-chemical</string>
+    <!-- %1$s: the quality limit of a parameter, as published by Hub'Eau, in French ("<=50 mg/L"). Also the chart legend of a limit drawn in the chart range. -->
+    <string name="quality_limit">Quality limit: %1$s</string>
+    <!-- %1$s: the quality reference of a parameter, as published by Hub'Eau, in French (">=6,5 et <=9 unité pH"). -->
+    <string name="quality_reference">Quality reference: %1$s</string>
+    <!-- In place of the value of a result Hub'Eau published without one. -->
+    <string name="sample_no_value">No value published</string>
+    <!-- Small caption under a sanitary conclusion shown as published, in French. -->
+    <string name="sheet_official_wording">Official wording, in French</string>
+    <!-- Caption above the parameter labels published by Hub'Eau, in French. -->
+    <string name="sample_official_labels">Official labels, in French, as published by Hub\'Eau.</string>
+
+    <!-- ===== First-launch notice (SPEC §14) ===== -->
+
+    <string name="disclaimer_title">Before you start</string>
+    <string name="disclaimer_point_source">The results come from the official sanitary control carried out by the regional health agencies (ARS), published by the French Ministry of Health through Hub\'Eau.</string>
+    <string name="disclaimer_point_freshness">The data are updated once a month: a result shown here may be several weeks old.</string>
+    <string name="disclaimer_point_scope">Tests are made on the distribution unit, not at your own tap: the state of the private pipes in your building is not covered.</string>
+    <string name="disclaimer_point_no_advice">Potable gives no health advice. If in doubt, contact your regional health agency (ARS) or your water distributor.</string>
+    <string name="disclaimer_point_no_score">Potable adds no score, rating or classification of its own: it shows the official conclusions as published.</string>
+    <!-- Full-width button that closes the notice. -->
+    <string name="disclaimer_accept">I understand</string>
+
+    <!-- ===== Search for a commune (start screen, SPEC §5 F1) ===== -->
+
+    <!-- Label of the search field. -->
+    <string name="search_label">Commune or postal code</string>
+    <string name="search_hint">Search for your commune by name or postal code to see the latest tap water test results.</string>
+    <string name="search_loading">Loading the list of communes…</string>
+    <!-- %1$s: what the user typed. -->
+    <string name="search_no_results">No commune matches “%1$s”.</string>
+    <!-- Under a commune name in the results. %1$s: its first postal code ("75001"); %2$d: how many more postal codes it has. -->
+    <string name="search_postal_codes_more">%1$s +%2$d</string>
+    <!-- Under a former or delegated commune in the results. %1$s: name of the commune under which Hub'Eau publishes its data (its INSEE code if the name is unknown). -->
+    <string name="search_published_under">Water data published under the parent commune: %1$s</string>
+    <!-- Button of the search screen that finds the commune of the device position. Short: about 20 characters. Quoted in about_privacy. -->
+    <string name="nearby_action">Near me</string>
+    <string name="nearby_locating">Finding the commune you are in…</string>
+    <!-- Heading above the commune found by "Near me". -->
+    <string name="nearby_found_title">Near you</string>
+    <string name="nearby_permission_denied">Without location access, Potable can’t find your commune. You can still search for it by name or postal code.</string>
+    <string name="nearby_disabled">Location is turned off on this device. Turn it on, or search for your commune by name or postal code.</string>
+    <string name="nearby_unavailable">Your position couldn’t be found in time. Try again, or search for your commune by name or postal code.</string>
+    <string name="nearby_no_commune">No French commune was found near you. Search for yours by name or postal code.</string>
+
+    <!-- ===== Choice of the distribution unit (SPEC §5 F2) ===== -->
+
+    <string name="udi_loading">Looking for the distribution units of this commune…</string>
+    <string name="udi_none">No distribution unit is listed for this commune.</string>
+    <string name="udi_choice_title">Choose your distribution unit</string>
+    <!-- Explains the notion, never assumed known (SPEC §9; docs/glossary.md, udi). -->
+    <string name="udi_explanation">A distribution unit is the part of the water network that delivers water of the same quality. Several serve this commune: pick the one for your area.</string>
+    <!-- Under the unit chosen earlier, in the list of units. -->
+    <string name="udi_current_choice">Your current choice</string>
+    <!-- Label of the filter field above a long list of units (more than 8). -->
+    <string name="udi_search_label">Search a distribution unit</string>
+    <!-- %1$s: what the user typed in the filter field. -->
+    <string name="udi_no_match">No distribution unit matches “%1$s”.</string>
+
+    <!-- ===== "My water" sheet (SPEC §5 F3) ===== -->
+
+    <!-- Top bar button, text next to a bookmark icon. Very short: about 10 characters. Quoted in follows_empty. -->
+    <string name="sheet_follow">Follow</string>
+    <!-- Same button once the unit is followed. Very short: about 10 characters. -->
+    <string name="sheet_following">Following</string>
+    <!-- Screen reader label of sheet_follow. -->
+    <string name="sheet_follow_description">Follow this distribution unit</string>
+    <!-- Screen reader label of sheet_following. -->
+    <string name="sheet_unfollow_description">Following. Tap to stop following this distribution unit</string>
+    <!-- Text button under the top bar, when the commune has several units. -->
+    <string name="sheet_change_udi">Change distribution unit</string>
+    <!-- Banner. %1$s: date of the last successful update from Hub'Eau, formatted for the language. -->
+    <string name="sheet_data_from">Data from %1$s</string>
+    <!-- Warning banner. %1$s: date of the last successful update from Hub'Eau, formatted for the language. -->
+    <string name="sheet_refresh_failed">Could not refresh — showing data from %1$s</string>
+    <string name="sheet_loading">Loading the latest sample…</string>
+    <string name="sheet_no_sample">No sample has been published for this distribution unit.</string>
+    <!-- Heading of the card that shows the conclusion of the regional health agency, as published, in French. -->
+    <string name="sheet_conclusion_title">Sanitary conclusion of the latest sample</string>
+    <string name="sheet_no_conclusion">No sanitary conclusion was published for this sample.</string>
+    <!-- Heading of the card of the featured parameters (SPEC §4.3). -->
+    <string name="sheet_key_parameters_title">Key parameters</string>
+    <!-- Names of the featured parameters, translated (docs/glossary.md), unlike the labels published by Hub'Eau. -->
+    <string name="featured_nitrates">Nitrates</string>
+    <string name="featured_nitrates_explanation">Nitrates, mostly from farming and wastewater, are among the most closely followed parameters.</string>
+    <string name="featured_hardness">Hardness</string>
+    <string name="featured_hardness_explanation">Hardness, useful to set a dishwasher or a water softener.</string>
+    <string name="featured_ph">pH</string>
+    <string name="featured_ph_explanation">pH tells how acidic or alkaline the water is.</string>
+    <string name="featured_free_chlorine">Free chlorine</string>
+    <string name="featured_free_chlorine_explanation">Free chlorine is the disinfectant left in the water as it travels through the network.</string>
+    <!-- Action read by screen readers on a featured parameter ("Double-tap to show the history of Nitrates"): starts lowercase. %1$s: the translated name of the parameter (featured_nitrates…). -->
+    <string name="sheet_parameter_history_action">show the history of %1$s</string>
+    <!-- %1$s: the sample date, formatted for the language ("26 August 2026"). Also the subtitle of the sample detail. -->
+    <string name="sheet_sampled_on">Sampled on %1$s</string>
+    <!-- Age of the sample, under its date. -->
+    <string name="age_today">Today</string>
+    <!-- %d: number of days, 1 to 6. -->
+    <plurals name="age_days">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+    <!-- %d: number of weeks, 1 to 4. -->
+    <plurals name="age_weeks">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+    <!-- %d: number of months, 1 to 11. -->
+    <plurals name="age_months">
+        <item quantity="one">%d month ago</item>
+        <item quantity="other">%d months ago</item>
+    </plurals>
+    <!-- %d: number of years, 1 or more. -->
+    <plurals name="age_years">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
+    <!-- %1$s: name of the water distributor, as published by Hub'Eau. -->
+    <string name="sheet_distributor">Distributor: %1$s</string>
+    <!-- %1$s: name of the public body responsible for the water service, as published by Hub'Eau (docs/glossary.md, authority). -->
+    <string name="sheet_owner">Responsible authority: %1$s</string>
+    <!-- Heading of the four compliance codes. -->
+    <string name="sheet_compliance_title">Compliance</string>
+    <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
+    <!-- Full-width button that opens the sample detail. -->
+    <string name="sheet_show_all_results">See all analysed parameters</string>
+    <!-- Permanent footer of the sheet. -->
+    <string name="sheet_source_notice">Source: Hub\'Eau — French Ministry of Health, ARS sanitary control. Data updated monthly.</string>
+
+    <!-- ===== Sample detail: every analysed parameter (SPEC §5 F4) ===== -->
+
+    <!-- Top bar title, one line. -->
+    <string name="sample_detail_title">Analysed parameters</string>
+    <string name="sample_loading">Loading the sample…</string>
+    <string name="sample_unavailable">This sample is no longer shown on the sheet. Go back to see the latest one.</string>
+    <string name="sample_no_results">No analysis result was published for this sample.</string>
+    <!-- Label of the search field. -->
+    <string name="sample_search_label">Search a parameter</string>
+    <!-- %1$s: what the user typed. -->
+    <string name="sample_no_match">No parameter matches “%1$s”.</string>
+    <string name="sample_values_as_published">Values, limits and references are shown as published. Potable does not compare them.</string>
+    <!-- Action read by screen readers on a result ("Double-tap to show the history"): starts lowercase. -->
+    <string name="sample_open_history">show the history</string>
+    <!-- Headings of the families of parameters. -->
+    <string name="family_microbiology">Microbiology</string>
+    <string name="family_physicochemistry">Physico-chemistry</string>
+    <string name="family_disinfection">Disinfection</string>
+    <string name="family_pesticides">Pesticides</string>
+    <string name="family_metals">Metals</string>
+    <string name="family_organic_compounds">Organic compounds</string>
+    <string name="family_radioactivity">Radioactivity</string>
+    <string name="family_other">Other</string>
+
+    <!-- ===== Sample history: the conclusions over time (SPEC §5 F5) ===== -->
+
+    <!-- Top bar title, one line, and the full-width button of the sheet that opens it. -->
+    <string name="timeline_title">Sample history</string>
+    <string name="timeline_loading">Loading the samples…</string>
+    <!-- %1$s: start of the period, a date formatted for the language. -->
+    <string name="timeline_empty">No sample has been published for this distribution unit since %1$s.</string>
+    <!-- Heading of the list. %1$d: number of samples; %2$s: start of the period, a date formatted for the language. A plain count, no judgement. -->
+    <plurals name="timeline_summary">
+        <item quantity="one">%1$d sample since %2$s</item>
+        <item quantity="other">%1$d samples since %2$s</item>
+    </plurals>
+    <!-- Under a conclusion. %1$s: which compliance (sheet_limits_bacteriological…); %2$s: compliance_not_compliant. -->
+    <string name="timeline_non_compliance">%1$s: %2$s</string>
+    <!-- %1$s: why the refresh failed, one of the error_… messages (a full sentence). -->
+    <string name="timeline_refresh_failed">The history could not be updated. %1$s</string>
+
+    <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
+
+    <!-- Screen reader label of the refresh icon of the top bar. -->
+    <string name="history_refresh">Refresh</string>
+    <string name="history_loading">Loading the history…</string>
+    <string name="history_empty">No measurement in this period.</string>
+    <!-- Followed by the measurement, its date and its value. -->
+    <string name="history_single">A single measurement in this period:</string>
+    <string name="history_not_numeric">These results are not numbers, so they are listed instead of charted.</string>
+    <string name="history_refresh_failed">Could not refresh. The data shown were loaded earlier.</string>
+    <!-- Text buttons under the chart. -->
+    <string name="history_show_list">Show values as a list</string>
+    <string name="history_hide_list">Hide the list of values</string>
+    <!-- Heading of the list of values. -->
+    <string name="history_values_title">Measurements</string>
+    <string name="history_touch_hint">Touch or drag along the chart to read a measurement.</string>
+    <!-- Screen reader actions of the chart: select the previous or the next measurement. -->
+    <string name="history_previous_measurement">Previous measurement</string>
+    <string name="history_next_measurement">Next measurement</string>
+    <!-- Above the chart. %1$s: date of the measurement, formatted for the language; %2$s: the value as published, with its unit ("12,5 mg/L"). -->
+    <string name="history_selected_point">Selected: %1$s, %2$s</string>
+    <!-- Read by screen readers for the whole chart. %1$d: number of measurements; %2$s and %3$s: first and last dates, formatted for the language; %4$s and %5$s: lowest and highest values as published, with their unit. -->
+    <plurals name="history_chart_description">
+        <item quantity="one">Chart of %1$d measurement from %2$s to %3$s. Lowest: %4$s. Highest: %5$s.</item>
+        <item quantity="other">Chart of %1$d measurements from %2$s to %3$s. Lowest: %4$s. Highest: %5$s.</item>
+    </plurals>
+    <!-- Legend of the chart, next to a small drawing of each mark. -->
+    <string name="history_legend_measure">Measured value</string>
+    <string name="history_legend_censored">Hollow marker: published as a bound, such as “&lt;0,01” (below a detection or quantification limit). It is drawn at that bound.</string>
+    <!-- Legend of a limit the chart range does not reach. %1$s: the quality limit as published by Hub'Eau, in French. -->
+    <string name="history_legend_limit_above">Quality limit: %1$s, above the chart range</string>
+    <!-- %1$s: the quality limit as published by Hub'Eau, in French. -->
+    <string name="history_legend_limit_below">Quality limit: %1$s, below the chart range</string>
+    <!-- %1$s: the quality limit as published by Hub'Eau, in French, with a lower and an upper bound. -->
+    <string name="history_legend_limit_partly">Quality limit: %1$s, partly outside the chart range</string>
+    <!-- %1$s: the quality limit as published by Hub'Eau, in French, which could not be read as numbers. -->
+    <string name="history_legend_limit_not_drawn">Quality limit: %1$s (not drawn)</string>
+    <!-- Legend of a reference drawn as a dashed line. %1$s: the quality reference as published by Hub'Eau, in French. -->
+    <string name="history_legend_reference">Quality reference (dashed): %1$s</string>
+    <!-- %1$s: the quality reference as published by Hub'Eau, in French. -->
+    <string name="history_legend_reference_above">Quality reference: %1$s, above the chart range</string>
+    <!-- %1$s: the quality reference as published by Hub'Eau, in French. -->
+    <string name="history_legend_reference_below">Quality reference: %1$s, below the chart range</string>
+    <!-- %1$s: the quality reference as published by Hub'Eau, in French, with a lower and an upper bound. -->
+    <string name="history_legend_reference_partly">Quality reference (dashed): %1$s, partly outside the chart range</string>
+    <!-- %1$s: the quality reference as published by Hub'Eau, in French, which could not be read as numbers. -->
+    <string name="history_legend_reference_not_drawn">Quality reference: %1$s (not drawn)</string>
+
+    <!-- ===== My communes: the followed units (SPEC §5 F6) ===== -->
+
+    <!-- Top bar title, one line, and screen reader label of the list icon that opens it. -->
+    <string name="follows_title">My communes</string>
+    <string name="follows_loading">Loading your communes…</string>
+    <!-- "Follow" is the label of sheet_follow: keep the same word. -->
+    <string name="follows_empty">You don’t follow any commune yet. Search for yours, then tap Follow on its sheet: it will open when Potable starts and stay readable offline.</string>
+    <string name="follows_explanation">The primary commune opens when Potable starts. The data of the communes you follow stay readable offline.</string>
+    <!-- Badge of the primary commune, next to a house icon. Short: about 15 characters. -->
+    <string name="follows_primary">Primary</string>
+    <!-- Text button of a row, between icons. Short: about 20 characters. -->
+    <string name="follows_set_primary">Set as primary</string>
+    <!-- Screen reader labels of the actions of a row. %1$s: commune_and_unit, "commune, unit". -->
+    <string name="follows_move_up">Move %1$s up</string>
+    <!-- %1$s: commune_and_unit, "commune, unit". -->
+    <string name="follows_move_down">Move %1$s down</string>
+    <!-- %1$s: commune_and_unit, "commune, unit". -->
+    <string name="follows_set_primary_description">Set %1$s as primary</string>
+    <!-- %1$s: commune_and_unit, "commune, unit". -->
+    <string name="follows_remove">Stop following %1$s</string>
+    <!-- Dialog title. %1$s: commune name, as published. -->
+    <string name="follows_remove_title">Stop following %1$s?</string>
+    <!-- Dialog text. %1$s: distribution unit name, as published. -->
+    <string name="follows_remove_text">The data of %1$s saved on this phone will be deleted.</string>
+    <!-- Dialog button. Short: about 20 characters. -->
+    <string name="follows_remove_confirm">Stop following</string>
+
+    <!-- ===== Settings (SPEC §5 F8) ===== -->
+
+    <!-- Top bar title, menu item and button of About. -->
+    <string name="settings_title">Settings</string>
+    <!-- Section headings. -->
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_history_title">History</string>
+    <string name="settings_storage_title">Storage</string>
+    <string name="settings_alerts_title">Alerts</string>
+    <!-- Theme choices (radio buttons). -->
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_history_description">Period shown by default in the history of a commune.</string>
+    <!-- Followed by radio buttons: settings_years. -->
+    <string name="settings_retention_description">Results of your communes are kept on this phone for:</string>
+    <!-- A period. Radio button in Settings, and chip above the histories: short, about 10 characters. %d: 1, 3, 5 or 10. -->
+    <plurals name="settings_years">
+        <item quantity="one">%d year</item>
+        <item quantity="other">%d years</item>
+    </plurals>
+    <string name="settings_clear_cache_description">Your communes are kept; their results are downloaded again the next time you open them.</string>
+    <!-- Button, then title of its confirmation dialog (docs/glossary.md, cache). -->
+    <string name="settings_clear_cache">Clear cached data</string>
+    <string name="settings_clear_cache_confirm_title">Clear cached data?</string>
+    <string name="settings_clear_cache_confirm_text">Test results saved on this phone will be deleted, along with the distribution unit chosen for the communes you don’t follow. Your communes stay in your list.</string>
+    <!-- Confirmation button of the dialog. Short: about 15 characters. -->
+    <string name="settings_clear_cache_confirm">Clear</string>
+    <!-- Snackbar once done. -->
+    <string name="settings_clear_cache_done">Cached data cleared.</string>
+    <string name="settings_alerts_description">Potable checks your communes in the background and notifies you of new results. Hub\'Eau data change only once a month, so checking more often would not find more.</string>
+    <!-- Switch title, and name of the notification channel in the system settings. Quoted in settings_alert_unfavourable_included. -->
+    <string name="alert_new_analyses">New analyses</string>
+    <string name="settings_alert_new_description">Every new analysis of your communes, whatever its conclusion.</string>
+    <!-- Switch title. -->
+    <string name="settings_alert_unfavourable">Unfavourable conclusions only</string>
+    <string name="settings_alert_unfavourable_description">Only new analyses whose published conclusion is unfavourable.</string>
+    <!-- Replaces the line above while "New analyses" (alert_new_analyses) is on. -->
+    <string name="settings_alert_unfavourable_included">Already included in new analyses: turn those off to be notified of unfavourable conclusions only.</string>
+    <!-- Followed by radio buttons: settings_alert_weekly, settings_alert_weeks. -->
+    <string name="settings_alert_period">Check for new results:</string>
+    <string name="settings_alert_weekly">Every week</string>
+    <!-- Radio button. Used for 2 weeks or more only; 1 week is settings_alert_weekly. %d: 2 or 4. -->
+    <plurals name="settings_alert_weeks">
+        <item quantity="one">Every %d week</item>
+        <item quantity="other">Every %d weeks</item>
+    </plurals>
+    <string name="settings_notifications_denied">Potable is not allowed to show notifications, so this alert stays off. You can allow notifications in the system settings.</string>
+    <string name="settings_notifications_blocked">Notifications are turned off for Potable: your communes are not checked until you allow them again.</string>
+    <!-- Button that opens the notification settings of the app. -->
+    <string name="settings_notifications_open">Open notification settings</string>
+
+    <!-- ===== Notifications (SPEC §5 F7): facts only, no opinion on the water (SPEC §14) ===== -->
+
+    <!-- Channel description in the system settings; the name is alert_new_analyses. -->
+    <string name="alert_channel_new_description">A new analysis has been published for one of your communes.</string>
+    <!-- Channel name in the system settings. -->
+    <string name="alert_channel_unfavourable">Unfavourable conclusions</string>
+    <string name="alert_channel_unfavourable_description">A new analysis of one of your communes has an unfavourable published conclusion.</string>
+    <!-- Notification text, under the title commune_and_unit. %1$s: date the sample was taken, formatted for the language. -->
+    <string name="alert_notification_new">New analysis published: sample taken on %1$s</string>
+    <!-- Notification header (one short line) above an unfavourable conclusion, which is shown as published, in French. %1$s: date the sample was taken, formatted for the language. -->
+    <string name="alert_notification_date">Sample of %1$s</string>
+    <!-- Title of the notification that sums up several alert notifications; touching it opens follows_title. -->
+    <string name="alert_summary_title">New analyses for your communes</string>
+
+    <!-- ===== About (SPEC §5 F8) ===== -->
+
+    <!-- Top bar title, one line, and menu item. -->
+    <string name="about_title">About</string>
+    <!-- %1$s: version name, such as 1.0. -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_presentation">Potable shows the latest official test results of the tap water in your commune in France.</string>
+    <!-- Section headings. -->
+    <string name="about_notice_title">Good to know</string>
+    <string name="about_sources_title">Sources</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_license_title">License</string>
+    <string name="about_libraries_title">Open-source libraries</string>
+    <!-- “Qualité de l'eau potable” is the French name of the API: keep it as is. -->
+    <string name="about_source_hubeau">Water quality results: Hub\'Eau “Qualité de l\'eau potable” API, French Ministry of Health and regional health agencies (ARS).</string>
+    <!-- Link. -->
+    <string name="about_source_hubeau_terms">Hub\'Eau terms of use</string>
+    <!-- “Découpage administratif communal” and “Licence Ouverte Etalab 2.0” are French names: keep them as is. -->
+    <string name="about_source_communes">Communes: Découpage administratif communal — geo.api.gouv.fr, Licence Ouverte Etalab 2.0.</string>
+    <!-- Source citation, French names only. -->
+    <string name="about_source_cog" translatable="false">Code officiel géographique — INSEE, Licence Ouverte Etalab 2.0.</string>
+    <!-- Link text: the domain name. -->
+    <string name="about_source_communes_link" translatable="false">geo.api.gouv.fr</string>
+    <!-- “Near me” is the label of nearby_action: keep the same words. -->
+    <string name="about_privacy">No tracker, no analytics, no account. Potable only connects to Hub\'Eau. If you use “Near me”, your position stays on your phone: it is used once to find your commune, then discarded.</string>
+    <string name="about_license">Potable is free software, released under the GNU General Public License version 3.</string>
+    <!-- Links. -->
+    <string name="about_license_link">GNU GPL v3 license text</string>
+    <string name="about_source_code_link">Source code</string>
+    <!-- Snackbar when no browser is installed. -->
+    <string name="about_open_link_failed">No app can open this link.</string>
+    <string name="url_hubeau_terms" translatable="false">https://hubeau.eaufrance.fr/page/conditions-generales</string>
+    <string name="url_geo_api" translatable="false">https://geo.api.gouv.fr</string>
+    <string name="url_gpl" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html</string>
+    <string name="url_repository" translatable="false">https://github.com/mgdx/Potable</string>
+    <!-- Library names and licenses, from docs/dependencies.md. Not translated. -->
+    <string-array name="about_libraries" translatable="false">
+        <item>Kotlin standard library — Apache License 2.0</item>
+        <item>kotlinx.coroutines — Apache License 2.0</item>
+        <item>kotlinx.serialization — Apache License 2.0</item>
+        <item>OkHttp, Okio — Apache License 2.0</item>
+        <item>AndroidX Jetpack Compose, Material 3, Material Icons — Apache License 2.0</item>
+        <item>AndroidX Activity, Core, Lifecycle, Navigation, Startup — Apache License 2.0</item>
+        <item>AndroidX DataStore — Apache License 2.0</item>
+        <item>AndroidX Room, SQLite — Apache License 2.0</item>
+        <item>AndroidX WorkManager — Apache License 2.0</item>
+    </string-array>
+</resources>

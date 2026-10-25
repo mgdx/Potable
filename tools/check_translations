@@ -1,0 +1,338 @@
+#!/usr/bin/env python3
+"""Check the Android string translations of Potable (SPEC §11, §16 criterion 10).
+
+Reads app/src/main/res/values/strings.xml (English, the reference) and the
+strings.xml of the French translation (values-fr).
+Prints one line per problem, ``language: name: problem``, then a summary.
+Exit code: 0 when no error was found (warnings do not fail), 1 otherwise.
+
+Python 3 standard library only. The rules are documented in tools/README.md.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+import xml.etree.ElementTree as ET
+from collections import Counter
+from dataclasses import dataclass, field
+from pathlib import Path
+
+LANGUAGES = ("fr",)
+RES_DIR = Path("app/src/main/res")
+STRINGS = "strings.xml"
+
+PLURAL_QUANTITIES = ("zero", "one", "two", "few", "many", "other")
+# Quantities whose text may leave out an integer argument: "one day ago" can
+# be written "yesterday".
+QUANTITIES_MAY_OMIT_INTEGER = {"zero", "one", "two"}
+
+# Android format specifiers (java.util.Formatter subset). The space flag is
+# deliberately not accepted, so that "50 % de" in French is not read as "% d".
+FORMAT_RE = re.compile(
+    r"%(?:(?P<pos>\d+)\$)?[-#+0,(]*\d*(?:\.\d+)?(?P<conv>[sSdfxXoeEgGcbBhH%n])"
+)
+INTEGER_CONVERSIONS = set("dxXo")
+
+# Terms that legitimately stay identical to English in a translation.
+IDENTICAL_ALLOWED_TERMS = (
+    "Hub\\'Eau",
+    "Hub'Eau",
+    "Potable",
+    "pH",
+    "ARS",
+    "INSEE",
+    "geo.api.gouv.fr",
+    "Etalab",
+    "GNU",
+    "GPL",
+    "API",
+    "Code officiel géographique",
+    "Licence Ouverte",
+)
+
+# Words spelt as in English in one language only, where they are the right
+# translation: "Nitrates" in French. Kept per language, so that a word
+# allowed in one language still warns in another.
+IDENTICAL_ALLOWED_TERMS_BY_LANGUAGE = {
+    "fr": ("Nitrates", "Pesticides", "Version", "Sources"),
+}
+
+# Spaces a translator may type instead of a plain one (no-break, narrow
+# no-break, thin), typed as such or as an Android escape ( ): they do
+# not make a text different from English.
+SPACES_RE = re.compile(r"(?:[\s   ]|\\u(?:00[aA]0|202[fF]|2009))+")
+
+
+@dataclass
+class Resource:
+    kind: str  # "string", "plurals" or "string-array"
+    name: str
+    translatable: bool
+    # string: [text]; string-array: item texts; plurals: {quantity: text}
+    texts: list[str] = field(default_factory=list)
+    quantities: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class Report:
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    resources_checked: int = 0
+    languages_checked: int = 0
+
+    def error(self, lang: str, name: str, problem: str) -> None:
+        self.errors.append(f"{lang}: {name}: {problem}")
+
+    def warning(self, lang: str, name: str, problem: str) -> None:
+        self.warnings.append(f"{lang}: {name}: warning: {problem}")
+
+
+def element_text(element: ET.Element) -> str:
+    """Whole text of an element, children such as <xliff:g> included."""
+    return "".join(element.itertext())
+
+
+def format_args(text: str) -> Counter:
+    """Format specifiers of a text, as a multiset of normalised tokens.
+
+    Positional specifiers count once whatever their number of uses, plain
+    ones (%s, %d) count each time, since their order and number matter.
+    """
+    tokens: Counter = Counter()
+    for match in FORMAT_RE.finditer(text):
+        conv = match.group("conv")
+        if conv in "%n":
+            continue
+        pos = match.group("pos")
+        if pos is not None:
+            tokens[f"%{pos}${conv}"] = 1
+        else:
+            tokens[f"%{conv}"] += 1
+    return tokens
+
+
+def describe(tokens: Counter) -> str:
+    if not tokens:
+        return "none"
+    return " ".join(sorted(tokens.elements()))
+
+
+def unescaped_apostrophe(text: str) -> bool:
+    """True when the text holds a ' that aapt2 would reject.
+
+    A ' is accepted when escaped (\\') or inside a "double-quoted" section.
+    """
+    in_quotes = False
+    escaped = False
+    for char in text:
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == '"':
+            in_quotes = not in_quotes
+        elif char == "'" and not in_quotes:
+            return True
+    return False
+
+
+def parse_file(path: Path, lang: str, report: Report, display: str = "") -> dict[str, Resource] | None:
+    """Resources of a strings.xml, or None when the file cannot be read."""
+    display = display or path.name
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as exc:
+        report.error(lang, display, f"malformed XML: {exc}")
+        return None
+    except OSError as exc:
+        report.error(lang, display, f"cannot read file: {exc.strerror}")
+        return None
+    if root.tag != "resources":
+        report.error(lang, display, f"root element is <{root.tag}>, not <resources>")
+        return None
+
+    resources: dict[str, Resource] = {}
+    for element in root:
+        if element.tag not in ("string", "plurals", "string-array"):
+            continue
+        name = element.get("name")
+        if not name:
+            report.error(lang, f"<{element.tag}>", "missing name attribute")
+            continue
+        if name in resources:
+            report.error(lang, name, "defined twice")
+            continue
+        resource = Resource(
+            kind=element.tag,
+            name=name,
+            translatable=element.get("translatable", "true") != "false",
+        )
+        if element.tag == "string":
+            resource.texts = [element_text(element)]
+        elif element.tag == "string-array":
+            resource.texts = [element_text(item) for item in element if item.tag == "item"]
+        else:
+            for item in element:
+                if item.tag != "item":
+                    continue
+                quantity = item.get("quantity", "")
+                if quantity not in PLURAL_QUANTITIES:
+                    report.error(lang, name, f"unknown plural quantity \"{quantity}\"")
+                elif quantity in resource.quantities:
+                    report.error(lang, name, f"plural quantity \"{quantity}\" defined twice")
+                else:
+                    resource.quantities[quantity] = element_text(item)
+            if "other" not in resource.quantities:
+                report.error(lang, name, "plural without an \"other\" item")
+        for text in resource.texts + list(resource.quantities.values()):
+            if unescaped_apostrophe(text):
+                report.error(lang, name, "unescaped apostrophe (write \\' or ’)")
+                break
+        resources[name] = resource
+    return resources
+
+
+def plural_reference(resource: Resource) -> Counter:
+    """Format arguments a plural must carry: those of its "other" item."""
+    if "other" in resource.quantities:
+        return format_args(resource.quantities["other"])
+    merged: Counter = Counter()
+    for text in resource.quantities.values():
+        merged |= format_args(text)
+    return merged
+
+
+def check_plural_args(lang: str, name: str, quantity: str, text: str,
+                      expected: Counter, report: Report) -> None:
+    actual = format_args(text)
+    if actual == expected:
+        return
+    if quantity in QUANTITIES_MAY_OMIT_INTEGER:
+        missing = expected - actual
+        extra = actual - expected
+        if not extra and all(token[-1] in INTEGER_CONVERSIONS for token in missing):
+            return
+    report.error(
+        lang, name,
+        f"format arguments of \"{quantity}\" differ: {describe(actual)} "
+        f"instead of {describe(expected)}",
+    )
+
+
+def remainder_after_allowed(text: str, lang: str = "") -> str:
+    """Text left once format arguments, allowed terms and punctuation are gone.
+
+    The allowed terms are the common ones plus those of [lang].
+    """
+    text = FORMAT_RE.sub(" ", text)
+    for term in IDENTICAL_ALLOWED_TERMS + IDENTICAL_ALLOWED_TERMS_BY_LANGUAGE.get(lang, ()):
+        text = text.replace(term, " ")
+    return re.sub(r"[\W\d_]+", "", text)
+
+
+def normalise_spaces(text: str) -> str:
+    """Text with each run of spaces, no-break ones included, as one space."""
+    return SPACES_RE.sub(" ", text).strip()
+
+
+def check_identical(lang: str, name: str, source: str, target: str, report: Report) -> None:
+    if (normalise_spaces(source) == normalise_spaces(target)
+            and remainder_after_allowed(source, lang)):
+        report.warning(lang, name, f"identical to English (\"{source.strip()}\")")
+
+
+def compare(lang: str, english: dict[str, Resource], translation: dict[str, Resource],
+            report: Report) -> None:
+    for name, target in translation.items():
+        source = english.get(name)
+        if source is None:
+            report.error(lang, name, "not in the English strings.xml")
+            continue
+        if not source.translatable:
+            report.error(lang, name, "translatable=\"false\" in English, must not be translated")
+            continue
+        if target.kind != source.kind:
+            report.error(lang, name, f"is a <{target.kind}>, English has a <{source.kind}>")
+            continue
+
+        if source.kind == "string":
+            expected, actual = format_args(source.texts[0]), format_args(target.texts[0])
+            if expected != actual:
+                report.error(lang, name, f"format arguments differ: {describe(actual)} "
+                                         f"instead of {describe(expected)}")
+            check_identical(lang, name, source.texts[0], target.texts[0], report)
+
+        elif source.kind == "string-array":
+            if len(source.texts) != len(target.texts):
+                report.error(lang, name, f"{len(target.texts)} items instead of {len(source.texts)}")
+                continue
+            for index, (src, tgt) in enumerate(zip(source.texts, target.texts)):
+                expected, actual = format_args(src), format_args(tgt)
+                if expected != actual:
+                    report.error(lang, name, f"format arguments of item {index + 1} differ: "
+                                             f"{describe(actual)} instead of {describe(expected)}")
+                check_identical(lang, f"{name}[{index + 1}]", src, tgt, report)
+
+        else:
+            expected = plural_reference(source)
+            for quantity, text in target.quantities.items():
+                check_plural_args(lang, name, quantity, text, expected, report)
+                if quantity in source.quantities:
+                    check_identical(lang, f"{name}[{quantity}]",
+                                    source.quantities[quantity], text, report)
+
+    for name, source in english.items():
+        if source.translatable and name not in translation:
+            report.error(lang, name, f"missing translation ({source.kind})")
+
+
+def run(root: Path, languages: tuple[str, ...] = LANGUAGES) -> Report:
+    report = Report()
+    english_path = root / RES_DIR / "values" / STRINGS
+    if not english_path.is_file():
+        report.error("en", str(RES_DIR / "values" / STRINGS), "file not found")
+        return report
+    english = parse_file(english_path, "en", report, str(RES_DIR / "values" / STRINGS))
+    if english is None:
+        return report
+    to_translate = sum(1 for r in english.values() if r.translatable)
+
+    for lang in languages:
+        relative = RES_DIR / f"values-{lang}" / STRINGS
+        path = root / relative
+        if not path.is_file():
+            report.error(lang, str(relative), f"file not found ({to_translate} resources to translate)")
+            continue
+        translation = parse_file(path, lang, report, str(relative))
+        if translation is not None:
+            compare(lang, english, translation, report)
+    report.resources_checked = to_translate
+    report.languages_checked = len(languages)
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parent.parent,
+                        help="repository root (default: the parent of tools/)")
+    args = parser.parse_args(argv)
+
+    report = run(args.root)
+    for line in report.errors:
+        print(line)
+    for line in report.warnings:
+        print(line)
+    if report.errors:
+        print(f"check_translations: FAILED, {len(report.errors)} error(s), "
+              f"{len(report.warnings)} warning(s)")
+        return 1
+    print(f"check_translations: OK, {report.resources_checked} resources checked in "
+          f"{report.languages_checked} languages, "
+          f"{len(report.warnings)} warning(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

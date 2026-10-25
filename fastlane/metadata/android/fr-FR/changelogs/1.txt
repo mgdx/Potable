@@ -1,0 +1,5 @@
+Première version.
+
+• Recherche d’une commune hors ligne, par nom, code postal ou autour de vous.
+• Conclusion sanitaire du dernier prélèvement, détail de chaque paramètre, historique d’un paramètre et frise des conclusions.
+• Communes suivies consultables hors ligne, alertes facultatives.

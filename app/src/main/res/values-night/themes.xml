@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dark system theme: the window is the Material 3 dark background
+         (#141218, as in PotableTheme's dark scheme) rather than a white flash
+         before the first Compose frame. -->
+    <style name="Theme.Potable" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF141218</item>
+    </style>
+</resources>

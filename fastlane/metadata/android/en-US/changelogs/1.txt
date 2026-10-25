@@ -1,0 +1,5 @@
+First version.
+
+• Offline search for a commune, by name, postal code or near you.
+• Sanitary conclusion of the latest sample, detail of every parameter, history of a parameter and timeline of the conclusions.
+• Followed communes readable offline, optional alerts.

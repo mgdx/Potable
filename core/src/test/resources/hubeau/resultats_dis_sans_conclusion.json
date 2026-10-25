@@ -1,0 +1,157 @@
+{
+  "count": 3,
+  "first": null,
+  "last": null,
+  "prev": null,
+  "next": null,
+  "api_version": "v1",
+  "data": [
+    {
+      "code_departement": "45",
+      "nom_departement": "Loiret",
+      "code_prelevement": "04500171315",
+      "code_parametre": "5440",
+      "code_parametre_se": "GT22_68",
+      "code_parametre_cas": null,
+      "libelle_parametre": "Bact. aér. revivifiables à 22°-68h",
+      "libelle_parametre_maj": "BACT. AÉR. REVIVIFIABLES À 22°-68H",
+      "libelle_parametre_web": null,
+      "code_type_parametre": "N",
+      "code_lieu_analyse": "L",
+      "resultat_alphanumerique": "2",
+      "resultat_numerique": 2.0,
+      "libelle_unite": "n/mL",
+      "code_unite": "222",
+      "limite_qualite_parametre": null,
+      "reference_qualite_parametre": null,
+      "code_commune": "45234",
+      "nom_commune": "ORLEANS",
+      "nom_uge": "METROPOLE SUEZ AQUALIGE",
+      "nom_distributeur": "SUEZ AQUALIGE",
+      "nom_moa": "ORLEANS METROPOLE",
+      "date_prelevement": "2026-08-10T12:43:00Z",
+      "conformite_limites_bact_prelevement": "",
+      "conformite_limites_pc_prelevement": null,
+      "reference_analyse": "04500187771",
+      "code_installation_amont": "045000474",
+      "nom_installation_amont": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL",
+      "reseaux": [
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL"
+        },
+        {
+          "code": "045001825",
+          "nom": "SAINT JEAN DE LA RUELLE",
+          "debit": "100 %"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS"
+        }
+      ]
+    },
+    {
+      "code_departement": "45",
+      "nom_departement": "Loiret",
+      "code_prelevement": "04500171315",
+      "code_parametre": "6455",
+      "code_parametre_se": "STRF",
+      "code_parametre_cas": null,
+      "libelle_parametre": "Entérocoques /100ml-MS",
+      "libelle_parametre_maj": "ENTÉROCOQUES /100ML-MS",
+      "libelle_parametre_web": null,
+      "code_type_parametre": "N",
+      "code_lieu_analyse": "L",
+      "resultat_alphanumerique": "<1",
+      "resultat_numerique": 0.0,
+      "libelle_unite": "n/(100mL)",
+      "code_unite": "226",
+      "limite_qualite_parametre": "<=0 n/(100mL)",
+      "reference_qualite_parametre": null,
+      "code_commune": "45234",
+      "nom_commune": "ORLEANS",
+      "nom_uge": "METROPOLE SUEZ AQUALIGE",
+      "nom_distributeur": "SUEZ AQUALIGE",
+      "nom_moa": "ORLEANS METROPOLE",
+      "date_prelevement": "2026-08-10T12:43:00Z",
+      "conformite_limites_bact_prelevement": "",
+      "conformite_limites_pc_prelevement": null,
+      "reference_analyse": "04500187771",
+      "code_installation_amont": "045000474",
+      "nom_installation_amont": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL",
+      "reseaux": [
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL"
+        },
+        {
+          "code": "045001825",
+          "nom": "SAINT JEAN DE LA RUELLE",
+          "debit": "100 %"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS"
+        }
+      ]
+    },
+    {
+      "code_departement": "45",
+      "nom_departement": "Loiret",
+      "code_prelevement": "04500171315",
+      "code_parametre": "1399",
+      "code_parametre_se": "CL2TOT",
+      "code_parametre_cas": null,
+      "libelle_parametre": "Chlore total",
+      "libelle_parametre_maj": "CHLORE TOTAL",
+      "libelle_parametre_web": null,
+      "code_type_parametre": "N",
+      "code_lieu_analyse": "T",
+      "resultat_alphanumerique": "0,16",
+      "resultat_numerique": 0.16,
+      "libelle_unite": "mg(Cl2)/L",
+      "code_unite": "165",
+      "limite_qualite_parametre": null,
+      "reference_qualite_parametre": null,
+      "code_commune": "45234",
+      "nom_commune": "ORLEANS",
+      "nom_uge": "METROPOLE SUEZ AQUALIGE",
+      "nom_distributeur": "SUEZ AQUALIGE",
+      "nom_moa": "ORLEANS METROPOLE",
+      "date_prelevement": "2026-08-10T12:43:00Z",
+      "conformite_limites_bact_prelevement": "",
+      "conformite_limites_pc_prelevement": null,
+      "reference_analyse": null,
+      "code_installation_amont": "045000474",
+      "nom_installation_amont": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL",
+      "reseaux": [
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL"
+        },
+        {
+          "code": "045001825",
+          "nom": "SAINT JEAN DE LA RUELLE",
+          "debit": "100 %"
+        },
+        {
+          "code": "045000474",
+          "nom": "ORLEANS"
+        }
+      ]
+    }
+  ]
+}

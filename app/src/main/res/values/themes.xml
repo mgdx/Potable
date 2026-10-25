@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- The window shown before Compose draws its first frame. Its background
+         is the Material 3 light background (#FEF7FF, the colour scheme leaves
+         it at its default), so that the first frame does not change colour;
+         values-night/ holds the dark one. -->
+    <style name="Theme.Potable" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFFEF7FF</item>
+    </style>
+</resources>

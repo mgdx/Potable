@@ -1,0 +1,35 @@
+# Automatic formatting, applied by ktlint (SPEC §14).
+# `./gradlew ktlintFormat` fixes, `./gradlew ktlintCheck` verifies.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+# The "ktlint_official" style forces line breaks on every multi-line
+# expression, including where the compact form reads better. The IntelliJ
+# style stays strict on what matters — indentation, imports, spacing —
+# without rewriting how expressions are laid out.
+ktlint_code_style = intellij_idea
+max_line_length = 100
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+# Composables are nouns in PascalCase (Compose convention). Test names are
+# sentences between backticks: that is what makes the test
+# report readable without opening the code.
+ktlint_function_naming_ignore_when_annotated_with = Composable,Test
+
+[*.{json,yaml,yml}]
+indent_size = 2
+
+[*.xml]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false

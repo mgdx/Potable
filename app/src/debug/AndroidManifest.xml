@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: acceptance tools for the alerts (docs/test-alerts.md).
+     Exported so that `adb shell am start` reaches it, but only the shell:
+     android.permission.DUMP is granted to it and to no third-party
+     application (security audit I1). Release builds do not merge this file. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".debug.DebugAlertsActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+    </application>
+
+</manifest>

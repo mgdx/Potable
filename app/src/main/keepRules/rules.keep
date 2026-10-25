@@ -1,0 +1,25 @@
+# R8 rules of the application, merged by AGP with
+# proguard-android-optimize.txt (applied by default) and with the rules every
+# library ships in its artefact.
+#
+# Every keep rule is code R8 gives up removing, so none is written without a
+# reason. The libraries that rely on reflection already carry their own
+# (checked with -printconfiguration on AGP 9.3.3):
+#
+# - kotlinx.serialization 1.11 keeps the generated serialisers and their
+#   companions; the parser calls them directly anyway (plugin, no reflection).
+# - Room 2.8 keeps the no-argument constructor of every RoomDatabase subclass,
+#   which is how it instantiates PotableDatabase_Impl.
+# - WorkManager 2.11 keeps the name and the (Context, WorkerParameters)
+#   constructor of every ListenableWorker: AlertWorker is rebuilt by its class
+#   name, which stays stable from one release to the next.
+# - DataStore ships the rules of its embedded protobuf; OkHttp and the
+#   coroutines theirs.
+#
+# The view models are built by explicit factories and the navigation routes
+# are strings: nothing else is reached by reflection.
+
+# Readable stack traces in a bug report (the mapping file stays private).
+# Measured: the APK keeps the same size to the byte.
+-keepattributes SourceFile, LineNumberTable
+-renamesourcefileattribute SourceFile
