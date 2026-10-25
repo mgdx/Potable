@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
@@ -55,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameter
 import io.github.mgdx.potable.core.FeaturedParameters
+import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.BackTopBar
@@ -97,6 +99,7 @@ fun SheetScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isFollowed by viewModel.isFollowed.collectAsStateWithLifecycle()
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
+    val recentUnfavourable by viewModel.recentUnfavourable.collectAsStateWithLifecycle()
     val largeFont = LocalDensity.current.fontScale > PINNED_NOTICE_MAX_FONT_SCALE
     // Loading, error and empty states have room to spare: the notice stays pinned.
     val pinnedNotice = !largeFont || state !is SheetUiState.Loaded
@@ -149,6 +152,7 @@ fun SheetScreen(
                     is SheetUiState.Loaded -> SampleContent(
                         samples = current.samples,
                         age = current.age,
+                        recentUnfavourable = recentUnfavourable,
                         onShowAllResults = onShowAllResults,
                         onShowHistory = onShowHistory,
                         onParameterHistory = onParameterHistory,
@@ -253,6 +257,7 @@ private fun FreshnessBanner(freshness: Freshness) {
 private fun SampleContent(
     samples: List<Sample>,
     age: RelativeAge,
+    recentUnfavourable: UnfavourableDigest?,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
     onParameterHistory: (FeaturedParameter, String) -> Unit,
@@ -277,6 +282,7 @@ private fun SampleContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        recentUnfavourable?.let { RecentUnfavourableCard(it, onShowHistory) }
         KeyParametersCard(sample, onParameterHistory)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -486,9 +492,74 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
     }
 }
 
+/**
+ * A discreet box: how many samples of the last 12 months have an
+ * unfavourable published outcome, and the most recent one's date and
+ * conclusion as published (SPEC §14: no verdict, no reassuring message when
+ * there is none, in which case the box is not shown). Opens the timeline.
+ */
+@Composable
+private fun RecentUnfavourableCard(digest: UnfavourableDigest, onShowHistory: () -> Unit) {
+    val locale = currentLocale()
+    val date = remember(digest.latest.date, locale) {
+        formatSampleDate(digest.latest.date, locale)
+    }
+    Card(
+        onClick = onShowHistory,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.sheet_recent_unfavourable_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = pluralStringResource(
+                    R.plurals.sheet_recent_unfavourable_count,
+                    digest.count,
+                    digest.count,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = stringResource(R.string.sheet_recent_unfavourable_latest, date),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ConclusionText(digest.latest.conclusion, style = MaterialTheme.typography.bodyMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.timeline_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
 /** One published conclusion, verbatim, or the sentence saying there is none. */
 @Composable
-private fun ConclusionText(conclusion: String?) {
+private fun ConclusionText(
+    conclusion: String?,
+    style: TextStyle = MaterialTheme.typography.titleMedium,
+) {
     if (conclusion.isNullOrBlank()) {
         Text(
             text = stringResource(R.string.sheet_no_conclusion),
@@ -502,7 +573,7 @@ private fun ConclusionText(conclusion: String?) {
                 conclusion,
                 SpanStyle(localeList = LocaleList(FRENCH_LANGUAGE_TAG)),
             ),
-            style = MaterialTheme.typography.titleMedium.asApiText(),
+            style = style.asApiText(),
         )
         Text(
             text = stringResource(R.string.sheet_official_wording),

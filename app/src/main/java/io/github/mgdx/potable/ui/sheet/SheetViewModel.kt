@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
+import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
+import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.ui.common.LoadError
@@ -62,10 +64,14 @@ data class Freshness(val fetchedAt: Instant, val refreshFailed: Boolean)
  * as amended, `docs/decisions.md`): it is refreshed when the sheet opens
  * (the repository decides whether the network is needed) and on
  * pull-to-refresh. Following only changes the follow button.
+ *
+ * Once a sample is shown, the timeline of the last 12 months is read in the
+ * background ([recentUnfavourable]), from the history cache when it is fresh.
  */
 class SheetViewModel(
     private val water: WaterRepository,
     private val follows: FollowRepository,
+    private val history: HistoryRepository,
     private val communeCode: String,
     private val udiCode: String,
     private val communeName: String,
@@ -98,7 +104,21 @@ class SheetViewModel(
     /** Whether this unit is followed; null until the follows are read. */
     val isFollowed: StateFlow<Boolean?> = _isFollowed.asStateFlow()
 
+    private val _recentUnfavourable = MutableStateFlow<UnfavourableDigest?>(null)
+
+    /**
+     * The samples of the last [RECENT_MONTHS] months with an unfavourable
+     * published outcome, read once the latest sample is shown; null while
+     * unknown, when there is none, or when the timeline could not be read:
+     * nothing is said then (SPEC §14).
+     */
+    val recentUnfavourable: StateFlow<UnfavourableDigest?> = _recentUnfavourable.asStateFlow()
+
     private var refreshJob: Job? = null
+    private var recentJob: Job? = null
+
+    /** The newest sample [recentJob] was started for: read again only when it changes. */
+    private var recentFor: String? = null
     private var cached: CachedSample? = null
     private var refreshError: LoadError? = null
 
@@ -199,9 +219,32 @@ class SheetViewModel(
         if (cache != null) {
             _state.value = sampleState(cache.samples)
             _freshness.value = Freshness(cache.fetchedAt, refreshFailed = error != null)
+            cache.sample?.let { loadRecentUnfavourable(it.code) }
         } else if (error != null) {
             val shown = _state.value is SheetUiState.Loaded || _state.value is SheetUiState.NoSample
             if (!shown) _state.value = SheetUiState.Error(error)
+        }
+    }
+
+    /**
+     * Reads the timeline of the last [RECENT_MONTHS] months, after the
+     * latest sample [sampleCode] is shown, and keeps its unfavourable
+     * samples ([UnfavourableDigest]). Best effort: a failure shows nothing.
+     */
+    private fun loadRecentUnfavourable(sampleCode: String) {
+        if (recentFor == sampleCode) return
+        recentFor = sampleCode
+        recentJob?.cancel()
+        recentJob = viewModelScope.launch {
+            val since = clock.instant().atZone(FRANCE_ZONE).toLocalDate()
+                .minusMonths(RECENT_MONTHS)
+            _recentUnfavourable.value = try {
+                UnfavourableDigest.of(history.sampleTimeline(communeCode, udiCode, since))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 
@@ -212,6 +255,9 @@ class SheetViewModel(
     }
 
     companion object {
+        /** The period of [recentUnfavourable]. */
+        const val RECENT_MONTHS = 12L
+
         fun factory(
             container: AppContainer,
             communeCode: String,
@@ -223,6 +269,7 @@ class SheetViewModel(
                 SheetViewModel(
                     container.water,
                     container.follows,
+                    container.history,
                     communeCode,
                     udiCode,
                     communeName,

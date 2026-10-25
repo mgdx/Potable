@@ -3,6 +3,7 @@ package io.github.mgdx.potable.ui.sheet
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.ui.FakeFollowRepository
+import io.github.mgdx.potable.ui.FakeHistoryRepository
 import io.github.mgdx.potable.ui.FakeWaterRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.common.LoadError
@@ -38,8 +39,16 @@ class FollowedSheetViewModelTest {
     private val loaded = SheetUiState.Loaded(latest, RelativeAge.Weeks(3))
     private val fetchedAt = Instant.parse("2026-10-20T07:00:00Z")
 
-    private fun viewModel() =
-        SheetViewModel(water, follows, "45234", "045000123", "Orléans", "ORLEANS", clock)
+    private fun viewModel() = SheetViewModel(
+        water,
+        follows,
+        FakeHistoryRepository(),
+        "45234",
+        "045000123",
+        "Orléans",
+        "ORLEANS",
+        clock,
+    )
 
     @Test
     fun `the cache is shown with its date, and refreshed without force`() =
@@ -174,7 +183,16 @@ class FollowFromSheetViewModelTest {
         val fetchedAt = Instant.parse("2026-10-25T09:59:00Z")
         water.refreshedCache = CachedSample(latest, fetchedAt)
         val viewModel =
-            SheetViewModel(water, follows, "45234", "045000123", "Orléans", "ORLEANS", clock)
+            SheetViewModel(
+                water,
+                follows,
+                FakeHistoryRepository(),
+                "45234",
+                "045000123",
+                "Orléans",
+                "ORLEANS",
+                clock,
+            )
         advanceUntilIdle()
         assertEquals(false, viewModel.isFollowed.value)
         assertEquals(Freshness(fetchedAt, refreshFailed = false), viewModel.freshness.value)

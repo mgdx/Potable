@@ -151,6 +151,15 @@
     <string name="sheet_sample_number">Sample %1$d of %2$d</string>
     <!-- Under the card of several samples. -->
     <string name="sheet_details_of_latest">The key parameters and compliance below are those of the most recent sample.</string>
+    <!-- Heading of a small box on the sheet, shown only when samples of the last 12 months have an unfavourable published result (non-compliance, consumption advised against or forbidden). Tapping it opens the sample history. -->
+    <string name="sheet_recent_unfavourable_title">Last 12 months</string>
+    <!-- %d: number of samples of the last 12 months with an unfavourable published result, 1 or more. -->
+    <plurals name="sheet_recent_unfavourable_count">
+        <item quantity="one">%d sample has an unfavourable published result.</item>
+        <item quantity="other">%d samples have an unfavourable published result.</item>
+    </plurals>
+    <!-- Followed by the conclusion of that sample, as published, in French. %1$s: the date it was taken, formatted for the language. -->
+    <string name="sheet_recent_unfavourable_latest">Most recent, sampled on %1$s:</string>
     <!-- Heading of the card of the featured parameters (SPEC §4.3). -->
     <string name="sheet_key_parameters_title">Key parameters</string>
     <!-- Names of the featured parameters, translated (docs/glossary.md), unlike the labels published by Hub'Eau. -->

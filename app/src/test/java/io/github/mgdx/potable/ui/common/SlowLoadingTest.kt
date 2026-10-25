@@ -6,6 +6,7 @@ import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeFollowRepository
+import io.github.mgdx.potable.ui.FakeHistoryRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.follow
 import io.github.mgdx.potable.ui.sample
@@ -70,6 +71,7 @@ class SlowLoadingTest {
     private fun sheet(follows: FakeFollowRepository = FakeFollowRepository()) = SheetViewModel(
         water,
         follows,
+        FakeHistoryRepository(),
         "45234",
         "045000123",
         "Orléans",

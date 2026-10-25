@@ -2,11 +2,14 @@ package io.github.mgdx.potable.ui
 
 import io.github.mgdx.potable.core.model.Commune
 import io.github.mgdx.potable.core.model.Compliance
+import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.Sample
+import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.core.model.Udi
 import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.CommuneRepository
+import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
@@ -22,6 +25,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.time.Instant
+import java.time.LocalDate
 
 /** Routes `Dispatchers.Main`, hence `viewModelScope`, to a test dispatcher. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -85,6 +89,33 @@ class FakeWaterRepository : WaterRepository {
     override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? {
         sampleCalls += communeCode to networkCode
         return sampleAnswers.removeFirst().getOrThrow()
+    }
+}
+
+/** A timeline per unit, as [sampleTimeline] returns it; no series. */
+class FakeHistoryRepository : HistoryRepository {
+    /** What [sampleTimeline] returns, or throws. */
+    var timeline: Result<List<SampleSummary>> = Result.success(emptyList())
+
+    /** The `since` argument of each [sampleTimeline]. */
+    val timelineCalls = mutableListOf<LocalDate>()
+
+    override suspend fun parameterSeries(
+        communeCode: String,
+        udiCode: String,
+        parameterCodes: Set<String>,
+        since: LocalDate,
+        force: Boolean,
+    ): ParameterSeries? = null
+
+    override suspend fun sampleTimeline(
+        communeCode: String,
+        udiCode: String,
+        since: LocalDate,
+        force: Boolean,
+    ): List<SampleSummary> {
+        timelineCalls += since
+        return timeline.getOrThrow()
     }
 }
 
