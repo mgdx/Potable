@@ -7,17 +7,23 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.alert.NotificationAccess
+import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.data.preferences.ThemeMode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /** The stored alert settings (SPEC §5 F7). */
 data class AlertSettings(val newAnalysis: Boolean, val unfavourable: Boolean, val periodWeeks: Int)
@@ -43,6 +49,19 @@ enum class PurgeState {
     DONE,
 }
 
+/**
+ * A commune with something in the cache (SPEC §7): [name] from the embedded
+ * referential, or null if it is not found there (the code is shown then).
+ */
+data class CachedCommuneItem(
+    val communeCode: String,
+    val name: String?,
+    val lastFetched: Instant?,
+) {
+    /** What the screen shows: the name, or the code. */
+    val label: String get() = name ?: communeCode
+}
+
 /** The two alerts the user can switch on. */
 enum class AlertKind { NEW_ANALYSIS, UNFAVOURABLE }
 
@@ -57,11 +76,15 @@ enum class NotificationNotice {
     BLOCKED,
 }
 
-/** Settings (SPEC §5 F8): theme, default history window, cache retention and purge, alerts. */
+/**
+ * Settings (SPEC §5 F8): theme, default history window, cache retention and
+ * purge (whole, or one commune), alerts.
+ */
 class SettingsViewModel(
     private val preferences: AppPreferences,
     private val water: WaterRepository,
     private val notifications: NotificationAccess,
+    private val communes: CommuneRepository,
 ) : ViewModel() {
     /** Null until the preferences are read, so that no wrong choice shows first. */
     val settings: StateFlow<Settings?> = combine(
@@ -79,6 +102,28 @@ class SettingsViewModel(
 
     private val _purge = MutableStateFlow(PurgeState.IDLE)
     val purge: StateFlow<PurgeState> = _purge.asStateFlow()
+
+    /**
+     * The communes in the cache, by name; null until read. An unreadable
+     * cache reads as empty.
+     */
+    val cachedCommunes: StateFlow<List<CachedCommuneItem>?> = water.cachedCommunes()
+        .map { list ->
+            list.map { CachedCommuneItem(it.communeCode, nameOf(it.communeCode), it.lastFetched) }
+                .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label })
+        }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    private val _communeToPurge = MutableStateFlow<CachedCommuneItem?>(null)
+
+    /** The commune whose cache the confirmation dialog is about; null without dialog. */
+    val communeToPurge: StateFlow<CachedCommuneItem?> = _communeToPurge.asStateFlow()
+
+    private val _communePurged = MutableStateFlow<CachedCommuneItem?>(null)
+
+    /** The commune whose cache was just cleared: a confirmation message is due, once. */
+    val communePurged: StateFlow<CachedCommuneItem?> = _communePurged.asStateFlow()
 
     val yearChoices: List<Int> = AppPreferences.YEAR_CHOICES
 
@@ -220,6 +265,38 @@ class SettingsViewModel(
         _purge.update { if (it == PurgeState.DONE) PurgeState.IDLE else it }
     }
 
+    /** Asks for confirmation; the commune's cache is only cleared by [confirmCommunePurge]. */
+    fun requestCommunePurge(commune: CachedCommuneItem) {
+        _communeToPurge.value = commune
+    }
+
+    fun dismissCommunePurge() {
+        _communeToPurge.value = null
+    }
+
+    /** Clears the cache of the commune of the dialog, once: a double tap does nothing more. */
+    fun confirmCommunePurge() {
+        val commune = _communeToPurge.getAndUpdate { null } ?: return
+        viewModelScope.launch {
+            water.purgeCommune(commune.communeCode)
+            _communePurged.value = commune
+        }
+    }
+
+    /** The confirmation message of [communePurged] was shown. */
+    fun onCommunePurgeMessageShown() {
+        _communePurged.value = null
+    }
+
+    /** The commune's name in the embedded referential; null if not found or unreadable. */
+    private suspend fun nameOf(communeCode: String): String? = try {
+        communes.byCode(communeCode)?.name
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        null
+    }
+
     companion object {
         private const val STOP_TIMEOUT_MS = 5_000L
 
@@ -229,6 +306,7 @@ class SettingsViewModel(
                     container.preferences,
                     container.water,
                     container.notificationAccess,
+                    container.communes,
                 )
             }
         }

@@ -7,7 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 /**
- * The local store of SPEC §7: followed units and the cache of their samples,
+ * The local store of SPEC §7: followed units and the cache of the units looked at,
  * never a national data set. Schemas are exported to `data/schemas/`.
  * Build it once per process, with [open].
  *

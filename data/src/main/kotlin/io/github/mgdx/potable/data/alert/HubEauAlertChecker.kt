@@ -59,7 +59,7 @@ class HubEauAlertChecker internal constructor(
         water.setLastSeenSampleDate(communeCode, udiCode, latest.date)
         // The notification opens the unit's page: give it the new sample,
         // but announce it even if Hub'Eau fails this second time.
-        bestEffort { water.refreshFollowed(communeCode, udiCode, force = true) }
+        bestEffort { water.refreshCache(communeCode, udiCode, force = true) }
         return AlertEvent(follow, latest, Unfavourable.isUnfavourable(latest))
     }
 

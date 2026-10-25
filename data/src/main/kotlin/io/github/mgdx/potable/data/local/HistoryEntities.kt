@@ -5,11 +5,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 
 /*
- * History cache of the followed units (SPEC §5 F5, §7), schema v2. Kept apart
+ * History cache of the units looked at (SPEC §5 F5, §7), schema v2. Kept apart
  * from the "latest sample" tables (`prelevement`, `resultat`, `synchro`),
  * whose rows hold full results: a history only needs one value per sample,
  * or a sample's header. Same unit key (code_commune, code_reseau of the
- * follow) as the other cached rows. Dates of coverage are epoch days of the
+ * unit) as the other cached rows. Dates of coverage are epoch days of the
  * published date (read in UTC, see `docs/decisions.md`).
  */
 

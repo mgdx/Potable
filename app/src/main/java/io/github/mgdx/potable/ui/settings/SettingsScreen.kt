@@ -21,7 +21,11 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -50,7 +54,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.data.preferences.ThemeMode
 import io.github.mgdx.potable.ui.common.BackTopBar
+import io.github.mgdx.potable.ui.common.asApiText
+import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.sample.currentLocale
+import io.github.mgdx.potable.ui.sheet.formatFetchedDate
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 
 /** Settings (SPEC §5 F8). Every change is stored at once: there is no "save". */
 @Composable
@@ -61,8 +70,19 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val purgedMessage = stringResource(R.string.settings_clear_cache_done)
     val notice by viewModel.notice.collectAsStateWithLifecycle()
+    val cachedCommunes by viewModel.cachedCommunes.collectAsStateWithLifecycle()
+    val communeToPurge by viewModel.communeToPurge.collectAsStateWithLifecycle()
+    val communePurged by viewModel.communePurged.collectAsStateWithLifecycle()
     val context = LocalContext.current
     NotificationPermissionRequest(viewModel)
+    communePurged?.let { commune ->
+        val message = stringResource(R.string.settings_clear_commune_done, bidiWrap(commune.label))
+        LaunchedEffect(commune) {
+            // Same as the whole purge: acknowledged first, shown once.
+            viewModel.onCommunePurgeMessageShown()
+            scope.launch { snackbarHostState.showSnackbar(message) }
+        }
+    }
     LaunchedEffect(purge) {
         if (purge == PurgeState.DONE) {
             // Acknowledged first, so that it is shown once; the message lives
@@ -120,6 +140,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
             ) {
                 Text(stringResource(R.string.settings_clear_cache))
             }
+            CachedCommunes(cachedCommunes, onClear = viewModel::requestCommunePurge)
 
             AlertsSection(
                 alerts = current.alerts,
@@ -130,6 +151,30 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 onOpenNotificationSettings = { openNotificationSettings(context) },
             )
         }
+    }
+    communeToPurge?.let { commune ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissCommunePurge,
+            title = {
+                Text(
+                    stringResource(
+                        R.string.settings_clear_commune_confirm_title,
+                        bidiWrap(commune.label),
+                    ),
+                )
+            },
+            text = { Text(stringResource(R.string.settings_clear_commune_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmCommunePurge) {
+                    Text(stringResource(R.string.settings_clear_cache_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissCommunePurge) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
     if (purge == PurgeState.CONFIRMING) {
         AlertDialog(
@@ -147,6 +192,65 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 }
             },
         )
+    }
+}
+
+/**
+ * The communes in the cache (SPEC §7), each with a button that clears its
+ * cache alone. Nothing until the cache is read; a sentence when it is empty.
+ */
+@Composable
+private fun CachedCommunes(
+    communes: List<CachedCommuneItem>?,
+    onClear: (CachedCommuneItem) -> Unit,
+) {
+    communes ?: return
+    Text(
+        text = stringResource(R.string.settings_cached_communes_title),
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+            .semantics { heading() },
+    )
+    if (communes.isEmpty()) {
+        Description(stringResource(R.string.settings_cached_communes_empty))
+        return
+    }
+    val locale = currentLocale()
+    communes.forEach { commune ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = commune.label,
+                    style = MaterialTheme.typography.bodyLarge.asApiText(),
+                )
+                commune.lastFetched?.let { fetched ->
+                    val date = remember(fetched, locale) {
+                        formatFetchedDate(fetched, locale, ZoneId.systemDefault())
+                    }
+                    Text(
+                        text = stringResource(R.string.sheet_data_from, date),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            IconButton(onClick = { onClear(commune) }) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = stringResource(
+                        R.string.settings_clear_commune_description,
+                        bidiWrap(commune.label),
+                    ),
+                )
+            }
+        }
     }
 }
 

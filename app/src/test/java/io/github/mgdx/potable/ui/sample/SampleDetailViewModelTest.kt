@@ -76,6 +76,22 @@ class SampleDetailViewModelTest {
     }
 
     @Test
+    fun `any sample of the day shown on the sheet is found by its code`() =
+        runTest(main.dispatcher) {
+            val morning = loaded.copy(code = "00122", results = listOf(nitrates))
+            sheet.value = SheetUiState.Loaded(listOf(loaded, morning), RelativeAge.Today)
+            val viewModel = SampleDetailViewModel(morning.code, sheet)
+            advanceUntilIdle()
+            assertEquals(
+                SampleDetailUiState.Loaded(
+                    morning,
+                    listOf(FamilyGroup(ParameterFamily.PHYSICOCHEMISTRY, listOf(nitrates))),
+                ),
+                viewModel.state.value,
+            )
+        }
+
+    @Test
     fun `another sample on the sheet makes this one unavailable`() = runTest(main.dispatcher) {
         val viewModel = viewModel()
         sheet.value = SheetUiState.Loaded(loaded.copy(code = "00999"), RelativeAge.Today)

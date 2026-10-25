@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Locale
 
 class SampleDateTest {
@@ -33,6 +34,25 @@ class SampleDateTest {
         assertFalse(sampled, sampled.any { it in '0'..'9' })
         val fetched = formatFetchedDate(lateSample, egypt, FRANCE_ZONE)
         assertFalse(fetched, fetched.any { it in '0'..'9' })
+    }
+
+    @Test
+    fun `samples of the same day are told apart by their published time`() {
+        val afternoon = Instant.parse("2026-08-26T15:10:00Z")
+        val morning = Instant.parse("2026-08-26T08:30:00Z")
+        assertEquals(
+            listOf(LocalTime.of(15, 10), LocalTime.of(8, 30)),
+            distinctSampleTimes(listOf(afternoon, morning)),
+        )
+        assertEquals("15:10", formatSampleTime(LocalTime.of(15, 10), Locale.FRANCE))
+    }
+
+    @Test
+    fun `samples without a time of their own are numbered instead`() {
+        val midnight = Instant.parse("2026-08-26T00:00:00Z")
+        val morning = Instant.parse("2026-08-26T08:30:00Z")
+        assertEquals(listOf(null, null), distinctSampleTimes(listOf(morning, midnight)))
+        assertEquals(listOf(null, null), distinctSampleTimes(listOf(morning, morning)))
     }
 
     @Test

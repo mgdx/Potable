@@ -24,10 +24,10 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * [HistoryRepository] that asks [network] for a unit that is not followed,
- * and keeps the history of every **followed** unit in [database] (SPEC §7).
+ * [HistoryRepository] that keeps in [database] the history of every unit
+ * looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`).
  *
- * A followed unit's series (per set of parameter codes) or timeline is
+ * A unit's series (per set of parameter codes) or timeline is
  * fetched again only if [force], if its last successful fetch was not today
  * (Europe/Paris), or if [since] goes back before what is cached; otherwise
  * the cache answers. A failed fetch with something cached returns the cache
@@ -44,7 +44,6 @@ class CachingHistoryRepository(
     private val preferences: AppPreferences,
     private val clock: Clock = Clock.systemUTC(),
 ) : HistoryRepository {
-    private val follows = database.follows()
     private val history = database.history()
 
     /** Serialises fetches: a second caller waits, then finds today's fetch. */
@@ -57,9 +56,6 @@ class CachingHistoryRepository(
         since: LocalDate,
         force: Boolean,
     ): ParameterSeries? {
-        if (follows.find(communeCode, udiCode) == null) {
-            return network.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
-        }
         val key = parameterCodes.sorted().joinToString(",")
         return fetching.withLock {
             val cached = history.series(communeCode, udiCode, key)
@@ -86,9 +82,6 @@ class CachingHistoryRepository(
         since: LocalDate,
         force: Boolean,
     ): List<SampleSummary> {
-        if (follows.find(communeCode, udiCode) == null) {
-            return network.sampleTimeline(communeCode, udiCode, since, force)
-        }
         return fetching.withLock {
             val sync = history.timelineSync(communeCode, udiCode)
             if (sync != null && !force && isFresh(sync.lastSuccess, sync.depuis, since)) {
@@ -111,8 +104,7 @@ class CachingHistoryRepository(
      * the older ones when the cache reaches [since] (it was fetched after
      * that day): the union is then contiguous and the coverage starts at the
      * earlier of both. Otherwise the old points are dropped, so that no gap
-     * reads as an absence of measure. Nothing is written if the unit was
-     * unfollowed meanwhile.
+     * reads as an absence of measure.
      */
     private suspend fun storeSeries(
         communeCode: String,
@@ -126,7 +118,6 @@ class CachingHistoryRepository(
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
-            if (follows.find(communeCode, udiCode) == null) return@withTransaction
             val keepOlder = cached != null && cached.lastSuccess >= from
             val depuis = if (keepOlder) {
                 minOf(
@@ -187,7 +178,6 @@ class CachingHistoryRepository(
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
-            if (follows.find(communeCode, udiCode) == null) return@withTransaction
             val keepOlder = sync != null && sync.lastSuccess >= from
             history.upsertTimelineSync(
                 TimelineSyncEntity(

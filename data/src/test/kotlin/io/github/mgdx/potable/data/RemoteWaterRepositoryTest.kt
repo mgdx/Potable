@@ -100,9 +100,9 @@ class RemoteWaterRepositoryTest {
     }
 
     @Test
-    fun latestSample_stopsWhenTheDateChangesWithinAPage() = runTest {
+    fun latestSample_stopsWhenTheDayChangesWithinAPage() = runTest {
         val first = rows("P2", "2026-08-26T12:50:00Z", 3)
-        val older = rows("P1", "2026-08-26T10:04:00Z", 2)
+        val older = rows("P1", "2026-08-25T10:04:00Z", 2)
         server.enqueue(response(page(5000, NEXT, first + older), partial = true))
 
         val sample = repository.latestSample("45234", null)!!
@@ -157,6 +157,43 @@ class RemoteWaterRepositoryTest {
         )
         assertEquals("P2", sample.code)
         assertEquals(10, sample.results.size)
+    }
+
+    @Test
+    fun latestSamples_readsEverySampleOfTheNewestDay() = runTest {
+        // Hub'Eau sorts on the full date: the second sample of the day comes
+        // after the last row of the first one, on the next page.
+        server.enqueue(
+            response(page(9, NEXT, rows("P3", "2026-08-26T15:10:00Z", 3)), partial = true),
+        )
+        server.enqueue(
+            response(
+                page(
+                    9,
+                    NEXT,
+                    rows("P3", "2026-08-26T15:10:00Z", 1, firstParameter = 4) +
+                        rows("P2", "2026-08-26T08:30:00Z", 2),
+                ),
+                partial = true,
+            ),
+        )
+        server.enqueue(
+            response(
+                page(
+                    9,
+                    NEXT,
+                    rows("P2", "2026-08-26T08:30:00Z", 1, firstParameter = 3) +
+                        rows("P1", "2026-08-12T10:54:00Z", 2),
+                ),
+                partial = true,
+            ),
+        )
+
+        val samples = repository.latestSamples("45234", null)
+
+        assertEquals(3, server.requestCount)
+        assertEquals(listOf("P3", "P2"), samples.map { it.code })
+        assertEquals(listOf(4, 3), samples.map { it.results.size })
     }
 
     @Test

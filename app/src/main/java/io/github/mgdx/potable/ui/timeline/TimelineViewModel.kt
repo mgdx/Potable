@@ -78,8 +78,8 @@ sealed interface TimelineUiState {
  * window starts at the history setting and can be changed on the screen
  * without changing the setting.
  *
- * A followed unit offers pull-to-refresh, which forces the request; so does
- * Retry. There is no automatic retry.
+ * Pull-to-refresh forces the request, for any unit (its history is cached,
+ * SPEC §7); so does Retry. There is no automatic retry.
  */
 class TimelineViewModel(
     private val history: HistoryRepository,
@@ -117,7 +117,7 @@ class TimelineViewModel(
 
     private val _isFollowed = MutableStateFlow(false)
 
-    /** Whether this unit is followed: only then is pull-to-refresh offered. */
+    /** Whether this unit is followed. */
     val isFollowed: StateFlow<Boolean> = _isFollowed.asStateFlow()
 
     private var loadJob: Job? = null

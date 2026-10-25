@@ -201,7 +201,8 @@ d'écran d'accueil, données de baignade ou de cours d'eau.
 
 ## 7. Stockage local
 
-Base **Room**. Cache limité aux communes suivies — jamais de jeu national.
+Base **Room**. Cache des communes suivies **et consultées** (écart consigné
+dans `docs/decisions.md`) — jamais de jeu national.
 
 Tables minimales :
 
@@ -209,14 +210,17 @@ Tables minimales :
 - `suivi` (code_commune, code_reseau, libellé, position, principale)
 - `prelevement` (code_prelevement, code_reseau, date, conclusions, distributeur)
 - `resultat` (code_prelevement, code_parametre, libellé, valeur, unité, limite)
-- `synchro` (par suivi : date du dernier prélèvement vu, horodatage de la
-  dernière requête réussie)
+- `synchro` (par unité en cache : horodatage de la dernière requête réussie ;
+  pour un suivi seulement, date du dernier prélèvement vu)
 
 Règles :
 
 - Rétention configurable, 3 ans par défaut ; purge automatique au-delà.
+- Purge manuelle de tout le cache, ou du cache d'une seule commune ; aucune
+  ne touche aux suivis.
 - Le cache sert de source d'affichage : l'application est **consultable hors
-  ligne** pour les communes suivies, avec un bandeau indiquant la fraîcheur.
+  ligne** pour toute commune déjà consultée, suivie ou non, avec un bandeau
+  indiquant la fraîcheur.
 - Rafraîchissement au premier affichage du jour, sur pull-to-refresh, et par la
   tâche d'alerte. Jamais en boucle.
 

@@ -7,10 +7,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /*
- * Tables of SPEC §7. Only public Hub'Eau data and the codes of the followed
- * units are stored: nothing about the user. A "unit" is the pair
- * (code_commune, code_reseau) the user follows; every cached row carries it,
- * so that unfollowing deletes exactly that unit's cache.
+ * Tables of SPEC §7. Only public Hub'Eau data and the codes of the units
+ * followed or looked at are stored: nothing else about the user. A "unit" is
+ * the pair (code_commune, code_reseau); every cached row carries it, so that
+ * a commune's cache can be deleted exactly.
  */
 
 /** A followed unit (table `suivi`). */
@@ -29,9 +29,9 @@ internal data class FollowEntity(
 )
 
 /**
- * A cached sample of a followed unit (table `prelevement`). The key includes
+ * A cached sample of a unit (table `prelevement`). The key includes
  * the unit: Hub'Eau publishes the same `code_prelevement` for every commune
- * (and network) the sampling point serves, and two followed units must not
+ * (and network) the sampling point serves, and two units must not
  * share, nor delete, each other's rows.
  *
  * The four compliances are kept as their raw Hub'Eau code (C, D, N, S, or
@@ -43,7 +43,7 @@ internal data class FollowEntity(
 )
 internal data class SampleEntity(
     @ColumnInfo(name = "code_commune") val communeCode: String,
-    /** The followed unit's network, the one the sample was queried with. */
+    /** The unit's network, the one the sample was queried with. */
     @ColumnInfo(name = "code_reseau") val udiCode: String,
     @ColumnInfo(name = "code_prelevement") val code: String,
     /** `Sample.networkCode` as published (first of `reseaux`), may differ from [udiCode]. */
@@ -88,7 +88,7 @@ internal data class ResultEntity(
     val reference: String?,
 )
 
-/** Sync state of a followed unit (table `synchro`). */
+/** Sync state of a unit (table `synchro`). */
 @Entity(tableName = "synchro", primaryKeys = ["code_commune", "code_reseau"])
 internal data class SyncEntity(
     @ColumnInfo(name = "code_commune") val communeCode: String,

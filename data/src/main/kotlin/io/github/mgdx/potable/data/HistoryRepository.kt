@@ -5,9 +5,8 @@ import io.github.mgdx.potable.core.model.SampleSummary
 import java.time.LocalDate
 
 /**
- * History of a unit (SPEC §5 F5). For a followed unit the result is cached (SPEC §7) and the network
- * is called at most once a day unless [force]; for any other unit it comes
- * straight from Hub'Eau.
+ * History of a unit (SPEC §5 F5). The result is cached for any unit looked
+ * at (SPEC §7) and the network is called at most once a day unless [force].
  */
 interface HistoryRepository {
     /**

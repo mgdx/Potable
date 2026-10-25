@@ -145,7 +145,7 @@ class CachingHistoryRepositoryTest {
     }
 
     @Test
-    fun `a unit that is not followed always goes to the network and is never cached`() = runTest {
+    fun `a unit that is not followed is cached too`() = runTest {
         givenHistory()
 
         assertEquals(2, series()?.points?.size)
@@ -153,10 +153,10 @@ class CachingHistoryRepositoryTest {
         assertEquals(2, timeline().size)
         assertEquals(2, timeline().size)
 
-        assertEquals(2, network.seriesCalls)
-        assertEquals(2, network.timelineCalls)
-        assertEquals(0, database.history().pointCount())
-        assertEquals(0, database.history().timelineCount())
+        assertEquals(1, network.seriesCalls)
+        assertEquals(1, network.timelineCalls)
+        assertEquals(2, database.history().pointCount())
+        assertEquals(2, database.history().timelineCount())
     }
 
     @Test
@@ -316,14 +316,6 @@ class CachingHistoryRepositoryTest {
         } catch (_: DataError.Http) {
             // Expected.
         }
-        // Not followed: thrown as well.
-        follows.unfollow(follows.find("45234", UDI)!!.id)
-        try {
-            series()
-            fail("expected DataError")
-        } catch (_: DataError.Http) {
-            // Expected.
-        }
     }
 
     @Test
@@ -340,23 +332,37 @@ class CachingHistoryRepositoryTest {
     }
 
     @Test
-    fun `unfollowing deletes the unit's history, and only it`() = runTest {
+    fun `unfollowing keeps the unit's history`() = runTest {
         val orleans = followOrleans()
-        follows.follow("75056", "Paris", "075000221", "CENTRE")
         givenHistory()
         series()
         timeline()
-        repository.parameterSeries("75056", "075000221", setOf("1340"), threeYears)
-        repository.sampleTimeline("75056", "075000221", threeYears)
-        assertEquals(4, database.history().pointCount())
-        assertEquals(4, database.history().timelineCount())
 
         follows.unfollow(orleans.id)
 
         assertEquals(2, database.history().pointCount())
         assertEquals(2, database.history().timelineCount())
+        assertEquals(2, series()?.points?.size)
+        assertEquals(1, network.seriesCalls)
+    }
+
+    @Test
+    fun `purging a commune deletes its history only`() = runTest {
+        givenHistory()
+        series()
+        timeline()
+        repository.parameterSeries("75056", "075000221", setOf("1340"), threeYears)
+        repository.sampleTimeline("75056", "075000221", threeYears)
+
+        water.purgeCommune("45234")
+
+        assertEquals(2, database.history().pointCount())
+        assertEquals(2, database.history().timelineCount())
         assertNull(database.history().series("45234", UDI, "1340"))
         assertNull(database.history().timelineSync("45234", UDI))
+        // The next read fetches again.
+        series()
+        assertEquals(3, network.seriesCalls)
     }
 
     @Test
@@ -424,39 +430,6 @@ class CachingHistoryRepositoryTest {
         // A window beyond the retention cannot come from the cache.
         series(tenYears)
         assertEquals(2, network.seriesCalls)
-    }
-
-    @Test
-    fun `a unit unfollowed during the fetch is not cached`() = runTest {
-        val orleans = followOrleans()
-        givenHistory()
-        val unfollowing =
-            object : HistoryRepository by network {
-                override suspend fun parameterSeries(
-                    communeCode: String,
-                    udiCode: String,
-                    parameterCodes: Set<String>,
-                    since: LocalDate,
-                    force: Boolean,
-                ): ParameterSeries? {
-                    follows.unfollow(orleans.id)
-                    return network.parameterSeries(
-                        communeCode,
-                        udiCode,
-                        parameterCodes,
-                        since,
-                        force,
-                    )
-                }
-            }
-        val racing = CachingHistoryRepository(unfollowing, database, preferences, clock)
-
-        assertEquals(
-            2,
-            racing.parameterSeries("45234", UDI, setOf("1340"), threeYears)?.points?.size,
-        )
-        assertEquals(0, database.history().pointCount())
-        assertNull(database.history().series("45234", UDI, "1340"))
     }
 
     @Test

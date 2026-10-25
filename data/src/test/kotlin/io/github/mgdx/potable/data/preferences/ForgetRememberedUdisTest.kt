@@ -46,6 +46,18 @@ class ForgetRememberedUdisTest {
     }
 
     @Test
+    fun forgetsTheUdiOfOneCommuneOnly() = runBlocking {
+        preferences.rememberUdi("45234", "045000123")
+        preferences.rememberUdi("75056", "075000221")
+
+        preferences.forgetRememberedUdi("45234")
+        preferences.forgetRememberedUdi("99999")
+
+        assertNull(preferences.rememberedUdi("45234"))
+        assertEquals("075000221", preferences.rememberedUdi("75056"))
+    }
+
+    @Test
     fun keepsTheOtherSettings() = runBlocking {
         preferences.acceptDisclaimer()
         preferences.setThemeMode(ThemeMode.DARK)

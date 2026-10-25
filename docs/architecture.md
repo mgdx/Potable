@@ -105,31 +105,34 @@ deviennent des `DataError` explicites — réseau, délai dépassé alors que Hu
 en messages. Les comportements observés de l’API (lenteurs, tris, filtres de
 date, pannes) sont consignés dans [`hubeau-api.md`](hubeau-api.md).
 
-### Le cache Room, limité aux communes suivies
+### Le cache Room, des communes consultées
 
 La base `potable.db` ne contient jamais de jeu national : seulement les
-**communes suivies** et les données publiques de leur unité de distribution
-(SPEC §7). Ses tables :
+**communes suivies** et les données publiques des unités de distribution
+**consultées**, suivies ou non (SPEC §7). Ses tables :
 
 | Table | Contenu |
 |---|---|
 | `suivi` | commune, unité de distribution, libellés, position dans la liste, principale |
-| `prelevement`, `resultat` | le dernier prélèvement de chaque unité suivie et ses résultats |
-| `synchro` | par suivi : dernière requête réussie, dernier prélèvement vu par les alertes |
+| `prelevement`, `resultat` | les derniers prélèvements de chaque unité consultée (tous ceux du dernier jour) et leurs résultats |
+| `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes |
 | `serie`, `serie_point` | séries de paramètres consultées (historique) |
 | `historique_prelevement`, `historique_synchro` | frise des conclusions |
 
 Le schéma est exporté (`data/schemas/`) et ses migrations sont testées
 (`MigrationTest`).
 
-`CachingWaterRepository` enveloppe `RemoteWaterRepository` : pour une unité
-suivie, le cache est la source d’affichage, rafraîchie au premier affichage du
-jour, sur un tirer-pour-actualiser, et par la tâche d’alerte — jamais en
-boucle. Un échec réseau laisse le cache intact, et l’écran l’affiche avec la
-date de ses données. Une unité non suivie est lue en direct, et rien n’en est
-écrit. La rétention (3 ans par défaut) est appliquée après chaque
-rafraîchissement réussi, en gardant toujours le dernier prélèvement de chaque
-unité.
+`CachingWaterRepository` enveloppe `RemoteWaterRepository` : pour toute
+unité consultée, suivie ou non, le cache est la source d’affichage, rafraîchie
+au premier affichage du jour, sur un tirer-pour-actualiser, et par la tâche
+d’alerte pour les suivis — jamais en boucle. Un échec réseau laisse le cache
+intact, et l’écran l’affiche avec la date de ses données. `CachingHistoryRepository`
+fait de même pour les séries et la frise. Retirer un suivi garde son cache et
+n’oublie que la date vue par les alertes. La rétention (3 ans par défaut) est
+appliquée après chaque rafraîchissement réussi, en gardant toujours le dernier
+prélèvement de chaque unité. Les réglages listent les communes en cache
+(`cachedCommunes`) et vident tout le cache (`purgeCache`) ou celui d’une
+commune (`purgeCommune`).
 
 Les réglages — thème, fenêtres en années, rétention, alertes, unité de
 distribution choisie pour chaque commune, acceptation de l’avertissement —
@@ -213,7 +216,7 @@ Chacun est argumenté, avec ce qu’il écarte, dans
 | Injection manuelle (`AppContainer`) | Un seul lieu d’assemblage, aucun framework |
 | Référentiel en TSV embarqué, indexé en mémoire | Recherche et géolocalisation hors ligne, fichier lisible et diffable |
 | OkHttp seul, sans Retrofit | Deux GET, une dépendance de moins |
-| Cache Room limité aux communes suivies | Consultation hors ligne sans stocker de jeu national |
+| Cache Room des communes consultées | Consultation hors ligne sans stocker de jeu national |
 | Dates de prélèvement lues en UTC | La date affichée est la date publiée, sans décalage d’un jour |
 | Requête d’alerte d’une ligne | Quelques kilo-octets par commune et par semaine |
 | Graphique en `Canvas` | Aucune bibliothèque de graphiques |

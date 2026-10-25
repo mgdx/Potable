@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -35,12 +36,18 @@ internal interface FollowDao {
 
 @Dao
 internal interface CacheDao {
-    /** The newest cached sample of a unit, re-emitted on every change of the table. */
+    /**
+     * The cached samples of a unit taken less than a day before its newest
+     * one, newest first (then by code), re-emitted on every change of the
+     * table: those of the newest published day are among them.
+     */
     @Query(
         "SELECT * FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
-            "ORDER BY date DESC, code_prelevement DESC LIMIT 1",
+            "AND date > (SELECT MAX(p.date) FROM prelevement AS p " +
+            "WHERE p.code_commune = :communeCode AND p.code_reseau = :udiCode) - $DAY_MS " +
+            "ORDER BY date DESC, code_prelevement",
     )
-    fun observeLatestSample(communeCode: String, udiCode: String): Flow<SampleEntity?>
+    fun observeLatestSamples(communeCode: String, udiCode: String): Flow<List<SampleEntity>>
 
     @Query(
         "SELECT * FROM resultat WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
@@ -72,14 +79,15 @@ internal interface CacheDao {
 
     /**
      * Retention purge (SPEC §7): deletes the samples dated before [cutoff]
-     * (epoch ms), except the newest of each unit, so that a followed unit
-     * always keeps its latest analysis. Results follow by cascade.
+     * (epoch ms), except those taken less than a day before the newest of
+     * their unit, so that a unit always keeps its latest analyses (all of
+     * the newest day). Results follow by cascade.
      */
     @Query(
-        "DELETE FROM prelevement WHERE date < :cutoff AND date < (" +
+        "DELETE FROM prelevement WHERE date < :cutoff AND date <= (" +
             "SELECT MAX(p.date) FROM prelevement AS p " +
             "WHERE p.code_commune = prelevement.code_commune " +
-            "AND p.code_reseau = prelevement.code_reseau)",
+            "AND p.code_reseau = prelevement.code_reseau) - $DAY_MS",
     )
     suspend fun purgeOlderThan(cutoff: Long)
 
@@ -108,15 +116,44 @@ internal interface CacheDao {
     )
     suspend fun setLastSeenSampleDate(communeCode: String, udiCode: String, date: Long?)
 
-    /** Deletes a unit's whole cache: samples, results, sync state. */
-    @Query("DELETE FROM resultat WHERE code_commune = :communeCode AND code_reseau = :udiCode")
-    suspend fun deleteUnitResults(communeCode: String, udiCode: String)
+    /** Forgets the date the alert task has seen for a unit (it is no longer followed). */
+    @Query(
+        "UPDATE synchro SET dernier_prelevement_vu = NULL " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun clearLastSeenSampleDate(communeCode: String, udiCode: String)
 
-    @Query("DELETE FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode")
-    suspend fun deleteUnitSamples(communeCode: String, udiCode: String)
+    /**
+     * Every unit with something cached, and the last successful fetch of
+     * each of its caches (latest sample, series, timeline), one row per
+     * cache; re-emitted on every change of these tables.
+     */
+    @Query(
+        "SELECT code_commune, code_reseau, dernier_succes FROM synchro " +
+            "WHERE dernier_succes IS NOT NULL " +
+            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM serie " +
+            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM historique_synchro",
+    )
+    fun observeCachedUnits(): Flow<List<CachedUnitRow>>
 
-    @Query("DELETE FROM synchro WHERE code_commune = :communeCode AND code_reseau = :udiCode")
-    suspend fun deleteUnitSync(communeCode: String, udiCode: String)
+    @Query("DELETE FROM resultat WHERE code_commune = :communeCode")
+    suspend fun deleteCommuneResults(communeCode: String)
+
+    @Query("DELETE FROM prelevement WHERE code_commune = :communeCode")
+    suspend fun deleteCommuneSamples(communeCode: String)
+
+    /**
+     * Forgets a commune's fetches, keeping only the date the alert task has
+     * seen for a followed unit ([SyncEntity.lastSeenSampleDate]).
+     */
+    @Query("UPDATE synchro SET dernier_succes = NULL WHERE code_commune = :communeCode")
+    suspend fun clearCommuneLastSuccess(communeCode: String)
+
+    @Query(
+        "DELETE FROM synchro WHERE code_commune = :communeCode " +
+            "AND dernier_prelevement_vu IS NULL",
+    )
+    suspend fun deleteCommuneSyncWithoutLastSeen(communeCode: String)
 
     @Query("DELETE FROM resultat")
     suspend fun deleteAllResults()
@@ -127,3 +164,13 @@ internal interface CacheDao {
     @Query("DELETE FROM synchro")
     suspend fun deleteAllSync()
 }
+
+/** A day in milliseconds, for the queries on `prelevement.date`. */
+private const val DAY_MS = 86_400_000L
+
+/** One cache of a unit and its last successful fetch (epoch ms), see [CacheDao.observeCachedUnits]. */
+internal data class CachedUnitRow(
+    @ColumnInfo(name = "code_commune") val communeCode: String,
+    @ColumnInfo(name = "code_reseau") val udiCode: String,
+    @ColumnInfo(name = "dernier_succes") val lastSuccess: Long?,
+)
