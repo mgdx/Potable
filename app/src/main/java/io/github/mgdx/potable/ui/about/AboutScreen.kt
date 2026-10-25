@@ -112,6 +112,14 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                 openLink,
             )
 
+            SectionTitle(stringResource(R.string.about_donate_title))
+            Body(stringResource(R.string.about_donate))
+            Link(
+                stringResource(R.string.about_donate_link),
+                stringResource(R.string.url_donate),
+                openLink,
+            )
+
             SectionTitle(stringResource(R.string.about_libraries_title))
             stringArrayResource(R.array.about_libraries).forEach { library ->
                 Text(text = library, style = MaterialTheme.typography.bodyMedium)
