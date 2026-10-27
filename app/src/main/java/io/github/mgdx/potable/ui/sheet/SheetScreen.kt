@@ -54,12 +54,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameter
 import io.github.mgdx.potable.core.FeaturedParameters
 import io.github.mgdx.potable.core.UnfavourableDigest
+import io.github.mgdx.potable.core.WatchedMeasure
+import io.github.mgdx.potable.core.WatchedSubstance
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.BackTopBar
@@ -68,11 +71,17 @@ import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
+import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.messageRes
+import io.github.mgdx.potable.ui.history.pointValueText
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.settings.OverflowMenu
+import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.FormatStyle
 
 /** Language of the Hub'Eau labels and conclusions (SPEC §11.2). */
 private const val FRENCH_LANGUAGE_TAG = "fr-FR"
@@ -93,7 +102,7 @@ fun SheetScreen(
     onBack: (() -> Unit)?,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
-    onParameterHistory: (parameter: FeaturedParameter, label: String) -> Unit,
+    onParameterHistory: (codes: Set<String>, label: String) -> Unit,
     onMyCommunes: (() -> Unit)?,
     onSettings: () -> Unit,
     onAbout: () -> Unit,
@@ -106,6 +115,7 @@ fun SheetScreen(
     val isFollowed by viewModel.isFollowed.collectAsStateWithLifecycle()
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
     val recentUnfavourable by viewModel.recentUnfavourable.collectAsStateWithLifecycle()
+    val watched by viewModel.watched.collectAsStateWithLifecycle()
     val largeFont = LocalDensity.current.fontScale > PINNED_NOTICE_MAX_FONT_SCALE
     // Loading, error and empty states have room to spare: the notice stays pinned.
     val pinnedNotice = !largeFont || state !is SheetUiState.Loaded
@@ -156,6 +166,8 @@ fun SheetScreen(
                         samples = current.samples,
                         age = current.age,
                         recentUnfavourable = recentUnfavourable,
+                        watched = watched,
+                        onRetryWatched = viewModel::retryWatched,
                         onShowAllResults = onShowAllResults,
                         onShowHistory = onShowHistory,
                         onParameterHistory = onParameterHistory,
@@ -264,9 +276,11 @@ private fun SampleContent(
     samples: List<Sample>,
     age: RelativeAge,
     recentUnfavourable: UnfavourableDigest?,
+    watched: WatchedUiState?,
+    onRetryWatched: () -> Unit,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
-    onParameterHistory: (FeaturedParameter, String) -> Unit,
+    onParameterHistory: (Set<String>, String) -> Unit,
     showSourceNotice: Boolean,
     modifier: Modifier,
 ) {
@@ -289,6 +303,7 @@ private fun SampleContent(
             )
         }
         KeyParametersCard(sample, onParameterHistory)
+        watched?.let { WatchedSubstancesCard(it, onRetryWatched, onParameterHistory) }
         SectionCard(title = stringResource(R.string.sheet_sample_card_title)) {
             LabelValueRow(stringResource(R.string.sheet_sampled_on_label)) {
                 Column(horizontalAlignment = Alignment.End) {
@@ -353,10 +368,7 @@ private fun SampleContent(
  * opens the history of that parameter.
  */
 @Composable
-private fun KeyParametersCard(
-    sample: Sample,
-    onParameterHistory: (FeaturedParameter, String) -> Unit,
-) {
+private fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>, String) -> Unit) {
     val present = remember(sample) { FeaturedParameters.present(sample.results) }
     if (present.isEmpty()) return
     SectionCard(title = stringResource(R.string.sheet_key_parameters_title)) {
@@ -368,7 +380,7 @@ private fun KeyParametersCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(role = Role.Button, onClickLabel = actionLabel) {
-                            onParameterHistory(parameter, name)
+                            onParameterHistory(parameter.codes, name)
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -413,6 +425,165 @@ private fun FeaturedParameter.explanationRes(): Int = when (this) {
     FeaturedParameter.HARDNESS -> R.string.featured_hardness_explanation
     FeaturedParameter.PH -> R.string.featured_ph_explanation
     FeaturedParameter.FREE_CHLORINE -> R.string.featured_free_chlorine_explanation
+}
+
+/**
+ * The latest known measure of each watched substance on the unit (SPEC §5
+ * F3), however old within the history window: its translated name, its value
+ * as published, its date and age, the quality limit as published when there
+ * is one, and what the substance is. Value and limit are only shown side by
+ * side, never compared (SPEC §14). Each one opens the history of that
+ * substance. A failure here only shows in this card.
+ */
+@Composable
+private fun WatchedSubstancesCard(
+    state: WatchedUiState,
+    onRetry: () -> Unit,
+    onParameterHistory: (Set<String>, String) -> Unit,
+) {
+    SectionCard(title = stringResource(R.string.sheet_watched_title)) {
+        when (state) {
+            WatchedUiState.Loading -> CardNote(stringResource(R.string.sheet_watched_loading))
+            is WatchedUiState.Error -> {
+                CardNote(stringResource(state.error.messageRes()))
+                RetryButton(onRetry)
+            }
+            is WatchedUiState.Loaded -> {
+                if (state.measures.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.sheet_watched_none, formatDay(state.since)),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    CardNote(stringResource(R.string.sheet_watched_intro))
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        for (measure in state.measures) {
+                            WatchedMeasureRow(measure, onParameterHistory)
+                        }
+                    }
+                }
+                if (state.partialError != null) {
+                    CardNote(stringResource(R.string.sheet_watched_partial_error))
+                    RetryButton(onRetry)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WatchedMeasureRow(
+    measure: WatchedMeasure,
+    onParameterHistory: (Set<String>, String) -> Unit,
+) {
+    val locale = currentLocale()
+    val name = stringResource(measure.substance.nameRes())
+    val actionLabel = stringResource(R.string.sheet_parameter_history_action, name)
+    val value = remember(measure, locale) { pointValueText(measure.point, measure.unit, locale) }
+    val date = remember(measure.point.date, locale) {
+        localizedDateFormatter(FormatStyle.MEDIUM, locale).format(publishedDate(measure.point.date))
+    }
+    val age = remember(measure.point.date) { RelativeAge.of(measure.point.date, Clock.systemUTC()) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClickLabel = actionLabel) {
+                onParameterHistory(measure.substance.codes, name)
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(text = name, style = MaterialTheme.typography.titleSmall)
+            // As ResultValue: one left-to-right block, value and unit as published.
+            Text(
+                text = bidiWrap(value ?: stringResource(R.string.sample_no_value)),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    textDirection = TextDirection.Ltr,
+                ),
+                fontStyle = if (value == null) FontStyle.Italic else null,
+            )
+            measure.limitText?.let {
+                Text(
+                    text = stringResource(R.string.quality_limit, bidiWrap(it)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = stringResource(
+                    R.string.sheet_watched_measured_on,
+                    date,
+                    relativeAgeText(age),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(measure.substance.explanationRes()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun CardNote(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** No start padding: the label lines up with the text above. */
+@Composable
+private fun RetryButton(onRetry: () -> Unit) {
+    TextButton(
+        onClick = onRetry,
+        contentPadding = PaddingValues(
+            horizontal = 0.dp,
+            vertical = ButtonDefaults.TextButtonContentPadding.calculateTopPadding(),
+        ),
+    ) {
+        Text(stringResource(R.string.action_retry))
+    }
+}
+
+private fun WatchedSubstance.nameRes(): Int = when (this) {
+    WatchedSubstance.PFAS -> R.string.watched_pfas
+    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides
+    WatchedSubstance.TFA -> R.string.watched_tfa
+    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride
+    WatchedSubstance.LEAD -> R.string.watched_lead
+    WatchedSubstance.ARSENIC -> R.string.watched_arsenic
+    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate
+}
+
+private fun WatchedSubstance.explanationRes(): Int = when (this) {
+    WatchedSubstance.PFAS -> R.string.watched_pfas_explanation
+    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides_explanation
+    WatchedSubstance.TFA -> R.string.watched_tfa_explanation
+    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride_explanation
+    WatchedSubstance.LEAD -> R.string.watched_lead_explanation
+    WatchedSubstance.ARSENIC -> R.string.watched_arsenic_explanation
+    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate_explanation
+}
+
+/** A day of the history window in the long date format of the language. */
+@Composable
+private fun formatDay(day: LocalDate): String {
+    val locale = currentLocale()
+    return remember(day, locale) { localizedDateFormatter(FormatStyle.LONG, locale).format(day) }
 }
 
 /** The ARS conclusion, verbatim: never translated, summarised or scored (SPEC §14). */
