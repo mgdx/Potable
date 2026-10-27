@@ -80,8 +80,19 @@
     <string name="disclaimer_point_scope">Tests are made on the distribution unit, not at your own tap: the state of the private pipes in your building is not covered.</string>
     <string name="disclaimer_point_no_advice">Potable gives no health advice. If in doubt, contact your regional health agency (ARS) or your water distributor.</string>
     <string name="disclaimer_point_no_score">Potable adds no score, rating or classification of its own: it shows the official conclusions as published.</string>
+    <!-- Full-width button of the first page of the notice, that shows the second one. -->
+    <string name="disclaimer_next">Next</string>
     <!-- Full-width button that closes the notice. -->
     <string name="disclaimer_accept">I understand</string>
+    <!-- Screen reader label of the page dots above the button. %1$d: current page, %2$d: number of pages. -->
+    <string name="intro_page_indicator">Page %1$d of %2$d</string>
+    <!-- Second page of the first-launch notice: the alerts (SPEC §5 F7). -->
+    <string name="intro_alerts_title">Alerts for your communes</string>
+    <!-- "Follow" and "My communes" are sheet_follow and follows_title: keep the same words. -->
+    <string name="intro_alerts_point_follow">Follow a commune with the Follow button of its sheet: you will find it in My communes.</string>
+    <string name="intro_alerts_point_notify">Potable can then check your communes in the background and notify you when a new analysis is published, or only when its conclusion is unfavourable.</string>
+    <!-- "Settings" is settings_title: keep the same word. -->
+    <string name="intro_alerts_point_off">Alerts are off by default. Turn them on in Settings, from the menu at the top of the screen: Potable will then ask for permission to show notifications.</string>
 
     <!-- ===== Search for a commune (start screen, SPEC §5 F1) ===== -->
 

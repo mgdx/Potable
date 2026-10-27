@@ -51,7 +51,13 @@
     <string name="disclaimer_point_scope">Les analyses portent sur l’unité de distribution, pas sur votre propre robinet : l’état des canalisations privées de votre immeuble n’est pas pris en compte.</string>
     <string name="disclaimer_point_no_advice">Potable ne donne aucun avis sanitaire. En cas de doute, contactez votre agence régionale de santé (ARS) ou votre distributeur d’eau.</string>
     <string name="disclaimer_point_no_score">Potable n’ajoute ni score, ni note, ni classement qui lui soit propre : l’application affiche les conclusions officielles telles qu’elles sont publiées.</string>
+    <string name="disclaimer_next">Suivant</string>
     <string name="disclaimer_accept">J’ai compris</string>
+    <string name="intro_page_indicator">Page %1$d sur %2$d</string>
+    <string name="intro_alerts_title">Des alertes pour vos communes</string>
+    <string name="intro_alerts_point_follow">Suivez une commune avec le bouton Suivre de sa fiche : vous la retrouverez dans Mes communes.</string>
+    <string name="intro_alerts_point_notify">Potable peut alors vérifier vos communes en arrière-plan et vous avertir dès qu’une nouvelle analyse est publiée, ou seulement lorsque sa conclusion est défavorable.</string>
+    <string name="intro_alerts_point_off">Les alertes sont désactivées par défaut. Activez-les dans Paramètres, depuis le menu en haut de l’écran : Potable vous demandera alors l’autorisation d’afficher des notifications.</string>
 
     <!-- ===== Search for a commune (SPEC §5 F1) ===== -->
 
