@@ -55,7 +55,6 @@ dans `values-fr/` et dans les métadonnées Fastlane `fr-FR`.
 | postal | postal code | code postal |
 | tap | tap water / drinking water | eau du robinet / eau destinée à la consommation humaine |
 | follow | Follow / Following | suivre une commune, état « suivie » |
-| primary | primary commune, Primary, Set as primary | commune qui s'ouvre au démarrage |
 | key | key parameters | paramètres mis en avant (SPEC §4.3) |
 | nitrates | Nitrates | nitrates |
 | hardness | Hardness | dureté (titre hydrotimétrique, TH) |
@@ -93,7 +92,6 @@ dans `values-fr/` et dans les métadonnées Fastlane `fr-FR`.
 | postal | code postal | |
 | tap | eau du robinet ; eau potable | |
 | follow | Suivre / Suivie | accord avec « commune » ou « unité », toutes deux féminines |
-| primary | commune principale ; « Principale » ; « Définir comme principale » | |
 | key | paramètres clés | |
 | nitrates / hardness / ph / chlorine | Nitrates / Dureté / pH / Chlore libre | |
 | history | Historique ; Historique des prélèvements | terme Android |

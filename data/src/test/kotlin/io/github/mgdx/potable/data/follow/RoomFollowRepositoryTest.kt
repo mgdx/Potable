@@ -25,16 +25,12 @@ class RoomFollowRepositoryTest {
 
     private suspend fun order() = repository.follows.first().map { it.communeCode }
 
-    private suspend fun primary() = repository.follows.first().single { it.isPrimary }.communeCode
-
     @Test
-    fun `the first follow is primary and the next ones are appended`() = runTest {
+    fun `the follows are appended in order`() = runTest {
         val first = follow("45234")
         val second = follow("75056")
 
-        assertTrue(first.isPrimary)
         assertEquals(0, first.position)
-        assertEquals(false, second.isPrimary)
         assertEquals(1, second.position)
         assertEquals(listOf("45234", "75056"), order())
     }
@@ -66,7 +62,7 @@ class RoomFollowRepositoryTest {
     }
 
     @Test
-    fun `removing the primary makes the first remaining one primary`() = runTest {
+    fun `removing the first follow closes the gap`() = runTest {
         val a = follow("A")
         follow("B")
         follow("C")
@@ -74,12 +70,11 @@ class RoomFollowRepositoryTest {
         repository.unfollow(a.id)
 
         assertEquals(listOf("B", "C"), order())
-        assertEquals("B", primary())
         assertEquals(listOf(0, 1), repository.follows.first().map { it.position })
     }
 
     @Test
-    fun `removing another follow keeps the primary and closes the gap`() = runTest {
+    fun `removing a follow in the middle closes the gap`() = runTest {
         follow("A")
         val b = follow("B")
         follow("C")
@@ -87,18 +82,17 @@ class RoomFollowRepositoryTest {
         repository.unfollow(b.id)
 
         assertEquals(listOf("A", "C"), order())
-        assertEquals("A", primary())
         assertEquals(listOf(0, 1), repository.follows.first().map { it.position })
     }
 
     @Test
-    fun `removing the last follow leaves none and the next one is primary again`() = runTest {
+    fun `removing the last follow leaves none and the next one starts the list again`() = runTest {
         val a = follow("A")
         repository.unfollow(a.id)
         repository.unfollow(a.id)
 
         assertTrue(repository.follows.first().isEmpty())
-        assertTrue(follow("B").isPrimary)
+        assertEquals(0, follow("B").position)
     }
 
     @Test
@@ -117,19 +111,5 @@ class RoomFollowRepositoryTest {
         repository.move(c.id, -5)
         assertEquals(listOf("C", "B", "A", "D"), order())
         assertEquals(listOf(0, 1, 2, 3), repository.follows.first().map { it.position })
-        // Moving does not change which one is primary.
-        assertEquals("A", primary())
-    }
-
-    @Test
-    fun `setPrimary moves the mark and ignores an unknown id`() = runTest {
-        follow("A")
-        val b = follow("B")
-
-        repository.setPrimary(b.id)
-        assertEquals("B", primary())
-
-        repository.setPrimary(12_345)
-        assertEquals("B", primary())
     }
 }

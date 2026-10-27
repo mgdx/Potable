@@ -25,6 +25,7 @@ internal data class FollowEntity(
     @ColumnInfo(name = "code_reseau") val udiCode: String,
     @ColumnInfo(name = "nom_reseau") val udiName: String,
     val position: Int,
+    /** Unused since the primary commune was dropped; kept to avoid a migration. */
     val principale: Boolean,
 )
 

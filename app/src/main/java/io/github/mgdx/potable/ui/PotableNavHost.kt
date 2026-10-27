@@ -1,14 +1,9 @@
 package io.github.mgdx.potable.ui
 
 import android.net.Uri
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -41,8 +36,6 @@ import io.github.mgdx.potable.ui.settings.SettingsScreen
 import io.github.mgdx.potable.ui.settings.SettingsViewModel
 import io.github.mgdx.potable.ui.sheet.SheetScreen
 import io.github.mgdx.potable.ui.sheet.SheetViewModel
-import io.github.mgdx.potable.ui.start.StartDestination
-import io.github.mgdx.potable.ui.start.StartViewModel
 import io.github.mgdx.potable.ui.timeline.TimelineScreen
 import io.github.mgdx.potable.ui.timeline.TimelineViewModel
 import io.github.mgdx.potable.ui.udi.UdiScreen
@@ -149,16 +142,14 @@ object Routes {
     }
 }
 
-/** A path argument; [default] is set only when the sheet is the start destination. */
-private fun requiredString(name: String, default: String? = null) = navArgument(name) {
+private fun requiredString(name: String) = navArgument(name) {
     type = NavType.StringType
-    if (default != null) defaultValue = default
 }
 
-private fun optionalString(name: String, default: String? = null) = navArgument(name) {
+private fun optionalString(name: String) = navArgument(name) {
     type = NavType.StringType
     nullable = true
-    defaultValue = default
+    defaultValue = null
 }
 
 private fun flag(name: String) = navArgument(name) {
@@ -195,13 +186,13 @@ internal fun NavController.sheetEntryOrNull(): NavBackStackEntry? = try {
 
 /**
  * Leaves a sample screen that has no sheet below it: back to the screen
- * below, or, when it is alone, to the start destination in its place.
+ * below, or, when it is alone, to the search in its place.
  */
-internal fun NavController.leaveOrphanSample(primary: Follow?) {
+internal fun NavController.leaveOrphanSample() {
     if (previousBackStackEntry != null) {
         popBackStack()
     } else {
-        navigate(primary?.let { Routes.sheet(it) } ?: Routes.SEARCH) {
+        navigate(Routes.SEARCH) {
             popUpTo(Routes.SAMPLE) { inclusive = true }
         }
     }
@@ -210,32 +201,6 @@ internal fun NavController.leaveOrphanSample(primary: Follow?) {
 /** Goes back to the search if it is below, or opens it otherwise. */
 private fun NavHostController.openSearch() {
     if (!popBackStack(Routes.SEARCH, inclusive = false)) navigate(Routes.SEARCH)
-}
-
-/**
- * The application's navigation. It opens on the sheet of the primary follow
- * if there is one, on the search otherwise (SPEC §5 F6). Until the follows
- * are read, only the background shows, rather than a screen replaced at once.
- *
- * [alertTarget], from an alert notification (a sheet, or "My communes" for
- * the summary of several), is opened on top of the start destination as soon
- * as the graph is there; [onAlertTargetOpened] is then called, once.
- */
-@Composable
-fun PotableNavHost(
-    container: AppContainer,
-    alertTarget: AlertTarget? = null,
-    onAlertTargetOpened: () -> Unit = {},
-) {
-    val startViewModel: StartViewModel = viewModel(factory = StartViewModel.factory(container))
-    val start by startViewModel.destination.collectAsStateWithLifecycle()
-    when (val current = start) {
-        StartDestination.Unknown -> Surface(modifier = Modifier.fillMaxSize()) {}
-        StartDestination.Search ->
-            PotableNavGraph(container, primary = null, alertTarget, onAlertTargetOpened)
-        is StartDestination.Sheet ->
-            PotableNavGraph(container, primary = current.follow, alertTarget, onAlertTargetOpened)
-    }
 }
 
 /** Opens the sheet of [target], named [names], unless it is the one already shown. */
@@ -264,19 +229,20 @@ private fun NavHostController.openFollows() {
 }
 
 /**
- * The graph, built once the start is known (it is never revised). With a
- * [primary] follow, the sheet is the start destination, its arguments
- * defaulting to that follow.
+ * The application's navigation. It always opens on the search, whatever is
+ * followed (SPEC §5 F6).
+ *
+ * [alertTarget], from an alert notification (a sheet, or "My communes" for
+ * the summary of several), is opened on top of the search as soon as the
+ * graph is there; [onAlertTargetOpened] is then called, once.
  */
 @Composable
-private fun PotableNavGraph(
+fun PotableNavHost(
     container: AppContainer,
-    primary: Follow?,
-    alertTarget: AlertTarget?,
-    onAlertTargetOpened: () -> Unit,
+    alertTarget: AlertTarget? = null,
+    onAlertTargetOpened: () -> Unit = {},
 ) {
     val navController = rememberNavController()
-    val startDestination = if (primary == null) Routes.SEARCH else Routes.SHEET
     LaunchedEffect(alertTarget) {
         when (alertTarget) {
             null -> return@LaunchedEffect
@@ -286,7 +252,7 @@ private fun PotableNavGraph(
         }
         onAlertTargetOpened()
     }
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = Routes.SEARCH) {
         composable(Routes.SEARCH) {
             SearchScreen(
                 viewModel = viewModel(factory = SearchViewModel.factory(container)),
@@ -370,18 +336,19 @@ private fun PotableNavGraph(
         composable(
             route = Routes.SHEET,
             arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE, default = primary?.communeCode),
-                requiredString(Routes.ARG_UDI, default = primary?.udiCode),
-                optionalString(Routes.ARG_NAME, default = primary?.communeName),
-                optionalString(Routes.ARG_UDI_NAME, default = primary?.udiName),
+                requiredString(Routes.ARG_COMMUNE),
+                requiredString(Routes.ARG_UDI),
+                optionalString(Routes.ARG_NAME),
+                optionalString(Routes.ARG_UDI_NAME),
                 flag(Routes.ARG_CHANGE),
             ),
         ) { entry ->
             val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
             val communeName = entry.string(Routes.ARG_NAME).orEmpty()
             val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
-            // The start sheet has nothing below it: no back arrow, and the
-            // search is offered in its top bar instead.
+            // The search is always below a sheet. Should a sheet ever be
+            // alone (a back stack restored oddly), it shows no back arrow and
+            // offers the search in its top bar instead, rather than a dead end.
             val isRoot = remember(entry) { navController.previousBackStackEntry == null }
             val onChangeUdi: (() -> Unit)? = if (entry.flag(Routes.ARG_CHANGE)) {
                 {
@@ -421,7 +388,7 @@ private fun PotableNavGraph(
             // missing, the screen goes away instead of crashing.
             val sheetEntry = remember(entry) { navController.sheetEntryOrNull() }
             if (sheetEntry == null) {
-                LaunchedEffect(entry) { navController.leaveOrphanSample(primary) }
+                LaunchedEffect(entry) { navController.leaveOrphanSample() }
                 return@composable
             }
             val sheet = sheetViewModel(container, sheetEntry)

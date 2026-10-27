@@ -126,25 +126,14 @@ class NavigationIntentTest {
     }
 
     @Test
-    fun `a sample screen alone gives way to the start destination`() {
+    fun `a sample screen alone gives way to the search`() {
         val controller = navController()
         controller.handleDeepLink(hostileIntent(controller))
 
-        controller.leaveOrphanSample(primary = null)
+        controller.leaveOrphanSample()
 
         assertEquals(Routes.SEARCH, controller.currentDestination?.route)
         assertNull(controller.previousBackStackEntry)
-    }
-
-    @Test
-    fun `a sample screen alone gives way to the primary sheet`() {
-        val controller = navController()
-        controller.handleDeepLink(hostileIntent(controller))
-
-        controller.leaveOrphanSample(primary = follow(1, isPrimary = true))
-
-        assertEquals(Routes.SHEET, controller.currentDestination?.route)
-        assertEquals("45234", controller.currentBackStackEntry?.arguments?.getString("commune"))
     }
 
     @Test
@@ -153,7 +142,7 @@ class NavigationIntentTest {
         controller.navigate(Routes.sample("X"))
         assertNull(controller.sheetEntryOrNull())
 
-        controller.leaveOrphanSample(primary = null)
+        controller.leaveOrphanSample()
 
         assertEquals(Routes.SEARCH, controller.currentDestination?.route)
     }

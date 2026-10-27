@@ -230,13 +230,12 @@
 
     <string name="follows_title">Mes communes</string>
     <string name="follows_loading">Chargement de vos communes…</string>
-    <string name="follows_empty">Vous ne suivez encore aucune commune. Recherchez la vôtre, puis appuyez sur Suivre dans sa fiche : elle s’ouvrira au démarrage de Potable et restera consultable hors connexion.</string>
-    <string name="follows_explanation">La commune principale s’ouvre au démarrage de Potable. Les données des communes que vous suivez restent consultables hors connexion.</string>
-    <string name="follows_primary">Principale</string>
-    <string name="follows_set_primary">Définir comme principale</string>
+    <string name="follows_empty">Vous ne suivez encore aucune commune. Recherchez la vôtre, puis appuyez sur Suivre dans sa fiche : elle restera consultable hors connexion.</string>
+    <string name="follows_explanation">Les données des communes que vous suivez restent consultables hors connexion.</string>
+    <string name="follows_filter_label">Rechercher dans mes communes</string>
+    <string name="follows_filter_empty">Aucune commune suivie ne correspond à cette recherche.</string>
     <string name="follows_move_up">Déplacer %1$s vers le haut</string>
     <string name="follows_move_down">Déplacer %1$s vers le bas</string>
-    <string name="follows_set_primary_description">Définir %1$s comme commune principale</string>
     <string name="follows_remove">Ne plus suivre %1$s</string>
     <string name="follows_remove_title">Ne plus suivre %1$s ?</string>
     <string name="follows_remove_text">Les alertes s’arrêtent pour %1$s. Ses données enregistrées sur ce téléphone restent jusqu’à ce que vous vidiez le cache dans les paramètres.</string>

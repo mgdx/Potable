@@ -15,7 +15,7 @@
       limits such as "<=50 mg/L") are data, shown in French in every
       language: they never appear in this file.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Name of the app, never translated (docs/glossary.md). -->
     <string name="app_name" translatable="false">Potable</string>
 
@@ -326,18 +326,16 @@
     <string name="follows_title">My communes</string>
     <string name="follows_loading">Loading your communes…</string>
     <!-- "Follow" is the label of sheet_follow: keep the same word. -->
-    <string name="follows_empty">You don’t follow any commune yet. Search for yours, then tap Follow on its sheet: it will open when Potable starts and stay readable offline.</string>
-    <string name="follows_explanation">The primary commune opens when Potable starts. The data of the communes you follow stay readable offline.</string>
-    <!-- Badge of the primary commune, next to a house icon. Short: about 15 characters. -->
-    <string name="follows_primary">Primary</string>
-    <!-- Text button of a row, between icons. Short: about 20 characters. -->
-    <string name="follows_set_primary">Set as primary</string>
+    <string name="follows_empty">You don’t follow any commune yet. Search for yours, then tap Follow on its sheet: it will stay readable offline.</string>
+    <string name="follows_explanation">The data of the communes you follow stay readable offline.</string>
+    <!-- Label of the field that filters the list by commune or unit name. -->
+    <string name="follows_filter_label" tools:ignore="MissingTranslation">Search my communes</string>
+    <!-- Shown instead of the list when no followed commune or unit matches the filter. -->
+    <string name="follows_filter_empty" tools:ignore="MissingTranslation">No commune you follow matches this search.</string>
     <!-- Screen reader labels of the actions of a row. %1$s: commune_and_unit, "commune, unit". -->
     <string name="follows_move_up">Move %1$s up</string>
     <!-- %1$s: commune_and_unit, "commune, unit". -->
     <string name="follows_move_down">Move %1$s down</string>
-    <!-- %1$s: commune_and_unit, "commune, unit". -->
-    <string name="follows_set_primary_description">Set %1$s as primary</string>
     <!-- %1$s: commune_and_unit, "commune, unit". -->
     <string name="follows_remove">Stop following %1$s</string>
     <!-- Dialog title. %1$s: commune name, as published. -->

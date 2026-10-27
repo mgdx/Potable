@@ -27,8 +27,7 @@ autre application ne peut lire :
   commune où vous en avez choisi une. « Vider le cache » oublie ce choix pour
   toutes les communes que vous ne suivez pas ; vider le cache d’une seule
   commune l’oublie pour elle si vous ne la suivez pas.
-- **Vos communes suivies**, avec leur unité de distribution, leur ordre et
-  celle qui est principale.
+- **Vos communes suivies**, avec leur unité de distribution et leur ordre.
 - **Le cache des données publiques des communes consultées**, suivies ou
   non : leur dernier prélèvement, les prélèvements ouverts depuis
   l’historique, les séries des paramètres consultés, la

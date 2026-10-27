@@ -113,7 +113,7 @@ La base `potable.db` ne contient jamais de jeu national : seulement les
 
 | Table | Contenu |
 |---|---|
-| `suivi` | commune, unité de distribution, libellés, position dans la liste, principale |
+| `suivi` | commune, unité de distribution, libellés, position dans la liste (colonne `principale` inutilisée, gardée pour éviter une migration) |
 | `prelevement`, `resultat` | les derniers prélèvements de chaque unité consultée (tous ceux du dernier jour, `dernier = 1`) et les prélèvements plus anciens ouverts depuis l’historique (`dernier = 0`), avec leurs résultats |
 | `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes |
 | `serie`, `serie_point` | séries de paramètres consultées (historique) |
@@ -192,7 +192,7 @@ d’atteindre un écran non accepté.
 
 Chaque écran qui charge des données a son ViewModel, qui expose un état observé et distingue
 explicitement chargement, vide, erreur réseau, données périmées et absence de
-données (SPEC §9). Au démarrage, la commune principale s’ouvre directement.
+données (SPEC §9). Au démarrage, l’application s’ouvre toujours sur la recherche.
 
 Règles tenues partout, et vérifiées par la build :
 

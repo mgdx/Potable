@@ -144,20 +144,13 @@ class FakeFollowRepository(initial: List<Follow> = emptyList()) : FollowReposito
             udiCode = udiCode,
             udiName = udiName,
             position = state.value.size,
-            isPrimary = state.value.isEmpty(),
         )
         state.value = state.value + follow
         return follow
     }
 
     override suspend fun unfollow(id: Long) {
-        val remaining = state.value.filter { it.id != id }
-        val fixed = if (remaining.isNotEmpty() && remaining.none { it.isPrimary }) {
-            listOf(remaining.first().copy(isPrimary = true)) + remaining.drop(1)
-        } else {
-            remaining
-        }
-        state.value = fixed.renumbered()
+        state.value = state.value.filter { it.id != id }.renumbered()
     }
 
     override suspend fun move(id: Long, newPosition: Int) {
@@ -166,10 +159,6 @@ class FakeFollowRepository(initial: List<Follow> = emptyList()) : FollowReposito
         list.remove(follow)
         list.add(newPosition.coerceIn(0, list.size), follow)
         state.value = list.renumbered()
-    }
-
-    override suspend fun setPrimary(id: Long) {
-        state.value = state.value.map { it.copy(isPrimary = it.id == id) }
     }
 
     override suspend fun find(communeCode: String, udiCode: String): Follow? =
@@ -219,8 +208,7 @@ fun follow(
     communeCode: String = "45234",
     udiCode: String = "045000123",
     position: Int = (id - 1).toInt(),
-    isPrimary: Boolean = false,
-) = Follow(id, communeCode, "Commune $communeCode", udiCode, "UDI $udiCode", position, isPrimary)
+) = Follow(id, communeCode, "Commune $communeCode", udiCode, "UDI $udiCode", position)
 
 fun commune(code: String, name: String) =
     Commune(code, name, listOf("45000"), latitude = 47.9, longitude = 1.9)
