@@ -146,28 +146,17 @@ class FakeFollowRepository(initial: List<Follow> = emptyList()) : FollowReposito
             communeName = communeName,
             udiCode = udiCode,
             udiName = udiName,
-            position = state.value.size,
         )
         state.value = state.value + follow
         return follow
     }
 
     override suspend fun unfollow(id: Long) {
-        state.value = state.value.filter { it.id != id }.renumbered()
-    }
-
-    override suspend fun move(id: Long, newPosition: Int) {
-        val list = state.value.toMutableList()
-        val follow = list.firstOrNull { it.id == id } ?: return
-        list.remove(follow)
-        list.add(newPosition.coerceIn(0, list.size), follow)
-        state.value = list.renumbered()
+        state.value = state.value.filter { it.id != id }
     }
 
     override suspend fun find(communeCode: String, udiCode: String): Follow? =
         state.value.firstOrNull { it.communeCode == communeCode && it.udiCode == udiCode }
-
-    private fun List<Follow>.renumbered() = mapIndexed { index, it -> it.copy(position = index) }
 }
 
 class FakeAppPreferences(
@@ -219,12 +208,8 @@ class FakeAppPreferences(
     }
 }
 
-fun follow(
-    id: Long,
-    communeCode: String = "45234",
-    udiCode: String = "045000123",
-    position: Int = (id - 1).toInt(),
-) = Follow(id, communeCode, "Commune $communeCode", udiCode, "UDI $udiCode", position)
+fun follow(id: Long, communeCode: String = "45234", udiCode: String = "045000123") =
+    Follow(id, communeCode, "Commune $communeCode", udiCode, "UDI $udiCode")
 
 fun commune(code: String, name: String) =
     Commune(code, name, listOf("45000"), latitude = 47.9, longitude = 1.9)

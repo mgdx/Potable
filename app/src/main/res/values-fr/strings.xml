@@ -236,8 +236,6 @@
     <string name="follows_explanation">Les données des communes que vous suivez restent consultables hors connexion.</string>
     <string name="follows_filter_label">Rechercher dans mes communes</string>
     <string name="follows_filter_empty">Aucune commune suivie ne correspond à cette recherche.</string>
-    <string name="follows_move_up">Déplacer %1$s vers le haut</string>
-    <string name="follows_move_down">Déplacer %1$s vers le bas</string>
     <string name="follows_remove">Ne plus suivre %1$s</string>
     <string name="follows_remove_title">Ne plus suivre %1$s ?</string>
     <string name="follows_remove_text">Les alertes s’arrêtent pour %1$s. Ses données enregistrées sur ce téléphone restent jusqu’à ce que vous vidiez le cache dans les paramètres.</string>

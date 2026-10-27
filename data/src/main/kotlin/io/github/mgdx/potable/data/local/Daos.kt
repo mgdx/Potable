@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 internal interface FollowDao {
-    @Query("SELECT * FROM suivi ORDER BY position, id")
+    @Query("SELECT * FROM suivi ORDER BY id")
     fun observeAll(): Flow<List<FollowEntity>>
 
-    @Query("SELECT * FROM suivi ORDER BY position, id")
+    @Query("SELECT * FROM suivi ORDER BY id")
     suspend fun all(): List<FollowEntity>
 
     @Query("SELECT * FROM suivi WHERE id = :id")
@@ -26,9 +26,6 @@ internal interface FollowDao {
 
     @Query("DELETE FROM suivi WHERE id = :id")
     suspend fun delete(id: Long)
-
-    @Query("UPDATE suivi SET position = :position WHERE id = :id")
-    suspend fun setPosition(id: Long, position: Int)
 }
 
 @Dao

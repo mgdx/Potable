@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 /**
- * [FollowRepository] over the `suivi` table. Positions are kept contiguous
- * (0 to n - 1). The `principale` column is a leftover of the primary
+ * [FollowRepository] over the `suivi` table, sorted by name ([FollowOrder]).
+ * The `position` column is a leftover of the manual order, dropped
+ * (docs/decisions.md, 2026-10-27): it stays in the schema to avoid a
+ * migration, is written 0 and never read. The `principale` column is a leftover of the primary
  * commune, dropped in 0.1.2 (docs/decisions.md, 2026-10-27): it stays in the
  * schema to avoid a migration, is written false and never read.
  * Unfollowing keeps the unit's cache (it is that of any unit looked at) and
@@ -20,7 +22,9 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
     private val cache = database.cache()
 
     override val follows: Flow<List<Follow>> =
-        dao.observeAll().map { rows -> rows.map { it.toFollow() } }.distinctUntilChanged()
+        dao.observeAll()
+            .map { rows -> rows.map { it.toFollow() }.sortedWith(FollowOrder.comparator()) }
+            .distinctUntilChanged()
 
     override suspend fun follow(
         communeCode: String,
@@ -29,14 +33,13 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
         udiName: String,
     ): Follow = database.withTransaction {
         dao.find(communeCode, udiCode)?.toFollow() ?: run {
-            val count = dao.all().size
             val row =
                 FollowEntity(
                     communeCode = communeCode,
                     communeName = communeName,
                     udiCode = udiCode,
                     udiName = udiName,
-                    position = count,
+                    position = 0,
                     principale = false,
                 )
             row.copy(id = dao.insert(row)).toFollow()
@@ -51,23 +54,6 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
             // alert state goes, so that following it again starts from a
             // new baseline (SPEC §5 F7).
             cache.clearLastSeenSampleDate(removed.communeCode, removed.udiCode)
-            val remaining = dao.all()
-            remaining.forEachIndexed { index, row ->
-                if (row.position != index) dao.setPosition(row.id, index)
-            }
-        }
-    }
-
-    override suspend fun move(id: Long, newPosition: Int) {
-        database.withTransaction {
-            val rows = dao.all().toMutableList()
-            val index = rows.indexOfFirst { it.id == id }
-            if (index < 0) return@withTransaction
-            val moved = rows.removeAt(index)
-            rows.add(newPosition.coerceIn(0, rows.size), moved)
-            rows.forEachIndexed { position, row ->
-                if (row.position != position) dao.setPosition(row.id, position)
-            }
         }
     }
 
@@ -80,6 +66,5 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
         communeName = communeName,
         udiCode = udiCode,
         udiName = udiName,
-        position = position,
     )
 }

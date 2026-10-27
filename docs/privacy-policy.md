@@ -30,7 +30,7 @@ autre application ne peut lire :
   dernières unités de distribution dont vous avez ouvert la fiche (codes et
   noms de la commune et de l’unité), proposées par l’écran de recherche ;
   chacune s’en retire d’un geste sur cet écran.
-- **Vos communes suivies**, avec leur unité de distribution et leur ordre.
+- **Vos communes suivies**, avec leur unité de distribution.
 - **Le cache des données publiques des communes consultées**, suivies ou
   non : leur dernier prélèvement, les prélèvements ouverts depuis
   l’historique, les séries des paramètres consultés, la

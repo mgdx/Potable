@@ -6,9 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FollowFilterTest {
-    private val orleans = Follow(1, "45234", "Orléans", "045000474", "ORLEANS", 0)
-    private val paris = Follow(2, "75056", "Paris", "075000001", "PARIS EST", 1)
-    private val etienne = Follow(3, "42218", "Saint-Étienne", "042000100", "ST-ETIENNE NORD", 2)
+    private val orleans = Follow(1, "45234", "Orléans", "045000474", "ORLEANS")
+    private val paris = Follow(2, "75056", "Paris", "075000001", "PARIS EST")
+    private val etienne = Follow(3, "42218", "Saint-Étienne", "042000100", "ST-ETIENNE NORD")
     private val all = listOf(orleans, paris, etienne)
 
     private fun ids(query: String) = filterFollows(all, query).map { it.id }
