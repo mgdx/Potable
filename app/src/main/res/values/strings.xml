@@ -219,6 +219,8 @@
     <string name="sheet_distributor_label">Distributor</string>
     <!-- Label of the public body responsible for the water service, as published by Hub'Eau (docs/glossary.md, authority). -->
     <string name="sheet_owner_label">Responsible authority</string>
+    <!-- Title of the card grouping the date, distributor and authority of the sample. -->
+    <string name="sheet_sample_card_title">Sample</string>
     <!-- Heading of the four compliance codes. -->
     <string name="sheet_compliance_title">Compliance</string>
     <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
