@@ -249,7 +249,7 @@
     <string name="settings_history_title">Historique</string>
     <string name="settings_storage_title">Stockage</string>
     <string name="settings_alerts_title">Alertes</string>
-    <string name="settings_theme_system">Valeur par défaut du système</string>
+    <string name="settings_theme_system">Système</string>
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_history_description">Période affichée par défaut dans l’historique d’une commune.</string>

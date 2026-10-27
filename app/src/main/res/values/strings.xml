@@ -357,7 +357,7 @@
     <string name="settings_storage_title">Storage</string>
     <string name="settings_alerts_title">Alerts</string>
     <!-- Theme choices (segments of one row, a quarter to a third of the screen width each). -->
-    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_history_description">Period shown by default in the history of a commune.</string>
