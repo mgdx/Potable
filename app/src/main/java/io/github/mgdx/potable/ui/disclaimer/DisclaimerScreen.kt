@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -83,7 +84,10 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
 
 /** The five points of SPEC §14, shared by the first-launch notice and About. */
 @Composable
-fun DisclaimerPoints(modifier: Modifier = Modifier) {
+fun DisclaimerPoints(
+    modifier: Modifier = Modifier,
+    bulletColor: Color = MaterialTheme.colorScheme.primary,
+) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         listOf(
             R.string.disclaimer_point_source,
@@ -98,7 +102,7 @@ fun DisclaimerPoints(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .size(6.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        .background(bulletColor, CircleShape),
                 )
                 Text(text = stringResource(point), style = MaterialTheme.typography.bodyLarge)
             }

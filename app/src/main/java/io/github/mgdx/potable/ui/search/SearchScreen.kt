@@ -9,31 +9,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,20 +37,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Commune
 import io.github.mgdx.potable.data.preferences.RecentUnit
+import io.github.mgdx.potable.ui.common.CenteredColumn
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.PillSearchField
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.postalCodesText
@@ -134,17 +132,29 @@ private fun SearchContent(
     onSettings: () -> Unit,
     onAbout: () -> Unit,
 ) {
-    val focusManager = LocalFocusManager.current
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 expandedHeight = topBarHeight(hasSubtitle = false),
                 title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        modifier = Modifier.semantics { heading() },
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Decorative: the name beside it says it all.
+                        Icon(
+                            painter = painterResource(R.drawable.ic_logo_mark),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(32.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.semantics { heading() },
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = onMyCommunes) {
@@ -164,27 +174,10 @@ private fun SearchContent(
                 .padding(innerPadding)
                 .imePadding(),
         ) {
-            OutlinedTextField(
+            PillSearchField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                label = { Text(stringResource(R.string.search_label)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { onQueryChange("") }) {
-                            Icon(
-                                imageVector = Icons.Filled.Clear,
-                                contentDescription = stringResource(R.string.action_clear_search),
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                label = stringResource(R.string.search_label),
             )
             NearbySection(
                 nearby = nearby,
@@ -201,7 +194,7 @@ private fun SearchContent(
                         onRemoved = onRecentRemoved,
                     )
                 } else if (nearby !is NearbyState.Found) {
-                    EmptyState(stringResource(R.string.search_hint))
+                    SearchInvitation()
                 }
                 SearchUiState.Loading -> LoadingState(stringResource(R.string.search_loading))
                 is SearchUiState.NoResults -> EmptyState(
@@ -234,7 +227,7 @@ private fun SearchContent(
                                     )
                                 }
                             }
-                            HorizontalDivider()
+                            ListDivider()
                         }
                     }
                 }
@@ -243,6 +236,38 @@ private fun SearchContent(
     }
 }
 
+/** No recent unit and nothing typed: the logo mark, then what to do. */
+@Composable
+private fun SearchInvitation() {
+    CenteredColumn(Modifier) {
+        Icon(
+            painter = painterResource(R.drawable.ic_logo_mark),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(96.dp),
+        )
+        Text(
+            text = stringResource(R.string.search_hint),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** Between list rows, inset like their text. */
+@Composable
+private fun ListDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
+}
+
+/** List rows sit on the screen's own background. */
+@Composable
+private fun transparentListItemColors() =
+    ListItemDefaults.colors(containerColor = Color.Transparent)
+
 /** The "near me" button, then what it found: a commune to select, or why not. */
 @Composable
 private fun NearbySection(
@@ -250,21 +275,19 @@ private fun NearbySection(
     onNearby: () -> Unit,
     onCommuneSelected: (Commune) -> Unit,
 ) {
-    OutlinedButton(
+    AssistChip(
         onClick = onNearby,
         enabled = nearby !is NearbyState.Locating,
         modifier = Modifier.padding(horizontal = 16.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(ButtonDefaults.IconSize),
-        )
-        Text(
-            text = stringResource(R.string.nearby_action),
-            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-        )
-    }
+        label = { Text(stringResource(R.string.nearby_action)) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Outlined.LocationOn,
+                contentDescription = null,
+                modifier = Modifier.size(AssistChipDefaults.IconSize),
+            )
+        },
+    )
     when (nearby) {
         NearbyState.Idle -> Unit
         NearbyState.Locating -> Row(
@@ -298,7 +321,7 @@ private fun NearbySection(
                 parentName = nearby.parentName,
                 onClick = { onCommuneSelected(nearby.commune) },
             )
-            HorizontalDivider()
+            ListDivider()
         }
     }
 }
@@ -314,6 +337,7 @@ private fun NearbyFailure.messageRes(): Int = when (this) {
 private fun CommuneRow(commune: Commune, parentName: String?, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = transparentListItemColors(),
         headlineContent = { Text(commune.name, style = LocalTextStyle.current.asApiText()) },
         supportingContent = {
             Column {
@@ -345,6 +369,7 @@ private fun SearchRow.key(): String = when (this) {
 private fun KnownUdiRow(communeName: String, udi: KnownUdi, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = transparentListItemColors(),
         headlineContent = {
             Text(
                 stringResource(
@@ -389,6 +414,7 @@ private fun RecentSection(
         items(recentUnits, key = { "${it.communeCode}/${it.udiCode}" }) { unit ->
             ListItem(
                 modifier = Modifier.clickable { onSelected(unit) },
+                colors = transparentListItemColors(),
                 headlineContent = {
                     Text(unit.communeName, style = LocalTextStyle.current.asApiText())
                 },
@@ -411,7 +437,7 @@ private fun RecentSection(
                     }
                 },
             )
-            HorizontalDivider()
+            ListDivider()
         }
     }
 }

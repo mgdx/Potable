@@ -1,24 +1,35 @@
 package io.github.mgdx.potable.ui.about
 
 import android.content.ActivityNotFoundException
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -58,28 +69,23 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
-                Text(
-                    text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Header()
             Body(stringResource(R.string.about_presentation))
-            TextButton(onClick = onSettings) {
-                Text(stringResource(R.string.settings_title))
-            }
+            ListItem(
+                modifier = Modifier.clickable(onClick = onSettings),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = { Icon(Icons.Outlined.Settings, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.settings_title)) },
+            )
 
             SectionTitle(stringResource(R.string.about_notice_title))
-            DisclaimerPoints()
+            DisclaimerPoints(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                bulletColor = MaterialTheme.colorScheme.secondary,
+            )
 
             SectionTitle(stringResource(R.string.about_sources_title))
             Body(stringResource(R.string.about_source_hubeau))
@@ -122,8 +128,41 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
 
             SectionTitle(stringResource(R.string.about_libraries_title))
             stringArrayResource(R.array.about_libraries).forEach { library ->
-                Text(text = library, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = library,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
+        }
+    }
+}
+
+/** The logo mark beside the name and the version. */
+@Composable
+private fun Header() {
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Decorative: the name beside it says it all.
+        Icon(
+            painter = painterResource(R.drawable.ic_logo_mark),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+        )
+        Column {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -135,20 +174,36 @@ private fun SectionTitle(text: String) {
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
-            .padding(top = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp)
             .semantics { heading() },
     )
 }
 
-/** A link, opened by the browser: the label says where it goes. */
+/**
+ * A link, opened by the browser: the label says where it goes, the trailing
+ * icon that it leaves the app.
+ */
 @Composable
 private fun Link(label: String, url: String, open: (String) -> Unit) {
-    TextButton(onClick = { open(url) }) {
-        Text(label)
-    }
+    ListItem(
+        modifier = Modifier.clickable { open(url) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(label, color = MaterialTheme.colorScheme.primary) },
+        trailingContent = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
 }
 
 @Composable
 private fun Body(text: String) {
-    Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
 }
