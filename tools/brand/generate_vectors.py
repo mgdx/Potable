@@ -14,7 +14,10 @@ into app/src/main/res/drawable/:
 - ic_launcher_monochrome.xml  faucet and drop silhouette with the curve
                               hollowed out: the stroke is converted into its
                               outline (stroke_outline.py) and subtracted from
-                              the drop with fillType="evenOdd".
+                              the drop with fillType="evenOdd";
+- ic_logo_mark.xml            the same single-fill silhouette, its viewport
+                              cropped to a square around the motif, for
+                              in-app use (tinted by the Icon that shows it).
 
 It then checks, by rasterising with pycairo, that:
 
@@ -81,13 +84,29 @@ def split(logo: svgsubset.Logo):
     return background, fills, strokes
 
 
-def vector(paths: list[str], w: float, h: float) -> str:
+def vector(paths: list[str], w: float, h: float, size: float | None = None, translate=None) -> str:
+    """A VectorDrawable of viewport w x h; [size] dp square when given, else w x h dp.
+
+    [translate] (dx, dy) wraps the paths in a translated group.
+    """
     body = "\n".join(paths)
+    if translate is not None:
+        dx, dy = translate
+        indented = "\n".join("    " + line for line in body.split("\n"))
+        body = (
+            "    <group\n"
+            + f"        android:translateX=\"{svgsubset.fmt(dx)}\"\n"
+            + f"        android:translateY=\"{svgsubset.fmt(dy)}\">\n"
+            + indented
+            + "\n    </group>"
+        )
+    dp_w = svgsubset.fmt(size if size is not None else w)
+    dp_h = svgsubset.fmt(size if size is not None else h)
     return (
         HEADER
         + "<vector xmlns:android=\"http://schemas.android.com/apk/res/android\"\n"
-        + f"    android:width=\"{svgsubset.fmt(w)}dp\"\n"
-        + f"    android:height=\"{svgsubset.fmt(h)}dp\"\n"
+        + f"    android:width=\"{dp_w}dp\"\n"
+        + f"    android:height=\"{dp_h}dp\"\n"
         + f"    android:viewportWidth=\"{svgsubset.fmt(w)}\"\n"
         + f"    android:viewportHeight=\"{svgsubset.fmt(h)}\">\n"
         + body
@@ -119,6 +138,20 @@ def drop_index(fills, stroke) -> int:
         if ctx.in_fill(*stroke.points[0]):
             return k
     raise ValueError("the stroke is not drawn over any filled shape")
+
+
+def motif_box(fills) -> tuple[int, int, int, int]:
+    """Bounding box (x0, y0, x1, y1) of the filled shapes, rounded outwards to whole units."""
+    ink = np.zeros((108 * SCALE, 108 * SCALE), dtype=bool)
+    for s in fills:
+        ink |= raster_fill(s.commands)
+    ys, xs = np.nonzero(ink)
+    return (
+        math.floor(xs.min() / SCALE),
+        math.floor(ys.min() / SCALE),
+        math.ceil((xs.max() + 1) / SCALE),
+        math.ceil((ys.max() + 1) / SCALE),
+    )
 
 
 # --- rasterised checks -------------------------------------------------------
@@ -222,10 +255,19 @@ def main() -> int:
             mono_paths.append(fill_path(data, "#FFFFFF"))
     mono = vector(mono_paths, w, h)
 
+    # The mark: a square viewport around the motif, with one unit of margin,
+    # the motif centred in it. Same single white fill as the monochrome icon.
+    x0, y0, x1, y1 = motif_box(fills)
+    side = max(x1 - x0, y1 - y0) + 2
+    dx = (side - (x1 - x0)) / 2 - x0
+    dy = (side - (y1 - y0)) / 2 - y0
+    mark = vector(mono_paths, side, side, size=24, translate=(dx, dy))
+
     for name, content in (
         ("ic_launcher_background.xml", bg),
         ("ic_launcher_foreground.xml", fg),
         ("ic_launcher_monochrome.xml", mono),
+        ("ic_logo_mark.xml", mark),
     ):
         path = os.path.join(DRAWABLE, name)
         with open(path, "w", encoding="utf-8") as fh:
