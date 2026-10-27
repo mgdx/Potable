@@ -73,25 +73,29 @@ de navigation a été quittée, et le cache du jour répond alors.
    L'implémentation par défaut de l'interface (fenêtre entière, puis coupe)
    garde les dépôts factices valides.
 3. **Actualiser pendant une requête relançait la même requête.** Le client
-   HTTP n'annule pas l'appel OkHttp quand la coroutine est annulée (voir
-   ci-dessous) : annuler puis relancer téléchargeait deux fois.
+   HTTP n'annulait pas l'appel OkHttp quand la coroutine était annulée (voir
+   point 5) : annuler puis relancer téléchargeait deux fois.
    `ParameterHistoryViewModel.refresh` et `TimelineViewModel.refresh`
    ignorent désormais un tirage quand une requête court déjà (la fiche le
    faisait déjà).
 4. **Alerte : rafraîchissement forcé d'un prélèvement déjà en cache.**
    `HubEauAlertChecker` ne force le rafraîchissement que si le cache ne
    contient pas déjà un prélèvement au moins aussi récent que celui annoncé.
+5. **Annulation non propagée au réseau** (corrigé dans un lot à part).
+   `HubEauClient.get` exécutait `call.execute()` (bloquant) dans
+   `withContext(Dispatchers.IO)` : quitter un écran pendant un chargement, ou
+   changer de fenêtre en cours de requête, laissait la requête aller au bout
+   pour rien (5 000 lignes d'historique, jusqu'à une dizaine de secondes).
+   Désormais l'annulation de la coroutine appelle `Call.cancel()`, qui ferme
+   la socket : l'attente des en-têtes comme la lecture du corps s'arrêtent
+   aussitôt, et l'appelant reçoit une `CancellationException`, jamais une
+   `DataError.Network` (le `IOException("Canceled")` d'OkHttp n'est pas
+   converti). Délais, distinction `Timeout`/`Network` et lecture bornée du
+   corps inchangés (`cancelledWhileWaitingForHeaders_cancelsTheCall`,
+   `cancelledWhileReadingTheBody_cancelsTheCall`).
 
 ## Non corrigé, à arbitrer
 
-- **Annulation non propagée au réseau.** `HubEauClient.get` exécute
-  `call.execute()` (bloquant) dans `withContext(Dispatchers.IO)` : quitter un
-  écran pendant un chargement, ou changer de fenêtre en cours de requête,
-  laisse la requête aller au bout pour rien (5 000 lignes d'historique, jusqu'à
-  une dizaine de secondes). Correction possible : `enqueue` +
-  `suspendCancellableCoroutine` avec `call.cancel()` à l'annulation ; non faite
-  ici car elle touche le client central (délais, distinction
-  `Timeout`/`Network`, lecture bornée du corps) et mérite son propre lot.
 - **Taille de page du dernier prélèvement (500 lignes).** Un gros prélèvement
   (Paris : 643 lignes) coûte deux pages ; 1 000 lignes l'éviteraient mais
   téléchargeraient plus de lignes de prélèvements plus anciens pour les petites

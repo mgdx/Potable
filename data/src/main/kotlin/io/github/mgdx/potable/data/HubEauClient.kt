@@ -5,7 +5,12 @@ import io.github.mgdx.potable.core.hubeau.HubEauParser
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.hubeau.UdiRow
 import io.github.mgdx.potable.core.model.Page
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Connection
@@ -25,7 +30,9 @@ import java.util.concurrent.TimeUnit
  * Thin client of the Hub'Eau `qualite_eau_potable` API (SPEC §4.1).
  * Observed behaviour of the API: `docs/hubeau-api.md`.
  *
- * Every call runs on [Dispatchers.IO], makes one attempt (no retry) and
+ * Every call runs on [Dispatchers.IO], is cancelled with the coroutine that
+ * waits for it (a `CancellationException`, never a [DataError]), makes one
+ * attempt (no retry) and
  * throws [DataError] on failure ([DataError.Timeout] when connected but the
  * answer took longer than the read timeout), or [IllegalArgumentException] for a request
  * the API would refuse (URL too long, page out of range). Redirections are
@@ -133,9 +140,22 @@ class HubEauClient(
         require(text.length <= MAX_URL_LENGTH) { "URL longer than $MAX_URL_LENGTH characters" }
         val progress = Progress()
         val request = Request.Builder().url(url).get().tag(Progress::class.java, progress).build()
+        val call = http.newCall(request)
         return withContext(Dispatchers.IO) {
+            // execute() blocks in a socket read that neither the coroutine nor
+            // Thread.interrupt() stops: cancelling the coroutine cancels the
+            // call, which closes the socket and ends the read, body included.
+            val outer = this
+            val canceller =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        if (!outer.isActive) call.cancel()
+                    }
+                }
             try {
-                http.newCall(request).execute().use { response ->
+                call.execute().use { response ->
                     // 206 Partial Content means "more pages follow": a success.
                     if (response.code != HTTP_OK && response.code != HTTP_PARTIAL) {
                         throw DataError.Http(response.code)
@@ -143,11 +163,17 @@ class HubEauClient(
                     response.body.boundedString(maxBodyBytes)
                 }
             } catch (e: SocketTimeoutException) {
+                ensureActive()
                 // Connected, then no answer in time: Hub'Eau is too slow
                 // (a connect timeout stays a network error).
                 throw if (progress.connected) DataError.Timeout(e) else DataError.Network(e)
             } catch (e: IOException) {
+                // OkHttp's "Canceled" is the coroutine's cancellation, not a
+                // network error: it surfaces as a CancellationException.
+                ensureActive()
                 throw DataError.Network(e)
+            } finally {
+                canceller.cancel()
             }
         }
     }

@@ -5,7 +5,13 @@ import io.github.mgdx.potable.data.HubEauJson.page
 import io.github.mgdx.potable.data.HubEauJson.response
 import io.github.mgdx.potable.data.HubEauJson.resultRow
 import io.github.mgdx.potable.data.HubEauJson.udiRow
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketEffect
@@ -232,6 +238,63 @@ class HubEauClientTest {
         assertTrue(impatientClient().communesUdi("45234").isEmpty())
     }
 
+    /**
+     * Starts [request] in a coroutine, cancels it once the server holds the
+     * request, and returns what the coroutine received, within [CANCEL_BOUND_MS]
+     * of real time although the server answers [SERVER_DELAY_S] seconds later.
+     */
+    private fun cancelWhileWaiting(request: suspend HubEauClient.() -> Unit): Throwable? =
+        runBlocking {
+            val client = client()
+            val outcome = CompletableDeferred<Throwable?>()
+            val job = launch(Dispatchers.Default) {
+                try {
+                    client.request()
+                    outcome.complete(null)
+                } catch (e: Throwable) {
+                    outcome.complete(e)
+                    throw e
+                }
+            }
+            server.takeRequest(SERVER_DELAY_S, TimeUnit.SECONDS)
+            // Lets the response start (headers, first bytes) when it is not delayed.
+            Thread.sleep(SETTLE_MS)
+            job.cancel()
+            withTimeout(CANCEL_BOUND_MS) { job.join() }
+            outcome.await()
+        }
+
+    @Test
+    fun cancelledWhileWaitingForHeaders_cancelsTheCall() {
+        server.enqueue(
+            MockResponse.Builder()
+                .headersDelay(SERVER_DELAY_S, TimeUnit.SECONDS)
+                .code(200)
+                .body(page(0, null, emptyList()))
+                .build(),
+        )
+
+        val outcome = cancelWhileWaiting { resultats("75056", null, 1, 500, null) }
+
+        assertTrue("expected a cancellation, got $outcome", outcome is CancellationException)
+    }
+
+    @Test
+    fun cancelledWhileReadingTheBody_cancelsTheCall() {
+        // A large page that trickles in: headers at once, then 1 KiB a second.
+        server.enqueue(
+            MockResponse.Builder()
+                .code(200)
+                .body(paddedPage(SERVER_DELAY_S * 1024L))
+                .throttleBody(1024, 1, TimeUnit.SECONDS)
+                .build(),
+        )
+
+        val outcome = cancelWhileWaiting { communesUdi("75056") }
+
+        assertTrue("expected a cancellation, got $outcome", outcome is CancellationException)
+    }
+
     @Test
     fun unreachableServer_isNetworkError() = runTest {
         val client = client()
@@ -380,5 +443,13 @@ class HubEauClientTest {
 
     private companion object {
         const val BODY_LIMIT = 4_096L
+
+        /** How long the server makes a cancelled request wait. */
+        const val SERVER_DELAY_S = 30L
+
+        /** Real time a cancelled request may still take: far below [SERVER_DELAY_S]. */
+        const val CANCEL_BOUND_MS = 3_000L
+
+        const val SETTLE_MS = 200L
     }
 }
