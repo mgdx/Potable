@@ -1,0 +1,4 @@
+• L’application s’ouvre toujours sur la recherche, qui liste les communes consultées récemment.
+• Mes communes : plus de commune principale ; un champ de recherche filtre la liste.
+• Les paramètres affichent la taille des données en cache de chaque commune.
+• Moins de requêtes vers Hub'Eau : listes d’unités, historique et alertes réutilisent le cache.

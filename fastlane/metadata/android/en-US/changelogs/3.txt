@@ -1,0 +1,4 @@
+• The app now always opens on the search, which lists the communes you opened recently.
+• My communes: no more primary commune; a search field filters the list.
+• Settings show the size of the cached data of each commune.
+• Fewer requests to Hub'Eau: unit lists, history and alerts reuse what is already cached.
