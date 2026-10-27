@@ -103,7 +103,7 @@
     <string name="sheet_sample_taken_at">Prélèvement effectué à %1$s</string>
     <string name="sheet_sample_number">Prélèvement %1$d sur %2$d</string>
     <string name="sheet_details_of_latest">Les paramètres clés et la conformité ci-dessous sont ceux du prélèvement le plus récent.</string>
-    <string name="sheet_recent_unfavourable_title">12 derniers mois</string>
+    <string name="sheet_recent_unfavourable_title">Sur les 12 derniers mois</string>
     <plurals name="sheet_recent_limits">
         <item quantity="one">%d prélèvement non conforme aux limites de qualité</item>
         <item quantity="many">%d prélèvements non conformes aux limites de qualité</item>

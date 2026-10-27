@@ -158,7 +158,7 @@
     <!-- Under the card of several samples. -->
     <string name="sheet_details_of_latest">The key parameters and compliance below are those of the most recent sample.</string>
     <!-- Heading of a small box on the sheet, shown only when samples of the last 12 months have an unfavourable published result (non-compliance, consumption advised against or forbidden). Tapping it opens the sample history. -->
-    <string name="sheet_recent_unfavourable_title">Last 12 months</string>
+    <string name="sheet_recent_unfavourable_title">Over the last 12 months</string>
     <!-- Line of the box. %d: samples of the last 12 months published non-compliant with a quality limit (bacteriological or physico-chemical). -->
     <plurals name="sheet_recent_limits">
         <item quantity="one">%d sample not compliant with the quality limits</item>

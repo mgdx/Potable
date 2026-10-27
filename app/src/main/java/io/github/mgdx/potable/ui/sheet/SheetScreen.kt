@@ -282,7 +282,6 @@ private fun SampleContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        recentUnfavourable?.let { RecentUnfavourableCard(it, onShowHistory) }
         KeyParametersCard(sample, onParameterHistory)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -312,6 +311,8 @@ private fun SampleContent(
                 Text(stringResource(R.string.sheet_show_all_results))
             }
         }
+        // Just above the history it opens.
+        recentUnfavourable?.let { RecentUnfavourableCard(it, onShowHistory) }
         OutlinedButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Filled.DateRange,
