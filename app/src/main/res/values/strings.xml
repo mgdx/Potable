@@ -202,6 +202,32 @@
     <string name="featured_free_chlorine_explanation">Free chlorine is the disinfectant left in the water as it travels through the network.</string>
     <!-- Action read by screen readers on a featured parameter ("Double-tap to show the history of Nitrates"): starts lowercase. %1$s: the translated name of the parameter (featured_nitrates…). -->
     <string name="sheet_parameter_history_action">show the history of %1$s</string>
+    <!-- ===== Watched substances: the latest known measure of each (SPEC §5 F3) ===== -->
+    <!-- Heading of the card, under the key parameters. -->
+    <string name="sheet_watched_title">Watched substances</string>
+    <string name="sheet_watched_intro">Latest measure of each substance on this distribution unit, even if older than the latest sample: they are not analysed every time.</string>
+    <string name="sheet_watched_loading">Loading the latest measures…</string>
+    <!-- Only line of the card when none of the substances was measured in the history window. %1$s: start of the window, a date formatted for the language. -->
+    <string name="sheet_watched_none">None of these substances has been measured on this distribution unit since %1$s.</string>
+    <!-- Under the substances shown, when the others could not be loaded; followed by action_retry. -->
+    <string name="sheet_watched_partial_error">Some substances could not be loaded.</string>
+    <!-- Date of a measure. %1$s: the date, formatted for the language; %2$s: how long ago (age_today, age_days…). -->
+    <string name="sheet_watched_measured_on">Measured on %1$s · %2$s</string>
+    <!-- Names of the watched substances, translated (docs/glossary.md), unlike the labels published by Hub'Eau. Explanations: what the substance is and where it comes from, no health advice (SPEC §14). -->
+    <string name="watched_pfas">PFAS (sum of 20)</string>
+    <string name="watched_pfas_explanation">PFAS are very persistent synthetic chemicals, used in many industrial and everyday products such as non-stick or water-repellent coatings.</string>
+    <string name="watched_pesticides">Pesticides (total)</string>
+    <string name="watched_pesticides_explanation">The sum of the pesticides and of their breakdown products analysed in the sample, mostly from farming.</string>
+    <string name="watched_tfa">TFA (trifluoroacetic acid)</string>
+    <string name="watched_tfa_explanation">A very small and very persistent PFAS, formed in particular when some pesticides and refrigerant gases break down.</string>
+    <string name="watched_vinyl_chloride">Vinyl chloride</string>
+    <string name="watched_vinyl_chloride_explanation">Vinyl chloride can come from some PVC water pipes laid before the 1980s.</string>
+    <string name="watched_lead">Lead</string>
+    <string name="watched_lead_explanation">Lead mostly comes from old lead pipes, in the network or inside buildings.</string>
+    <string name="watched_arsenic">Arsenic</string>
+    <string name="watched_arsenic_explanation">Arsenic is mostly of natural origin, from the rocks the water flows through.</string>
+    <string name="watched_perchlorate">Perchlorate</string>
+    <string name="watched_perchlorate_explanation">Perchlorate comes mainly from industrial and military activities, such as First World War munitions.</string>
     <!-- %1$s: the sample date, formatted for the language ("26 August 2026"). Also the subtitle of the sample detail. -->
     <string name="sheet_sampled_on">Sampled on %1$s</string>
     <!-- Age of the sample, under its date. -->

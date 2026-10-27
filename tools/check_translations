@@ -56,7 +56,7 @@ IDENTICAL_ALLOWED_TERMS = (
 # translation: "Nitrates" in French. Kept per language, so that a word
 # allowed in one language still warns in another.
 IDENTICAL_ALLOWED_TERMS_BY_LANGUAGE = {
-    "fr": ("Nitrates", "Pesticides", "Version", "Sources"),
+    "fr": ("Nitrates", "Pesticides", "Version", "Sources", "Arsenic", "Perchlorate"),
 }
 
 # Spaces a translator may type instead of a plain one (no-break, narrow

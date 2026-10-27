@@ -153,6 +153,34 @@ les accepte tous (`FeaturedParameter.codes`). Voisins volontairement exclus :
 « Titre alcalimétrique complet » (`1347`), « Nitrates/50 + Nitrites/3 »
 (`6374`).
 
+## Substances surveillées
+
+Vérification du 2026-10-28, pour la carte « Substances surveillées » de la
+fiche (SPEC §4.3, F3). Mêmes six communes que ci-dessus : 20 000 lignes les
+plus récentes de chacune (840 paramètres distincts), cherchées par libellé
+(PFAS, pesticide, trifluoro, vinyl, arsenic, perchlor, plomb), puis chaque code
+retenu sur tout l'historique publié de chaque commune
+(`resultats_dis?code_commune=…&code_parametre=8847,6276,8858,1753,1382,1369,6219&size=5000&sort=desc&fields=code_parametre,libelle_parametre,libelle_unite,limite_qualite_parametre,date_prelevement,code_lieu_analyse,…`).
+Le TFA, absent des six, a été cherché sur toute la France par
+`resultats_dis?libelle_parametre=Acide trifluoroacétique` (le filtre ignore
+la casse et les accents).
+
+| Substance | `code_parametre` | `libelle_parametre` | Unité | `limite_qualite_parametre` | Présent à (lignes, tout l'historique) |
+|---|---|---|---|---|---|
+| Somme des 20 PFAS | `8847` | Somme de 20 substances perfluoroalkylées (PFAS) | µg/L | `<=0,1 µg/L` | les six (7 à 78) |
+| Total des pesticides | `6276` | Total des pesticides analysés | µg/L | `<=0,5 µg/L` | les six (7 à 281) |
+| TFA | `8858` | acide trifluoroacétique | µg/L | aucune | aucune des six ; 62 lignes dans 13 communes en France (2024-07 à 2026-08) |
+| Chlorure de vinyle (CVM) | `1753` | Chlorure de vinyl monomère | µg/L | `<=0.5 µg/L` | les six (120 à 555) |
+| Plomb | `1382` | Plomb | µg/L | `<=10 µg/L` | les six (7 à 179 ; Marseille : dernière mesure en 2019) |
+| Arsenic | `1369` | Arsenic (Orléans : aussi « Arsenic dissous ») | µg/L | `<=10 µg/L` | les six (7 à 282) |
+| Perchlorate | `6219` | Perchlorate | µg/L | aucune | quatre : Orléans, Paris, Bordeaux, Toulouse (4 à 168) |
+
+Un seul code par substance ; toutes les lignes relevées sont des mesures de
+laboratoire (`code_lieu_analyse` = `L`). Voisins volontairement exclus :
+« Somme de 4 substances perfluoroalkylées (PFOA+PFNA+PFHXS+PFOS) » (`9268`,
+quatre des six communes) et chacun des 20 PFAS seul (`5347`, `6561`…).
+Aucun candidat n'a été écarté faute d'être publié.
+
 ## Familles de paramètres
 
 L'API ne publie **aucune** famille (bactériologie, pesticides…) :

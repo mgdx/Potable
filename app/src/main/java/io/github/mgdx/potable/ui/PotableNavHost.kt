@@ -384,9 +384,9 @@ fun PotableNavHost(
                 onShowHistory = {
                     navController.navigate(Routes.timeline(communeCode, udiCode, communeName))
                 },
-                onParameterHistory = { parameter, label ->
+                onParameterHistory = { codes, label ->
                     navController.navigate(
-                        Routes.parameterHistory(communeCode, udiCode, parameter.codes, label),
+                        Routes.parameterHistory(communeCode, udiCode, codes, label),
                     )
                 },
                 // Opened from My communes: going there again would stack a

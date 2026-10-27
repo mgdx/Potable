@@ -97,7 +97,7 @@ class FakeWaterRepository : WaterRepository {
     }
 }
 
-/** A timeline per unit, as [sampleTimeline] returns it; no series. */
+/** A timeline per unit, as [sampleTimeline] returns it; series set by codes, none otherwise. */
 class FakeHistoryRepository : HistoryRepository {
     /** What [sampleTimeline] returns, or throws. */
     var timeline: Result<List<SampleSummary>> = Result.success(emptyList())
@@ -105,13 +105,22 @@ class FakeHistoryRepository : HistoryRepository {
     /** The `since` argument of each [sampleTimeline]. */
     val timelineCalls = mutableListOf<LocalDate>()
 
+    /** What [parameterSeries] returns, or throws, per set of codes; null when absent. */
+    val series = mutableMapOf<Set<String>, Result<ParameterSeries?>>()
+
+    /** The codes and `since` of each [parameterSeries]. */
+    val seriesCalls = mutableListOf<Pair<Set<String>, LocalDate>>()
+
     override suspend fun parameterSeries(
         communeCode: String,
         udiCode: String,
         parameterCodes: Set<String>,
         since: LocalDate,
         force: Boolean,
-    ): ParameterSeries? = null
+    ): ParameterSeries? {
+        seriesCalls += parameterCodes to since
+        return series[parameterCodes]?.getOrThrow()
+    }
 
     override suspend fun sampleTimeline(
         communeCode: String,
@@ -192,6 +201,15 @@ class FakeAppPreferences(
         remembered[communeCode] = udiCode
         rememberedNames[communeCode] = udiName
         writes.value++
+    }
+
+    /** The history window setting. */
+    val historyYearsSetting = MutableStateFlow(AppPreferences.DEFAULT_YEARS)
+
+    override val historyYears: Flow<Int> = historyYearsSetting
+
+    override suspend fun setHistoryYears(years: Int) {
+        historyYearsSetting.value = years
     }
 
     /** The "recent" list, kept as the DataStore implementation keeps it. */

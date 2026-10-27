@@ -7,6 +7,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.core.UnfavourableDigest
+import io.github.mgdx.potable.core.WatchedMeasure
+import io.github.mgdx.potable.core.WatchedSubstance
+import io.github.mgdx.potable.core.WatchedSubstances
+import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
@@ -25,11 +29,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.time.Duration
 
 sealed interface SheetUiState {
@@ -53,6 +60,29 @@ sealed interface SheetUiState {
     }
 }
 
+/** The card of the watched substances of the sheet (SPEC §5 F3). */
+sealed interface WatchedUiState {
+    data object Loading : WatchedUiState
+
+    /**
+     * Nothing could be read, from the network or the cache: a discreet
+     * error with Retry, the rest of the sheet unaffected.
+     */
+    data class Error(val error: LoadError) : WatchedUiState
+
+    /**
+     * The latest measure of each substance measured since [since] (the
+     * history window, [years] years); empty when none was. [partialError]
+     * is set when some substances could not be read: the others are shown.
+     */
+    data class Loaded(
+        val measures: List<WatchedMeasure>,
+        val since: LocalDate,
+        val years: Int,
+        val partialError: LoadError? = null,
+    ) : WatchedUiState
+}
+
 /**
  * How old the data shown are, as they come from the cache (SPEC §7):
  * [fetchedAt] is the last successful request to Hub'Eau, and [refreshFailed]
@@ -69,7 +99,9 @@ data class Freshness(val fetchedAt: Instant, val refreshFailed: Boolean)
  * pull-to-refresh. Following only changes the follow button.
  *
  * Once a sample is shown, the timeline of the last 12 months is read in the
- * background ([recentUnfavourable]), from the history cache when it is fresh.
+ * background ([recentUnfavourable]), from the history cache when it is fresh;
+ * then the latest measure of each [WatchedSubstance] over the history window
+ * ([watched]), from the same cache: the conclusion never waits for either.
  */
 class SheetViewModel(
     private val water: WaterRepository,
@@ -119,8 +151,24 @@ class SheetViewModel(
      */
     val recentUnfavourable: StateFlow<UnfavourableDigest?> = _recentUnfavourable.asStateFlow()
 
+    private val _watched = MutableStateFlow<WatchedUiState?>(null)
+
+    /**
+     * The watched substances, read once the latest sample is shown; null
+     * until then. Their failure never touches [state].
+     */
+    val watched: StateFlow<WatchedUiState?> = _watched.asStateFlow()
+
+    /** The history window in years, from the setting; null until it is read. */
+    private val historyYears = MutableStateFlow<Int?>(null)
+
     private var refreshJob: Job? = null
     private var recentJob: Job? = null
+    private var watchedJob: Job? = null
+
+    /** The newest sample [watchedJob] was started for, and the window it used. */
+    private var watchedFor: String? = null
+    private var watchedYears: Int? = null
 
     /** The newest sample [recentJob] was started for: read again only when it changes. */
     private var recentFor: String? = null
@@ -156,7 +204,30 @@ class SheetViewModel(
                 }
                 .collect(::onCache)
         }
+        viewModelScope.launch {
+            (recents?.historyYears ?: flowOf(AppPreferences.DEFAULT_YEARS))
+                .catch { emit(AppPreferences.DEFAULT_YEARS) }
+                .map { years ->
+                    years.takeIf { it in AppPreferences.YEAR_CHOICES }
+                        ?: AppPreferences.DEFAULT_YEARS
+                }
+                .distinctUntilChanged()
+                .collect { years ->
+                    historyYears.value = years
+                    // The setting changed while the card was shown: read it again.
+                    val sample = watchedFor
+                    if (sample != null && watchedYears != null && watchedYears != years) {
+                        loadWatched(sample, again = true)
+                    }
+                }
+        }
         refresh(force = false)
+    }
+
+    /** The Retry button of the watched substances card: no automatic retry. */
+    fun retryWatched() {
+        val sample = watchedFor ?: return
+        loadWatched(sample, again = true)
     }
 
     /** Called by the Retry button only: there is no automatic retry. */
@@ -241,7 +312,10 @@ class SheetViewModel(
         if (cache != null) {
             _state.value = sampleState(cache.samples)
             _freshness.value = Freshness(cache.fetchedAt, refreshFailed = error != null)
-            cache.sample?.let { loadRecentUnfavourable(it.code) }
+            cache.sample?.let {
+                loadRecentUnfavourable(it.code)
+                loadWatched(it.code)
+            }
         } else if (error != null) {
             val shown = _state.value is SheetUiState.Loaded || _state.value is SheetUiState.NoSample
             if (!shown) _state.value = SheetUiState.Error(error)
@@ -267,6 +341,49 @@ class SheetViewModel(
                 throw e
             } catch (_: Exception) {
                 null
+            }
+        }
+    }
+
+    /**
+     * Reads, substance after substance, the series of every
+     * [WatchedSubstance] over the history window, from the history cache
+     * when it is fresh, and keeps the latest measure of each
+     * ([WatchedSubstances.latest]). Only once per newest sample [sampleCode]
+     * unless [again]. A substance that cannot be read is left out; if none
+     * can, the card shows an error.
+     */
+    private fun loadWatched(sampleCode: String, again: Boolean = false) {
+        if (!again && watchedFor == sampleCode) return
+        watchedFor = sampleCode
+        watchedJob?.cancel()
+        if (_watched.value !is WatchedUiState.Loaded) _watched.value = WatchedUiState.Loading
+        watchedJob = viewModelScope.launch {
+            val years = historyYears.filterNotNull().first()
+            watchedYears = years
+            val since = clock.instant().atZone(FRANCE_ZONE).toLocalDate()
+                .minusYears(years.toLong())
+            recorded?.join()
+            val series = LinkedHashMap<WatchedSubstance, ParameterSeries?>()
+            var error: LoadError? = null
+            for (substance in WatchedSubstance.entries) {
+                try {
+                    series[substance] =
+                        history.parameterSeries(communeCode, udiCode, substance.codes, since)
+                } catch (e: DataError) {
+                    error = error ?: LoadError.from(e)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    error = error ?: LoadError.UNEXPECTED
+                }
+            }
+            val measures = WatchedSubstances.latest(series)
+            _watched.value = when {
+                error == null -> WatchedUiState.Loaded(measures, since, years)
+                // "None measured" cannot be said when some could not be read.
+                measures.isEmpty() -> WatchedUiState.Error(error)
+                else -> WatchedUiState.Loaded(measures, since, years, partialError = error)
             }
         }
     }
