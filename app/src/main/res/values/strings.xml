@@ -89,8 +89,8 @@
     <string name="search_loading">Loading the list of communes…</string>
     <!-- %1$s: what the user typed. -->
     <string name="search_no_results">No commune matches “%1$s”.</string>
-    <!-- Under a commune name in the results. %1$s: its first postal code ("75001"); %2$d: how many more postal codes it has. -->
-    <string name="search_postal_codes_more">%1$s +%2$d</string>
+    <!-- Under a commune name in the search results and in My communes. %1$s: its first postal code ("75001"); %2$d: how many more postal codes it has. -->
+    <string name="postal_codes_more">%1$s +%2$d</string>
     <!-- Under a former or delegated commune in the results. %1$s: name of the commune under which Hub'Eau publishes its data (its INSEE code if the name is unknown). -->
     <string name="search_published_under">Water data published under the parent commune: %1$s</string>
     <!-- Under a “commune, unit” row of the results: the unit is followed (see sheet_following). Short: about 15 characters. -->

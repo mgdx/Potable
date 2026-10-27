@@ -54,7 +54,7 @@ class ApiTextTest {
 
     @Test
     fun `a translated sentence starting with a parameter keeps the layout direction`() {
-        // search_postal_codes_more in an RTL script: "%1$s +%2$d".
+        // postal_codes_more in an RTL script: "%1$s +%2$d".
         val text = bidiWrap("45000", RTL_LOCALE) + " +٣"
         assertEquals(ResolvedTextDirection.Rtl, direction(text, TextStyle()))
         val unit = bidiWrap("Saint-Denis", RTL_LOCALE) + "، " + bidiWrap("Réseau Nord", RTL_LOCALE)

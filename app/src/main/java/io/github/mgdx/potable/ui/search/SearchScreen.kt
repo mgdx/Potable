@@ -58,6 +58,7 @@ import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.postalCodesText
 import io.github.mgdx.potable.ui.common.topBarHeight
 import io.github.mgdx.potable.ui.settings.OverflowMenu
 
@@ -417,15 +418,3 @@ private fun RecentSection(
 
 /** Unit keys hold a "/": none equals the title's. */
 private const val RECENT_TITLE_KEY = "recent"
-
-/** The first postal code, followed by "+n" when the commune has more. */
-@Composable
-private fun postalCodesText(postalCodes: List<String>): String? = when (postalCodes.size) {
-    0 -> null
-    1 -> postalCodes.first()
-    else -> stringResource(
-        R.string.search_postal_codes_more,
-        bidiWrap(postalCodes.first()),
-        postalCodes.size - 1,
-    )
-}

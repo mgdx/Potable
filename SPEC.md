@@ -174,8 +174,12 @@ physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
 - Plusieurs communes/UDI suivies simultanément.
 - Aucune n'est « principale » : l'application s'ouvre toujours sur la
   recherche (voir `docs/decisions.md`, 2026-10-27).
+- Chaque ligne affiche le nom de la commune, son code postal (le premier,
+  suivi de « +n » s'il y en a d'autres, comme dans les résultats de la
+  recherche ; tiré du référentiel embarqué, absent si la commune n'y figure
+  pas), puis le nom de l'UDI.
 - Recherche dans la liste par nom de commune ou d'UDI (sans casse ni
-  accents), non mémorisée.
+  accents) ou par début de code postal (« 450 » → Orléans), non mémorisée.
 - Ajout et retrait. Pas de réordonnancement manuel : la liste est triée par
   ordre alphabétique du nom de commune, puis du nom d'UDI (collation
   française, accents et casse pris en compte comme dans un dictionnaire),

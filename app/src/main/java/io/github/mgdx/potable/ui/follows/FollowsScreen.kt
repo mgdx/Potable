@@ -42,6 +42,7 @@ import io.github.mgdx.potable.ui.common.CenteredColumn
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.postalCodesText
 
 @Composable
 fun FollowsScreen(
@@ -69,6 +70,7 @@ fun FollowsScreen(
                     FollowFilterField(query = current.query, onQueryChange = viewModel::setQuery)
                     FollowList(
                         follows = current.shown,
+                        postalCodes = current.postalCodes,
                         onOpen = onOpen,
                         onRemove = viewModel::requestRemoval,
                         modifier = Modifier.weight(1f),
@@ -140,10 +142,11 @@ private fun FollowFilterField(query: String, onQueryChange: (String) -> Unit) {
     )
 }
 
-/** [follows] as shown, sorted by name. */
+/** [follows] as shown, sorted by name, with the [postalCodes] of their communes. */
 @Composable
 private fun FollowList(
     follows: List<Follow>,
+    postalCodes: Map<String, List<String>>,
     onOpen: (Follow) -> Unit,
     onRemove: (Follow) -> Unit,
     modifier: Modifier,
@@ -173,6 +176,7 @@ private fun FollowList(
         items(follows, key = { it.id }) { follow ->
             FollowRow(
                 follow = follow,
+                postalCodes = postalCodes[follow.communeCode].orEmpty(),
                 onOpen = { onOpen(follow) },
                 onRemove = { onRemove(follow) },
             )
@@ -182,7 +186,12 @@ private fun FollowList(
 }
 
 @Composable
-private fun FollowRow(follow: Follow, onOpen: () -> Unit, onRemove: () -> Unit) {
+private fun FollowRow(
+    follow: Follow,
+    postalCodes: List<String>,
+    onOpen: () -> Unit,
+    onRemove: () -> Unit,
+) {
     val label = stringResource(
         R.string.commune_and_unit,
         bidiWrap(follow.communeName),
@@ -200,6 +209,13 @@ private fun FollowRow(follow: Follow, onOpen: () -> Unit, onRemove: () -> Unit) 
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(follow.communeName, style = MaterialTheme.typography.titleMedium.asApiText())
+            postalCodesText(postalCodes)?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(
                 text = follow.udiName,
                 style = MaterialTheme.typography.bodyMedium.asApiText(),
