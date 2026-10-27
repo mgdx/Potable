@@ -82,6 +82,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    // English and French only (SPEC §11.1): the libraries' translations into
+    // other languages (Material 3, Compose UI...) are left out of the APK, so
+    // that no screen shows a third language. Keep in step with
+    // res/xml/locales_config.xml.
+    androidResources {
+        localeFilters += listOf("en", "fr")
+    }
+
     buildFeatures {
         compose = true
         // BuildConfig.VERSION_NAME for the About screen.
