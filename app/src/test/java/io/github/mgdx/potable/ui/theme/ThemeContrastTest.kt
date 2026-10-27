@@ -40,11 +40,24 @@ class ThemeContrastTest {
             (c.onSurfaceVariant to c.surfaceContainerHigh),
         "inverseOnSurface / inverseSurface (chart tooltip)" to
             (c.inverseOnSurface to c.inverseSurface),
+        "onBackground / background" to (c.onBackground to c.background),
+        "onSurface / surfaceContainerHighest" to (c.onSurface to c.surfaceContainerHighest),
+        "primary / surfaceContainerLowest" to (c.primary to c.surfaceContainerLowest),
+        "error / surfaceContainerHigh" to (c.error to c.surfaceContainerHigh),
+        "onSurfaceVariant / surfaceContainerLowest" to
+            (c.onSurfaceVariant to c.surfaceContainerLowest),
+        "onPrimaryContainer / primaryContainer" to
+            (c.onPrimaryContainer to c.primaryContainer),
     )
 
     /** Marks of the chart and focus border, on the surface. */
     private fun markPairs(c: ColorScheme) = mapOf(
-        "primary / surface (series, focus border)" to (c.primary to c.surface),
+        "primary / surface (focus border)" to (c.primary to c.surface),
+        "secondary / surface (series)" to (c.secondary to c.surface),
+        "secondary / surfaceContainerLow (series on a card)" to
+            (c.secondary to c.surfaceContainerLow),
+        "outline / surfaceContainerLow (axis on a card)" to
+            (c.outline to c.surfaceContainerLow),
         "onSurface / surface (quality limit)" to (c.onSurface to c.surface),
         "onSurfaceVariant / surface (quality reference)" to (c.onSurfaceVariant to c.surface),
         "outline / surface (time axis)" to (c.outline to c.surface),
@@ -84,6 +97,14 @@ class ThemeContrastTest {
         assertEquals(PotableAccent, LightColorScheme.secondaryContainer)
         assertEquals(PotableContainerDark, DarkColorScheme.secondaryContainer)
         assertEquals(PotableOnContainerDark, DarkColorScheme.onSecondaryContainer)
+    }
+
+    @Test
+    fun `the light canvas is the logo blue`() {
+        // The logo background, #2350B5, is the light background and surface.
+        assertEquals(PotableBlue, LightColorScheme.background)
+        assertEquals(PotableBlue, LightColorScheme.surface)
+        assertEquals(Color(0xFF2350B5), PotableBlue)
     }
 
     private companion object {

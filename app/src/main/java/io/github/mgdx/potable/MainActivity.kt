@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.alert.AlertTarget
@@ -35,7 +34,12 @@ class MainActivity : ComponentActivity() {
         // recreated, since the system hands the original intent back.
         intent?.let { setIntent(it.sanitized()) }
         if (savedInstanceState == null) alertTarget.value = intent?.alertTarget()
-        enableEdgeToEdge()
+        // Both themes paint a dark canvas (the logo blue, or the night navy):
+        // the system bar icons are light in both, whatever the device's theme.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(DARK_SCRIM),
+        )
         val container = (application as PotableApplication).container
         setContent {
             // SYSTEM until the preference is read: the first frame matches the
@@ -43,18 +47,6 @@ class MainActivity : ComponentActivity() {
             val themeMode by container.preferences.themeMode
                 .collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
             val darkTheme = themeMode.isDark()
-            // The system bar icons follow the application's theme, not the
-            // device's, so that they stay readable when the two differ.
-            DisposableEffect(darkTheme) {
-                enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(
-                        Color.TRANSPARENT,
-                        Color.TRANSPARENT,
-                    ) { darkTheme },
-                    navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { darkTheme },
-                )
-                onDispose {}
-            }
             PotableTheme(darkTheme = darkTheme) {
                 DisclaimerGate(container) {
                     val target by alertTarget.collectAsStateWithLifecycle()
@@ -77,9 +69,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
-        // The scrims enableEdgeToEdge() uses by default behind a three-button
-        // navigation bar (androidx.activity).
-        val LIGHT_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+        // The dark scrim enableEdgeToEdge() uses by default behind a
+        // three-button navigation bar (androidx.activity).
         val DARK_SCRIM = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
     }
 }

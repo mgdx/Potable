@@ -2,10 +2,12 @@
 <resources>
 
     <!-- The window shown before Compose draws its first frame. Its background
-         is the Material 3 light background (#FEF7FF, the colour scheme leaves
-         it at its default), so that the first frame does not change colour;
-         values-night/ holds the dark one. -->
+         is the light theme's canvas, the logo blue (#2350B5), so that the
+         first frame does not change colour; values-night/ holds the dark one.
+         The canvas is dark: the status bar icons are light. values-v31/
+         repeats this style with the splash screen. -->
     <style name="Theme.Potable" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FFFEF7FF</item>
+        <item name="android:windowBackground">#FF2350B5</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

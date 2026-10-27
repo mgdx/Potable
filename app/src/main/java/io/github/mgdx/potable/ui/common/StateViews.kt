@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,7 +37,7 @@ import io.github.mgdx.potable.R
 @Composable
 fun LoadingState(text: String, modifier: Modifier = Modifier, slow: Boolean = false) {
     CenteredColumn(modifier) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
@@ -62,6 +63,7 @@ fun EmptyState(text: String, modifier: Modifier = Modifier) {
             imageVector = Icons.Outlined.Info,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(STATE_ICON_SIZE),
         )
         Text(
             text = text,
@@ -78,18 +80,22 @@ fun ErrorState(error: LoadError, onRetry: () -> Unit, modifier: Modifier = Modif
         Icon(
             imageVector = Icons.Outlined.Warning,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(STATE_ICON_SIZE),
         )
         Text(
             text = stringResource(error.messageRes()),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
         )
-        Button(onClick = onRetry) {
+        FilledTonalButton(onClick = onRetry) {
             Text(stringResource(R.string.action_retry))
         }
     }
 }
+
+/** Size of the icon of the empty and error states. */
+private val STATE_ICON_SIZE = 48.dp
 
 /** The sentence telling the user why a load failed. */
 internal fun LoadError.messageRes(): Int = when (this) {
