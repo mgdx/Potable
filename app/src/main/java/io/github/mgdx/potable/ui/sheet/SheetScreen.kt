@@ -312,7 +312,7 @@ private fun SampleContent(
             }
         }
         // Just above the history it opens.
-        recentUnfavourable?.let { RecentUnfavourableCard(it, onShowHistory) }
+        recentUnfavourable?.let { RecentUnfavourableCard(it) }
         OutlinedButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Filled.DateRange,
@@ -501,13 +501,12 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
  * there is none, in which case the box is not shown). Opens the timeline.
  */
 @Composable
-private fun RecentUnfavourableCard(digest: UnfavourableDigest, onShowHistory: () -> Unit) {
+private fun RecentUnfavourableCard(digest: UnfavourableDigest) {
     val locale = currentLocale()
     val date = remember(digest.latest.date, locale) {
         formatSampleDate(digest.latest.date, locale)
     }
     Card(
-        onClick = onShowHistory,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -547,21 +546,6 @@ private fun RecentUnfavourableCard(digest: UnfavourableDigest, onShowHistory: ()
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             ConclusionText(digest.latest.conclusion, style = MaterialTheme.typography.bodyMedium)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.timeline_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
         }
     }
 }
