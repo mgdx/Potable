@@ -1,0 +1,7 @@
+• Every commune you open is kept offline; clear the whole cache or one commune in Settings.
+• All the sanitary conclusions of the same day are shown, each with its time.
+• A box sums up the samples not compliant over the last 12 months.
+• Charts: pinch to zoom, long press a point to open the full report of that sample.
+• A single value now shows its limit.
+• The unit chosen for a commune is no longer asked again; search shows “Commune, unit”.
+• Donation link in About.

@@ -1,0 +1,7 @@
+• Chaque commune consultée reste lisible hors ligne ; cache à vider en entier ou par commune.
+• Toutes les conclusions d’un même jour, avec leur heure.
+• Un encart résume les non-conformités des 12 derniers mois.
+• Graphiques : pincer pour zoomer, appui long pour le rapport complet du prélèvement.
+• Une valeur seule affiche sa limite.
+• L’unité choisie n’est plus redemandée ; la recherche affiche « Commune, unité ».
+• Lien de don dans À propos.
