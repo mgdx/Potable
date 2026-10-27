@@ -53,6 +53,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
@@ -398,7 +399,7 @@ private fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>, 
                         )
                         Text(
                             text = stringResource(parameter.explanationRes()),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall.justified(),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -524,7 +525,7 @@ private fun WatchedMeasureRow(
             )
             Text(
                 text = stringResource(measure.substance.explanationRes()),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.justified(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -540,7 +541,7 @@ private fun WatchedMeasureRow(
 private fun CardNote(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.bodySmall,
+        style = MaterialTheme.typography.bodySmall.justified(),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
@@ -585,6 +586,10 @@ private fun formatDay(day: LocalDate): String {
     val locale = currentLocale()
     return remember(day, locale) { localizedDateFormatter(FormatStyle.LONG, locale).format(day) }
 }
+
+/** Running text justified, words hyphenated in the language of the text. */
+private fun TextStyle.justified(): TextStyle =
+    copy(textAlign = TextAlign.Justify, hyphens = Hyphens.Auto)
 
 /** The ARS conclusion, verbatim: never translated, summarised or scored (SPEC §14). */
 @Composable
@@ -740,7 +745,7 @@ private fun ConclusionText(
                 conclusion,
                 SpanStyle(localeList = LocaleList(FRENCH_LANGUAGE_TAG)),
             ),
-            style = style.asApiText(),
+            style = style.asApiText().justified(),
         )
         Text(
             text = stringResource(R.string.sheet_official_wording),
