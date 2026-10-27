@@ -8,7 +8,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -44,28 +43,6 @@ class FollowsViewModelTest {
     }
 
     @Test
-    fun `a follow moves up and down`() = runTest(main.dispatcher) {
-        val viewModel = FollowsViewModel(repository)
-        advanceUntilIdle()
-        viewModel.moveUp(third)
-        advanceUntilIdle()
-        assertEquals(listOf(1L, 3L, 2L), viewModel.ids())
-        viewModel.moveDown(first)
-        advanceUntilIdle()
-        assertEquals(listOf(3L, 1L, 2L), viewModel.ids())
-    }
-
-    @Test
-    fun `the ends of the list do not move further`() = runTest(main.dispatcher) {
-        val viewModel = FollowsViewModel(repository)
-        advanceUntilIdle()
-        viewModel.moveUp(first)
-        viewModel.moveDown(third)
-        advanceUntilIdle()
-        assertEquals(listOf(1L, 2L, 3L), viewModel.ids())
-    }
-
-    @Test
     fun `a query filters the list shown, not the follows`() = runTest(main.dispatcher) {
         val viewModel = FollowsViewModel(repository)
         advanceUntilIdle()
@@ -73,22 +50,10 @@ class FollowsViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf(2L), viewModel.shownIds())
         assertEquals(listOf(1L, 2L, 3L), viewModel.ids())
-        assertTrue((viewModel.state.value as FollowsUiState.Loaded).isFiltered)
 
         viewModel.setQuery("")
         advanceUntilIdle()
         assertEquals(listOf(1L, 2L, 3L), viewModel.shownIds())
-    }
-
-    @Test
-    fun `the order does not change while a query filters the list`() = runTest(main.dispatcher) {
-        val viewModel = FollowsViewModel(repository)
-        advanceUntilIdle()
-        viewModel.setQuery("udi c")
-        advanceUntilIdle()
-        viewModel.moveUp(third)
-        advanceUntilIdle()
-        assertEquals(listOf(1L, 2L, 3L), viewModel.ids())
     }
 
     @Test

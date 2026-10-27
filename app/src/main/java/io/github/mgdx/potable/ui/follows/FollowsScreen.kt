@@ -4,18 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
@@ -72,10 +69,7 @@ fun FollowsScreen(
                     FollowFilterField(query = current.query, onQueryChange = viewModel::setQuery)
                     FollowList(
                         follows = current.shown,
-                        canReorder = !current.isFiltered,
                         onOpen = onOpen,
-                        onMoveUp = viewModel::moveUp,
-                        onMoveDown = viewModel::moveDown,
                         onRemove = viewModel::requestRemoval,
                         modifier = Modifier.weight(1f),
                     )
@@ -146,18 +140,11 @@ private fun FollowFilterField(query: String, onQueryChange: (String) -> Unit) {
     )
 }
 
-/**
- * [follows] as shown. While a query filters them, [canReorder] is false and
- * the move buttons are hidden: moving within a partial list would move past
- * rows the user cannot see.
- */
+/** [follows] as shown, sorted by name. */
 @Composable
 private fun FollowList(
     follows: List<Follow>,
-    canReorder: Boolean,
     onOpen: (Follow) -> Unit,
-    onMoveUp: (Follow) -> Unit,
-    onMoveDown: (Follow) -> Unit,
     onRemove: (Follow) -> Unit,
     modifier: Modifier,
 ) {
@@ -183,15 +170,10 @@ private fun FollowList(
                 )
             }
         }
-        itemsIndexed(follows, key = { _, follow -> follow.id }) { index, follow ->
+        items(follows, key = { it.id }) { follow ->
             FollowRow(
                 follow = follow,
-                canReorder = canReorder,
-                isFirst = index == 0,
-                isLast = index == follows.lastIndex,
                 onOpen = { onOpen(follow) },
-                onMoveUp = { onMoveUp(follow) },
-                onMoveDown = { onMoveDown(follow) },
                 onRemove = { onRemove(follow) },
             )
             HorizontalDivider()
@@ -200,27 +182,21 @@ private fun FollowList(
 }
 
 @Composable
-private fun FollowRow(
-    follow: Follow,
-    canReorder: Boolean,
-    isFirst: Boolean,
-    isLast: Boolean,
-    onOpen: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onRemove: () -> Unit,
-) {
+private fun FollowRow(follow: Follow, onOpen: () -> Unit, onRemove: () -> Unit) {
     val label = stringResource(
         R.string.commune_and_unit,
         bidiWrap(follow.communeName),
         bidiWrap(follow.udiName),
     )
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .clickable(onClick = onOpen)
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp),
+                .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(follow.communeName, style = MaterialTheme.typography.titleMedium.asApiText())
@@ -230,33 +206,11 @@ private fun FollowRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (canReorder) {
-                IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowUp,
-                        contentDescription = stringResource(R.string.follows_move_up, label),
-                    )
-                }
-                IconButton(onClick = onMoveDown, enabled = !isLast) {
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.follows_move_down, label),
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = onRemove) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.follows_remove, label),
-                )
-            }
+        IconButton(onClick = onRemove, modifier = Modifier.padding(end = 4.dp)) {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = stringResource(R.string.follows_remove, label),
+            )
         }
     }
 }

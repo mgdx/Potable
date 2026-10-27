@@ -15,17 +15,20 @@ data class Follow(
     val communeName: String,
     val udiCode: String,
     val udiName: String,
-    val position: Int,
 )
 
 /** Implemented with Room. */
 interface FollowRepository {
-    /** Every follow, ordered by [Follow.position]. */
+    /**
+     * Every follow, in alphabetical order of [Follow.communeName], then of
+     * [Follow.udiName] ([FollowOrder]): the list, the search and the alerts
+     * all see them in this order.
+     */
     val follows: Flow<List<Follow>>
 
     /**
      * Follows a unit. Idempotent on (communeCode, udiCode): returns the
-     * existing follow if there is one. A new one is appended at the end.
+     * existing follow if there is one.
      */
     suspend fun follow(
         communeCode: String,
@@ -38,9 +41,6 @@ interface FollowRepository {
      * Stops following and deletes the unit's cached samples and history.
      */
     suspend fun unfollow(id: Long)
-
-    /** Moves a follow to [newPosition] (0-based, clamped), shifting the others. */
-    suspend fun move(id: Long, newPosition: Int)
 
     suspend fun find(communeCode: String, udiCode: String): Follow?
 }

@@ -336,11 +336,7 @@
     <string name="follows_filter_label">Search my communes</string>
     <!-- Shown instead of the list when no followed commune or unit matches the filter. -->
     <string name="follows_filter_empty">No commune you follow matches this search.</string>
-    <!-- Screen reader labels of the actions of a row. %1$s: commune_and_unit, "commune, unit". -->
-    <string name="follows_move_up">Move %1$s up</string>
-    <!-- %1$s: commune_and_unit, "commune, unit". -->
-    <string name="follows_move_down">Move %1$s down</string>
-    <!-- %1$s: commune_and_unit, "commune, unit". -->
+    <!-- Screen reader label of the remove button of a row. %1$s: commune_and_unit, "commune, unit". -->
     <string name="follows_remove">Stop following %1$s</string>
     <!-- Dialog title. %1$s: commune name, as published. -->
     <string name="follows_remove_title">Stop following %1$s?</string>

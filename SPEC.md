@@ -176,7 +176,11 @@ physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
   recherche (voir `docs/decisions.md`, 2026-10-27).
 - Recherche dans la liste par nom de commune ou d'UDI (sans casse ni
   accents), non mémorisée.
-- Ajout, retrait, réordonnancement.
+- Ajout et retrait. Pas de réordonnancement manuel : la liste est triée par
+  ordre alphabétique du nom de commune, puis du nom d'UDI (collation
+  française, accents et casse pris en compte comme dans un dictionnaire),
+  et cet ordre vaut partout où les suivis sont listés (voir
+  `docs/decisions.md`, 2026-10-27).
 
 ### F7 — Alertes
 
@@ -216,8 +220,9 @@ dans `docs/decisions.md`) — jamais de jeu national.
 Tables minimales :
 
 - `commune` (référentiel embarqué, lecture seule)
-- `suivi` (code_commune, code_reseau, libellé, position ; colonne `principale`
-  conservée mais inutilisée depuis 2026-10-27)
+- `suivi` (code_commune, code_reseau, libellé ; colonnes `principale` et
+  `position` conservées mais inutilisées depuis 2026-10-27, l'ordre étant
+  alphabétique)
 - `prelevement` (code_prelevement, code_reseau, date, conclusions, distributeur)
 - `resultat` (code_prelevement, code_parametre, libellé, valeur, unité, limite)
 - `synchro` (par unité en cache : horodatage de la dernière requête réussie ;

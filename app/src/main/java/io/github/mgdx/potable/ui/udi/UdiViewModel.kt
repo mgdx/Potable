@@ -141,7 +141,7 @@ class UdiViewModel(
      * longer listed is ignored, and the choice is offered again.
      */
     private suspend fun currentUdi(codes: Set<String>): String? = try {
-        // The first in the user's order, should several units of the commune be followed.
+        // The first by name, should several units of the commune be followed.
         val followed = follows.follows.first()
             .firstOrNull { it.communeCode == communeCode && it.udiCode in codes }
         followed?.udiCode ?: preferences.rememberedUdi(communeCode)?.takeIf { it in codes }

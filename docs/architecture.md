@@ -113,7 +113,7 @@ La base `potable.db` ne contient jamais de jeu national : seulement les
 
 | Table | Contenu |
 |---|---|
-| `suivi` | commune, unité de distribution, libellés, position dans la liste (colonne `principale` inutilisée, gardée pour éviter une migration) |
+| `suivi` | commune, unité de distribution, libellés ; triés par nom à la lecture (colonnes `position` et `principale` inutilisées, gardées pour éviter une migration) |
 | `prelevement`, `resultat` | les derniers prélèvements de chaque unité consultée (tous ceux du dernier jour, `dernier = 1`) et les prélèvements plus anciens ouverts depuis l’historique (`dernier = 0`), avec leurs résultats |
 | `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes |
 | `serie`, `serie_point` | séries de paramètres consultées (historique) |

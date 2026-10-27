@@ -20,22 +20,19 @@ sealed interface FollowsUiState {
     data object Loading : FollowsUiState
 
     /**
-     * The follows, in the user's order; empty when nothing is followed.
+     * The follows, sorted by name; empty when nothing is followed.
      * [query] filters the list shown ([shown]); it is kept in memory only.
      */
     data class Loaded(val follows: List<Follow>, val query: String = "") : FollowsUiState {
         /** The follows matching [query], all of them when it is blank. */
         val shown: List<Follow> = filterFollows(follows, query)
-
-        /** True while a query narrows the list: the order cannot be changed then. */
-        val isFiltered: Boolean get() = query.isNotBlank()
     }
 }
 
 /**
- * "My communes" (SPEC §5 F6): the followed units, reordered with buttons
- * rather than drag and drop, so that every action is reachable by keyboard
- * and screen reader.
+ * "My communes" (SPEC §5 F6): the followed units, in alphabetical order
+ * ([FollowRepository.follows]), filtered by a query and unfollowed after a
+ * confirmation.
  */
 class FollowsViewModel(private val repository: FollowRepository) : ViewModel() {
     private val query = MutableStateFlow("")
@@ -48,10 +45,6 @@ class FollowsViewModel(private val repository: FollowRepository) : ViewModel() {
 
     /** The follow whose removal awaits confirmation, if any. */
     val pendingRemoval: StateFlow<Follow?> = _pendingRemoval.asStateFlow()
-
-    fun moveUp(follow: Follow) = moveBy(follow, -1)
-
-    fun moveDown(follow: Follow) = moveBy(follow, 1)
 
     /** Filters the list by commune or unit name; not saved anywhere. */
     fun setQuery(value: String) {
@@ -70,21 +63,6 @@ class FollowsViewModel(private val repository: FollowRepository) : ViewModel() {
         val follow = _pendingRemoval.value ?: return
         _pendingRemoval.value = null
         viewModelScope.launch { repository.unfollow(follow.id) }
-    }
-
-    /**
-     * Moves by index in the full list, which is the one shown: the buttons
-     * are hidden while a query filters it.
-     */
-    private fun moveBy(follow: Follow, delta: Int) {
-        val loaded = state.value as? FollowsUiState.Loaded ?: return
-        if (loaded.isFiltered) return
-        val follows = loaded.follows
-        val index = follows.indexOfFirst { it.id == follow.id }
-        if (index < 0) return
-        val target = index + delta
-        if (target !in follows.indices) return
-        viewModelScope.launch { repository.move(follow.id, target) }
     }
 
     companion object {

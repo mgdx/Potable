@@ -24,6 +24,10 @@ internal data class FollowEntity(
     @ColumnInfo(name = "nom_commune") val communeName: String,
     @ColumnInfo(name = "code_reseau") val udiCode: String,
     @ColumnInfo(name = "nom_reseau") val udiName: String,
+    /**
+     * The manual order of 0.1.x, dropped (docs/decisions.md, 2026-10-27):
+     * the follows are sorted by name. Kept to avoid a migration, written 0.
+     */
     val position: Int,
     /** Unused since the primary commune was dropped; kept to avoid a migration. */
     val principale: Boolean,

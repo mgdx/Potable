@@ -25,14 +25,40 @@ class RoomFollowRepositoryTest {
 
     private suspend fun order() = repository.follows.first().map { it.communeCode }
 
-    @Test
-    fun `the follows are appended in order`() = runTest {
-        val first = follow("45234")
-        val second = follow("75056")
+    private suspend fun names() =
+        repository.follows.first().map { "${it.communeName} / ${it.udiName}" }
 
-        assertEquals(0, first.position)
-        assertEquals(1, second.position)
-        assertEquals(listOf("45234", "75056"), order())
+    @Test
+    fun `the follows are sorted by commune name then unit name`() = runTest {
+        repository.follow("75056", "Paris", "075000002", "PARIS OUEST")
+        repository.follow("91228", "Évry-Courcouronnes", "091000001", "EVRY")
+        repository.follow("27229", "Ézy-sur-Eure", "027000001", "EZY")
+        repository.follow("75056", "Paris", "075000001", "PARIS EST")
+        repository.follow("28134", "Eu", "028000001", "EU")
+        repository.follow("45234", "orléans", "045000474", "ORLEANS")
+
+        assertEquals(
+            listOf(
+                "Eu / EU",
+                "Évry-Courcouronnes / EVRY",
+                "Ézy-sur-Eure / EZY",
+                "orléans / ORLEANS",
+                "Paris / PARIS EST",
+                "Paris / PARIS OUEST",
+            ),
+            names(),
+        )
+    }
+
+    @Test
+    fun `unfollowing keeps the others in order`() = runTest {
+        follow("C")
+        val b = follow("B")
+        follow("A")
+
+        repository.unfollow(b.id)
+
+        assertEquals(listOf("A", "C"), order())
     }
 
     @Test
@@ -62,54 +88,13 @@ class RoomFollowRepositoryTest {
     }
 
     @Test
-    fun `removing the first follow closes the gap`() = runTest {
-        val a = follow("A")
-        follow("B")
-        follow("C")
-
-        repository.unfollow(a.id)
-
-        assertEquals(listOf("B", "C"), order())
-        assertEquals(listOf(0, 1), repository.follows.first().map { it.position })
-    }
-
-    @Test
-    fun `removing a follow in the middle closes the gap`() = runTest {
-        follow("A")
-        val b = follow("B")
-        follow("C")
-
-        repository.unfollow(b.id)
-
-        assertEquals(listOf("A", "C"), order())
-        assertEquals(listOf(0, 1), repository.follows.first().map { it.position })
-    }
-
-    @Test
     fun `removing the last follow leaves none and the next one starts the list again`() = runTest {
         val a = follow("A")
         repository.unfollow(a.id)
         repository.unfollow(a.id)
 
         assertTrue(repository.follows.first().isEmpty())
-        assertEquals(0, follow("B").position)
-    }
-
-    @Test
-    fun `move shifts the others and is clamped`() = runTest {
-        val a = follow("A")
         follow("B")
-        val c = follow("C")
-        follow("D")
-
-        repository.move(a.id, 2)
-        assertEquals(listOf("B", "C", "A", "D"), order())
-
-        repository.move(c.id, 99)
-        assertEquals(listOf("B", "A", "D", "C"), order())
-
-        repository.move(c.id, -5)
-        assertEquals(listOf("C", "B", "A", "D"), order())
-        assertEquals(listOf(0, 1, 2, 3), repository.follows.first().map { it.position })
+        assertEquals(listOf("B"), order())
     }
 }
