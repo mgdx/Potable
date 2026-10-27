@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.BuildConfig
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.ui.common.BackTopBar
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.disclaimer.DisclaimerPoints
 import kotlinx.coroutines.launch
 
@@ -81,29 +83,43 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                 headlineContent = { Text(stringResource(R.string.settings_title)) },
             )
 
-            SectionTitle(stringResource(R.string.about_notice_title))
-            DisclaimerPoints(
+            SectionCard(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                bulletColor = MaterialTheme.colorScheme.secondary,
-            )
+                title = stringResource(R.string.about_notice_title),
+            ) {
+                DisclaimerPoints(bulletColor = MaterialTheme.colorScheme.secondary)
+            }
 
-            SectionTitle(stringResource(R.string.about_sources_title))
-            Body(stringResource(R.string.about_source_hubeau))
-            Link(
-                stringResource(R.string.about_source_hubeau_terms),
-                stringResource(R.string.url_hubeau_terms),
-                openLink,
-            )
-            Body(stringResource(R.string.about_source_communes))
-            Link(
-                stringResource(R.string.about_source_communes_link),
-                stringResource(R.string.url_geo_api),
-                openLink,
-            )
-            Body(stringResource(R.string.about_source_cog))
+            // Vertical padding only: the links are ListItems, inset by themselves.
+            SectionCard(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                CardHeading(stringResource(R.string.about_sources_title))
+                Body(stringResource(R.string.about_source_hubeau))
+                Link(
+                    stringResource(R.string.about_source_hubeau_terms),
+                    stringResource(R.string.url_hubeau_terms),
+                    openLink,
+                )
+                Body(stringResource(R.string.about_source_communes))
+                Link(
+                    stringResource(R.string.about_source_communes_link),
+                    stringResource(R.string.url_geo_api),
+                    openLink,
+                )
+                Body(stringResource(R.string.about_source_cog))
+            }
 
-            SectionTitle(stringResource(R.string.about_privacy_title))
-            Body(stringResource(R.string.about_privacy))
+            SectionCard(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                title = stringResource(R.string.about_privacy_title),
+            ) {
+                Text(
+                    text = stringResource(R.string.about_privacy),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
 
             SectionTitle(stringResource(R.string.about_license_title))
             Body(stringResource(R.string.about_license))
@@ -175,6 +191,22 @@ private fun SectionTitle(text: String) {
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+            .semantics { heading() },
+    )
+}
+
+/**
+ * The title of a card whose content has no horizontal padding, inset like the
+ * title [SectionCard] draws itself.
+ */
+@Composable
+private fun CardHeading(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
             .semantics { heading() },
     )
 }
