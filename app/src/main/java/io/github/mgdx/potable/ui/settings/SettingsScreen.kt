@@ -10,7 +10,10 @@ import android.provider.Settings
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.data.preferences.ThemeMode
 import io.github.mgdx.potable.ui.common.BackTopBar
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.SegmentedChoices
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
@@ -107,42 +111,51 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SectionTitle(stringResource(R.string.settings_appearance_title))
-            SegmentedChoices(
-                choices = ThemeMode.entries,
-                selected = current.themeMode,
-                label = { stringResource(it.labelRes()) },
-                onSelect = viewModel::setThemeMode,
-            )
-
-            SectionTitle(stringResource(R.string.settings_history_title))
-            Description(stringResource(R.string.settings_history_description))
-            SegmentedChoices(
-                choices = viewModel.yearChoices,
-                selected = current.historyYears,
-                label = { pluralStringResource(R.plurals.settings_years, it, it) },
-                onSelect = viewModel::setHistoryYears,
-            )
-
-            SectionTitle(stringResource(R.string.settings_storage_title))
-            Description(stringResource(R.string.settings_retention_description))
-            SegmentedChoices(
-                choices = viewModel.yearChoices,
-                selected = current.retentionYears,
-                label = { pluralStringResource(R.plurals.settings_years, it, it) },
-                onSelect = viewModel::setRetentionYears,
-            )
-            Description(stringResource(R.string.settings_clear_cache_description))
-            OutlinedButton(
-                onClick = viewModel::requestPurge,
-                enabled = purge != PurgeState.RUNNING,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                Text(stringResource(R.string.settings_clear_cache))
+            SettingsCard(stringResource(R.string.settings_appearance_title)) {
+                SegmentedChoices(
+                    choices = ThemeMode.entries,
+                    selected = current.themeMode,
+                    label = { stringResource(it.labelRes()) },
+                    onSelect = viewModel::setThemeMode,
+                )
             }
-            CachedCommunes(cachedCommunes, onClear = viewModel::requestCommunePurge)
+
+            SettingsCard(stringResource(R.string.settings_history_title)) {
+                Description(stringResource(R.string.settings_history_description))
+                SegmentedChoices(
+                    choices = viewModel.yearChoices,
+                    selected = current.historyYears,
+                    label = { pluralStringResource(R.plurals.settings_years, it, it) },
+                    onSelect = viewModel::setHistoryYears,
+                )
+            }
+
+            SettingsCard(stringResource(R.string.settings_storage_title)) {
+                Description(stringResource(R.string.settings_retention_description))
+                SegmentedChoices(
+                    choices = viewModel.yearChoices,
+                    selected = current.retentionYears,
+                    label = { pluralStringResource(R.plurals.settings_years, it, it) },
+                    onSelect = viewModel::setRetentionYears,
+                )
+                Description(stringResource(R.string.settings_clear_cache_description))
+                OutlinedButton(
+                    onClick = viewModel::requestPurge,
+                    enabled = purge != PurgeState.RUNNING,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Text(stringResource(R.string.settings_clear_cache))
+                }
+            }
+
+            cachedCommunes?.let { communes ->
+                SettingsCard(stringResource(R.string.settings_cached_communes_title)) {
+                    CachedCommunes(communes, onClear = viewModel::requestCommunePurge)
+                }
+            }
 
             AlertsSection(
                 alerts = current.alerts,
@@ -199,21 +212,14 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
 
 /**
  * The communes in the cache (SPEC §7), each with a button that clears its
- * cache alone. Nothing until the cache is read; a sentence when it is empty.
+ * cache alone; a sentence when it is empty. The caller shows nothing until
+ * the cache is read.
  */
 @Composable
 private fun CachedCommunes(
-    communes: List<CachedCommuneItem>?,
+    communes: List<CachedCommuneItem>,
     onClear: (CachedCommuneItem) -> Unit,
 ) {
-    communes ?: return
-    Text(
-        text = stringResource(R.string.settings_cached_communes_title),
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
-            .semantics { heading() },
-    )
     if (communes.isEmpty()) {
         Description(stringResource(R.string.settings_cached_communes_empty))
         return
@@ -344,8 +350,7 @@ private fun AlertsSection(
     onAlert: (AlertKind, Boolean) -> Unit,
     onPeriod: (Int) -> Unit,
     onOpenNotificationSettings: () -> Unit,
-) {
-    SectionTitle(stringResource(R.string.settings_alerts_title))
+) = SettingsCard(stringResource(R.string.settings_alerts_title)) {
     Description(stringResource(R.string.settings_alerts_description))
     SwitchRow(
         title = stringResource(R.string.alert_new_analyses),
@@ -463,16 +468,26 @@ private fun openNotificationSettings(context: Context) {
     }
 }
 
+/**
+ * One section of the settings in a [SectionCard]. Its rows bring their own
+ * 16dp horizontal padding (SegmentedChoices among them), so the card pads
+ * vertically only and the title, padded the same, is drawn here rather than
+ * by the card, which would set it against the card's edge. The rows keep
+ * their own vertical rhythm, without the card's spacing between them.
+ */
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
-            .semantics { heading() },
-    )
+private fun SettingsCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    SectionCard(contentPadding = PaddingValues(vertical = 8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                .semantics { heading() },
+        )
+        Column(content = content)
+    }
 }
 
 @Composable
