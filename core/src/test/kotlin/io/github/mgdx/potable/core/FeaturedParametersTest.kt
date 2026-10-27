@@ -12,8 +12,8 @@ class FeaturedParametersTest {
         HubEauParser.parseResultats(Fixtures.hubeau("resultats_dis_45234.json")).data,
     ).first()
 
-    private fun result(code: String, text: String) =
-        AnalysisResult(code, "Titre hydrotimétrique", "N", text, null, "°f", null, null)
+    private fun result(code: String, text: String, place: String? = null) =
+        AnalysisResult(code, "Titre hydrotimétrique", "N", text, null, "°f", null, null, place)
 
     @Test
     fun `codes checked against the API map to their parameter`() {
@@ -53,6 +53,21 @@ class FeaturedParametersTest {
         val present = FeaturedParameters.present(listOf(result("1345", "20"), result("7972", "21")))
         assertEquals(listOf(FeaturedParameter.HARDNESS), present.map { it.first })
         assertEquals("20", present.single().second.resultText)
+    }
+
+    @Test
+    fun `the laboratory measure is preferred to the on-site one, in either order`() {
+        val onSite = result("1302", "7,7", place = "T")
+        val laboratory = result("1302", "7,90", place = "L")
+        for (results in listOf(listOf(onSite, laboratory), listOf(laboratory, onSite))) {
+            assertEquals("7,90", FeaturedParameters.present(results).single().second.resultText)
+        }
+    }
+
+    @Test
+    fun `an on-site measure alone is featured`() {
+        val present = FeaturedParameters.present(listOf(result("1302", "7,6", place = "T")))
+        assertEquals("7,6", present.single().second.resultText)
     }
 
     @Test

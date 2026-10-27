@@ -70,6 +70,8 @@ internal data class SampleEntity(
      * all written by refreshes.
      */
     @ColumnInfo(name = "dernier", defaultValue = "1") val latest: Boolean = true,
+    /** `nom_installation_amont`. Schema v4; null on the rows of v3. */
+    @ColumnInfo(name = "installation_amont") val upstreamFacility: String? = null,
 )
 
 /** One analysed parameter of a cached sample (table `resultat`). */
@@ -99,6 +101,8 @@ internal data class ResultEntity(
     val unite: String?,
     val limite: String?,
     val reference: String?,
+    /** `code_lieu_analyse`. Schema v4; null on the rows of v3. */
+    @ColumnInfo(name = "lieu_analyse") val analysisPlace: String? = null,
 )
 
 /** Sync state of a unit (table `synchro`). */

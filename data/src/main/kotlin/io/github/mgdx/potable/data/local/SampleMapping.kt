@@ -35,6 +35,7 @@ internal fun Sample.toEntity(communeCode: String, udiCode: String, latest: Boole
         distributeur = distributor,
         owner = owner,
         latest = latest,
+        upstreamFacility = upstreamFacility,
     )
 
 internal fun Sample.resultEntities(communeCode: String, udiCode: String) =
@@ -52,6 +53,7 @@ internal fun Sample.resultEntities(communeCode: String, udiCode: String) =
             unite = result.unit,
             limite = result.qualityLimit,
             reference = result.qualityReference,
+            analysisPlace = result.analysisPlace,
         )
     }
 
@@ -77,6 +79,8 @@ internal fun SampleEntity.toSample(results: List<ResultEntity>) = Sample(
             unit = it.unite,
             qualityLimit = it.limite,
             qualityReference = it.reference,
+            analysisPlace = it.analysisPlace,
         )
     },
+    upstreamFacility = upstreamFacility,
 )

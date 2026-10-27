@@ -46,6 +46,10 @@ class SamplesTest {
         assertEquals(Compliance.COMPLIANT, sample.physicochemicalReferences)
         assertEquals("SUEZ AQUALIGE", sample.distributor)
         assertEquals("ORLEANS METROPOLE", sample.owner)
+        assertEquals(
+            "ORLEANS-ST JEAN LE BLANC-ST PRYVÉ-ST DENIS EN VAL",
+            sample.upstreamFacility,
+        )
     }
 
     @Test
@@ -130,6 +134,19 @@ class SamplesTest {
             listOf("1" to "5", "1" to "6", "2" to "5"),
             results.map { it.parameterCode to it.resultText },
         )
+    }
+
+    @Test
+    fun `the same value measured in the laboratory and on site is kept twice`() {
+        val date = "2026-01-01T00:00:00Z"
+        val rows = listOf(
+            row("A", date, parameter = "1302", text = "7,6", number = 7.6, place = "T"),
+            row("A", date, parameter = "1302", text = "7,6", number = 7.6, place = "L"),
+            row("A", date, parameter = "1302", text = "7,6", number = 7.6, place = "L"),
+        )
+        val results = Samples.group(rows).single().results
+        assertEquals(listOf("T", "L"), results.map { it.analysisPlace })
+        assertEquals(listOf(true, false), results.map { it.isOnSite })
     }
 
     @Test
@@ -243,6 +260,7 @@ class SamplesTest {
         label: String? = "Paramètre $parameter",
         text: String? = null,
         number: Double? = null,
+        place: String? = null,
     ) = ResultRow(
         codePrelevement = sample,
         codeCommune = "45234",
@@ -251,5 +269,6 @@ class SamplesTest {
         libelleParametre = label,
         resultatAlphanumerique = text,
         resultatNumerique = number,
+        codeLieuAnalyse = place,
     )
 }

@@ -71,6 +71,7 @@ class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository 
                 "conformite_references_pc_prelevement",
                 "nom_distributeur",
                 "nom_moa",
+                "nom_installation_amont",
                 "code_parametre",
                 "libelle_parametre",
                 "code_type_parametre",
@@ -79,6 +80,7 @@ class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository 
                 "libelle_unite",
                 "limite_qualite_parametre",
                 "reference_qualite_parametre",
+                "code_lieu_analyse",
             )
     }
 }

@@ -18,7 +18,9 @@ import java.util.concurrent.atomic.AtomicLong
  * `historique_synchro`), new tables only, hence an automatic
  * migration that keeps every v1 row; 3, adds `prelevement.dernier` (1 by
  * default: every v2 row was written by a refresh) so that a sample kept from
- * the history is never taken for a latest one, automatic migration too.
+ * the history is never taken for a latest one, automatic migration too; 4,
+ * adds `prelevement.installation_amont` and `resultat.lieu_analyse`, both
+ * nullable (null until the next refresh), automatic migration.
  */
 @Database(
     entities = [
@@ -31,9 +33,13 @@ import java.util.concurrent.atomic.AtomicLong
         TimelineSampleEntity::class,
         TimelineSyncEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+    ],
 )
 abstract class PotableDatabase : RoomDatabase() {
     internal abstract fun follows(): FollowDao

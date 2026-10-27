@@ -38,6 +38,7 @@
     <string name="sheet_references_physicochemical">Références de qualité physico-chimiques</string>
     <string name="quality_limit">Limite de qualité : %1$s</string>
     <string name="quality_reference">Référence de qualité : %1$s</string>
+    <string name="result_measured_on_site">Mesuré sur place</string>
     <string name="sample_no_value">Aucune valeur publiée</string>
     <string name="sheet_official_wording">Libellé officiel</string>
     <string name="sample_official_labels">Libellés officiels, tels que publiés par Hub\'Eau.</string>
@@ -155,6 +156,7 @@
     <string name="sheet_sampled_on_label">Prélevé le</string>
     <string name="sheet_distributor_label">Distributeur</string>
     <string name="sheet_owner_label">Collectivité responsable</string>
+    <string name="sheet_upstream_facility_label">Installation en amont</string>
     <string name="sheet_sample_card_title">Prélèvement</string>
     <string name="sheet_compliance_title">Conformité</string>
     <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>

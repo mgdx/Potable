@@ -17,7 +17,16 @@ data class AnalysisResult(
     val qualityLimit: String?,
     /** `reference_qualite_parametre`. */
     val qualityReference: String?,
-)
+    /** `code_lieu_analyse`: "L" laboratory, "T" on site (terrain), or null. */
+    val analysisPlace: String? = null,
+) {
+    /** Measured on site rather than in the laboratory. */
+    val isOnSite: Boolean get() = analysisPlace == ON_SITE
+
+    private companion object {
+        const val ON_SITE = "T"
+    }
+}
 
 data class Sample(
     /** `code_prelevement`. */
@@ -36,4 +45,6 @@ data class Sample(
     /** `nom_moa`. */
     val owner: String?,
     val results: List<AnalysisResult>,
+    /** `nom_installation_amont`: the facility upstream of the sampling point. */
+    val upstreamFacility: String? = null,
 )

@@ -181,6 +181,23 @@ radioactivité, 3 autres.
   `resultat_numerique` à `0.0`. L'appli affiche donc le texte publié, et le
   nombre seulement quand il n'y a aucun texte.
 
+- `nom_installation_amont` (sondage du 2026-10-27) : identique sur toutes
+  les lignes d'un prélèvement (Orléans, 62 prélèvements sur 3 000 lignes).
+  Il nomme une usine de traitement (« USINE DE TRAITEMENT DU VAL ORLEANS »,
+  « DEFERRISATION LA SOURCE »), un réservoir (Paris, « RESERVOIR DES
+  LILAS »), ou le réseau lui-même (Orléans, même code que l'UDI). Absent
+  sur près de la moitié des lignes de Paris.
+- `code_lieu_analyse` : `L` laboratoire, `T` terrain. Sur une même commune,
+  un pH peut être publié deux fois dans un prélèvement, une fois de chaque,
+  **dans un ordre qui varie** (Orléans : `L` puis `T`, ou `T` puis `L`) ;
+  certains prélèvements n'ont que la mesure de terrain.
+- Champs publiés mais non lus : `code_departement`, `nom_departement`,
+  `code_parametre_se`, `code_parametre_cas`, `libelle_parametre_maj`,
+  `libelle_parametre_web` (presque toujours `null`), `code_unite`, `nom_uge`,
+  `reference_analyse`, `code_installation_amont` ; dans `communes_udi`,
+  `debut_alim`. Redondants avec ce que l'appli affiche déjà, ou sans sens
+  pour l'utilisateur.
+
 ## Seuils : `limite_qualite_parametre` et `reference_qualite_parametre`
 
 Relevé du 2026-10-25 : 20 000 lignes les plus récentes (ou toutes, pour une

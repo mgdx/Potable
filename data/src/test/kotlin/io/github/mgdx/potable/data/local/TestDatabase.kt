@@ -48,6 +48,8 @@ internal fun sample(code: String, date: String, communeCode: String = "45234", r
                 unit = "mg/L",
                 qualityLimit = if (it == 0) "<=50 mg/L" else null,
                 qualityReference = null,
+                analysisPlace = if (it == 0) "T" else "L",
             )
         },
+        upstreamFacility = "USINE",
     )

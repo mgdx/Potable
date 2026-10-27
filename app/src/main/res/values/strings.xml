@@ -63,6 +63,8 @@
     <string name="quality_limit">Quality limit: %1$s</string>
     <!-- %1$s: the quality reference of a parameter, as published by Hub'Eau, in French (">=6,5 et <=9 unité pH"). -->
     <string name="quality_reference">Quality reference: %1$s</string>
+    <!-- Under a result measured on site by the sampler (Hub'Eau code_lieu_analyse "T"), not in the laboratory. -->
+    <string name="result_measured_on_site">Measured on site</string>
     <!-- In place of the value of a result Hub'Eau published without one. -->
     <string name="sample_no_value">No value published</string>
     <!-- Small caption under a sanitary conclusion shown as published, in French. -->
@@ -219,7 +221,9 @@
     <string name="sheet_distributor_label">Distributor</string>
     <!-- Label of the public body responsible for the water service, as published by Hub'Eau (docs/glossary.md, authority). -->
     <string name="sheet_owner_label">Responsible authority</string>
-    <!-- Title of the card grouping the date, distributor and authority of the sample. -->
+    <!-- Label of the facility upstream of the sampling point (treatment plant, reservoir…), as published by Hub'Eau (nom_installation_amont, docs/glossary.md). -->
+    <string name="sheet_upstream_facility_label">Upstream facility</string>
+    <!-- Title of the card grouping the date, distributor, authority and upstream facility of the sample. -->
     <string name="sheet_sample_card_title">Sample</string>
     <!-- Heading of the four compliance codes. -->
     <string name="sheet_compliance_title">Compliance</string>

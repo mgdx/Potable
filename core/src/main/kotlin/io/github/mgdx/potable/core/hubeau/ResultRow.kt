@@ -38,6 +38,13 @@ data class ResultRow(
     @SerialName("nom_moa")
     val nomMoa: String? = null,
     /**
+     * Facility upstream of the sampling point (treatment plant, reservoir,
+     * or the network itself); the same on every row of a sample, absent on
+     * some (Paris).
+     */
+    @SerialName("nom_installation_amont")
+    val nomInstallationAmont: String? = null,
+    /**
      * Null on some rows that describe the sample rather than a parameter
      * (Toulouse: "Prélèvement sous acréditation", `code_parametre_se`
      * `PLVACR`). Such a row still carries the sample-level fields.

@@ -46,13 +46,18 @@ object FeaturedParameters {
     /**
      * The featured parameters present among [results], in the order of
      * [FeaturedParameter], each with the first result published for it (API
-     * order).
+     * order), a laboratory measure preferred to an on-site one: Hub'Eau
+     * publishes some pH twice, in either order, and the laboratory measure is
+     * the reference of the sanitary control (as in [Series]).
      */
     fun present(results: List<AnalysisResult>): List<Pair<FeaturedParameter, AnalysisResult>> {
         val found = LinkedHashMap<FeaturedParameter, AnalysisResult>()
         for (result in results) {
             val parameter = FeaturedParameter.of(result.parameterCode) ?: continue
-            found.putIfAbsent(parameter, result)
+            val current = found[parameter]
+            if (current == null || (current.isOnSite && !result.isOnSite)) {
+                found[parameter] = result
+            }
         }
         return FeaturedParameter.entries.mapNotNull { parameter ->
             found[parameter]?.let { parameter to it }

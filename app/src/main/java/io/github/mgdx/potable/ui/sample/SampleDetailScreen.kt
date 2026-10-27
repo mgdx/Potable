@@ -278,6 +278,13 @@ private fun ResultText(result: AnalysisResult, modifier: Modifier) {
             style = MaterialTheme.typography.bodyLarge.asApiText(),
         )
         ResultValue(result, style = MaterialTheme.typography.titleMedium, selectable = false)
+        if (result.isOnSite) {
+            Text(
+                text = stringResource(R.string.result_measured_on_site),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         result.qualityLimit?.takeIf { it.isNotBlank() }?.let {
             Text(
                 text = stringResource(R.string.quality_limit, bidiWrap(it)),

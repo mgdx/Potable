@@ -47,6 +47,8 @@ dans `values-fr/` et dans les métadonnées Fastlane `fr-FR`.
 | reference | quality reference | référence de qualité : valeur indicative de suivi du traitement |
 | distributor | distributor | distributeur, exploitant du service |
 | authority | responsible authority | maître d'ouvrage : collectivité responsable du service (commune, syndicat) |
+| upstream_facility | upstream facility | installation amont : usine de traitement, réservoir ou réseau en amont du point de prélèvement |
+| on_site | measured on site | mesure de terrain, faite par le préleveur (`code_lieu_analyse` `T`), par opposition au laboratoire |
 | conclusion | sanitary conclusion | conclusion sanitaire de l'ARS |
 | ars | regional health agency (ARS) | agence régionale de santé (ARS) |
 | ministry | French Ministry of Health | ministère chargé de la santé |
@@ -84,6 +86,8 @@ dans `values-fr/` et dans les métadonnées Fastlane `fr-FR`.
 | reference | référence de qualité | idem |
 | distributor | distributeur | champ Hub'Eau `nom_distributeur` |
 | authority | collectivité responsable | le terme officiel « maître d’ouvrage » est du jargon ; à citer entre parenthèses si besoin |
+| upstream_facility | installation en amont | champ Hub'Eau `nom_installation_amont` |
+| on_site | mesuré sur place | |
 | conclusion | conclusion sanitaire | |
 | ars | agence régionale de santé (ARS) | |
 | ministry | ministère de la Santé | |

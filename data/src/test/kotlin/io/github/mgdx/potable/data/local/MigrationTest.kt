@@ -106,6 +106,44 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun `v3 to v4 keeps the cached samples and results, without the new fields`() = runTest {
+        helper.createDatabase(NAME, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO prelevement (code_commune, code_reseau, code_prelevement, " +
+                    "reseau_prelevement, date, conclusion, conformite_limites_bact, " +
+                    "conformite_limites_pc, conformite_references_bact, " +
+                    "conformite_references_pc, distributeur, maitre_ouvrage, dernier) " +
+                    "VALUES ('45234', '045000474', 'P1', '045000474', 1787741400000, " +
+                    "'Eau conforme.', 'C', 'C', 'C', 'C', 'D', 'M', 1)",
+            )
+            db.execSQL(
+                "INSERT INTO resultat (code_commune, code_reseau, code_prelevement, ordre, " +
+                    "code_parametre, libelle, type_parametre, resultat_texte, " +
+                    "resultat_numerique, unite, limite, reference) VALUES ('45234', " +
+                    "'045000474', 'P1', 0, '1302', 'pH', 'N', '7,6', 7.6, 'unité pH', " +
+                    "NULL, NULL)",
+            )
+        }
+
+        // Validates the migrated schema against 4.json.
+        helper.runMigrationsAndValidate(NAME, 4, true).close()
+
+        val database = Room
+            .databaseBuilder(RuntimeEnvironment.getApplication(), PotableDatabase::class.java, NAME)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val sample = database.cache().sample("45234", "045000474", "P1")!!
+            assertNull(sample.upstreamFacility)
+            val results = database.cache().results("45234", "045000474", "P1")
+            assertEquals(listOf("7,6"), results.map { it.resultText })
+            assertNull(results.single().analysisPlace)
+        } finally {
+            database.close()
+        }
+    }
+
     private companion object {
         const val NAME = "migration-test.db"
     }

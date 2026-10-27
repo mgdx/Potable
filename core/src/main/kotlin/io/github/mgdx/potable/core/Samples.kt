@@ -67,7 +67,12 @@ object Samples {
         val seen = HashSet<ResultKey>()
         val results = group.mapNotNull { row ->
             val parameter = row.codeParametre ?: return@mapNotNull null
-            val key = ResultKey(parameter, row.resultatAlphanumerique, row.resultatNumerique)
+            val key = ResultKey(
+                parameter,
+                row.resultatAlphanumerique,
+                row.resultatNumerique,
+                row.codeLieuAnalyse,
+            )
             if (seen.add(key)) row.toResult(parameter) else null
         }
         return Sample(
@@ -85,6 +90,7 @@ object Samples {
             distributor = head.nomDistributeur,
             owner = head.nomMoa,
             results = results,
+            upstreamFacility = head.nomInstallationAmont,
         )
     }
 
@@ -98,9 +104,15 @@ object Samples {
         unit = libelleUnite,
         qualityLimit = limiteQualiteParametre,
         qualityReference = referenceQualiteParametre,
+        analysisPlace = codeLieuAnalyse,
     )
 
-    private data class ResultKey(val parameter: String, val text: String?, val number: Double?)
+    private data class ResultKey(
+        val parameter: String,
+        val text: String?,
+        val number: Double?,
+        val place: String?,
+    )
 
     /** ISO-8601 instant ("2026-08-26T12:50:00Z"), with offset, or date only (UTC midnight). */
     private fun parseDate(row: ResultRow): Instant {

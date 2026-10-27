@@ -315,6 +315,11 @@ private fun SampleContent(
                     ApiValueText(it)
                 }
             }
+            sample.upstreamFacility?.takeIf { it.isNotBlank() }?.let {
+                LabelValueRow(stringResource(R.string.sheet_upstream_facility_label)) {
+                    ApiValueText(it)
+                }
+            }
         }
         ComplianceSection(sample)
         // With several samples, each has its own button in the conclusions.
