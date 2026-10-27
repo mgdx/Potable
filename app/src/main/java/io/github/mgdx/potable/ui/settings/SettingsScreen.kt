@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.data.preferences.ThemeMode
 import io.github.mgdx.potable.ui.common.BackTopBar
+import io.github.mgdx.potable.ui.common.SegmentedChoices
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.sample.currentLocale
@@ -109,7 +110,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 .padding(vertical = 8.dp),
         ) {
             SectionTitle(stringResource(R.string.settings_appearance_title))
-            ChoiceGroup(
+            SegmentedChoices(
                 choices = ThemeMode.entries,
                 selected = current.themeMode,
                 label = { stringResource(it.labelRes()) },
@@ -118,7 +119,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
 
             SectionTitle(stringResource(R.string.settings_history_title))
             Description(stringResource(R.string.settings_history_description))
-            ChoiceGroup(
+            SegmentedChoices(
                 choices = viewModel.yearChoices,
                 selected = current.historyYears,
                 label = { pluralStringResource(R.plurals.settings_years, it, it) },
@@ -127,7 +128,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
 
             SectionTitle(stringResource(R.string.settings_storage_title))
             Description(stringResource(R.string.settings_retention_description))
-            ChoiceGroup(
+            SegmentedChoices(
                 choices = viewModel.yearChoices,
                 selected = current.retentionYears,
                 label = { pluralStringResource(R.plurals.settings_years, it, it) },
@@ -466,7 +467,7 @@ private fun openNotificationSettings(context: Context) {
 private fun SectionTitle(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleMedium,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)

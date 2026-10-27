@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -20,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,12 +42,12 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
-import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.PeriodSelector
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.messageRes
 import io.github.mgdx.potable.ui.sample.currentLocale
@@ -87,7 +85,7 @@ fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: ()
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            years?.let { YearsSelector(it, viewModel::selectYears) }
+            years?.let { PeriodSelector(it, viewModel::selectYears) }
             refreshFailed?.let { RefreshFailedBanner(it) }
             val content = @Composable {
                 when (val current = state) {
@@ -111,29 +109,6 @@ fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: ()
             ) {
                 content()
             }
-        }
-    }
-}
-
-/**
- * The window: 1, 3, 5 or 10 years, as chips without a title, like the
- * history of a parameter. They wrap onto a second line rather than run off
- * the screen when a translation is longer.
- */
-@Composable
-private fun YearsSelector(selected: Int, onSelect: (Int) -> Unit) {
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AppPreferences.YEAR_CHOICES.forEach { years ->
-            FilterChip(
-                selected = years == selected,
-                onClick = { onSelect(years) },
-                label = { Text(pluralStringResource(R.plurals.settings_years, years, years)) },
-            )
         }
     }
 }
@@ -249,7 +224,7 @@ private fun TimelineRow(entry: TimelineEntry, isLast: Boolean) {
 /** A neutral dot on a vertical line: the same for every sample, whatever its conclusion. */
 @Composable
 private fun TimelineMarker(isLast: Boolean) {
-    val lineColor = MaterialTheme.colorScheme.outlineVariant
+    val lineColor = MaterialTheme.colorScheme.secondary
     Column(
         modifier = Modifier
             .width(12.dp)
@@ -265,7 +240,7 @@ private fun TimelineMarker(isLast: Boolean) {
         Box(
             modifier = Modifier
                 .size(12.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                .background(lineColor, CircleShape),
         )
         if (!isLast) {
             Box(

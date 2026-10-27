@@ -1,9 +1,9 @@
 package io.github.mgdx.potable.ui.history
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -46,11 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
-import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.PeriodSelector
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.publishedDate
@@ -108,7 +105,7 @@ fun ParameterHistoryScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
             ) {
-                WindowChips(years, viewModel::selectYears)
+                PeriodSelector(years, viewModel::selectYears)
                 Text(
                     text = stringResource(R.string.sample_official_labels),
                     style = MaterialTheme.typography.bodySmall,
@@ -124,27 +121,6 @@ fun ParameterHistoryScreen(
                     is HistoryUiState.Loaded -> HistoryContent(current.series, onOpenSample)
                 }
             }
-        }
-    }
-}
-
-/** The window, 1 to 10 years: one choice among [AppPreferences.YEAR_CHOICES]. */
-@Composable
-private fun WindowChips(years: Int?, onSelect: (Int) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        for (choice in AppPreferences.YEAR_CHOICES) {
-            FilterChip(
-                selected = years == choice,
-                onClick = { onSelect(choice) },
-                label = { Text(pluralStringResource(R.plurals.settings_years, choice, choice)) },
-            )
         }
     }
 }
@@ -186,7 +162,7 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                     selected = selected,
                     onSelect = { selected = it },
                     onOpenSample = onOpenSample,
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
                 Legend(series, model)
                 Text(
@@ -195,9 +171,11 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
+                // The label starts at the content edge, like the texts above.
                 TextButton(
                     onClick = { showList = !showList },
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp),
                 ) {
                     val hide = R.string.history_hide_list
                     Text(stringResource(if (showList) hide else R.string.history_show_list))
