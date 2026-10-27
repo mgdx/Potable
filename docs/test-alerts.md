@@ -63,7 +63,7 @@ adb shell am start -n $PKG/.debug.DebugAlertsActivity --es action age
 adb shell am start -n $PKG/.debug.DebugAlertsActivity --es action run
 adb logcat -s PotableDebug WM-WorkerWrapper
 ```
-Une notification par commune suivie : titre « commune, UDI », texte « New
+Une notification par commune suivie : titre « commune », texte « New
 analysis published: sample taken on <date> ». La toucher ouvre la fiche de
 l'unité (appli fermée comme ouverte) ; le retour revient à l'écran de départ.
 

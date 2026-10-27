@@ -422,7 +422,7 @@
     <!-- Channel name in the system settings. -->
     <string name="alert_channel_unfavourable">Unfavourable conclusions</string>
     <string name="alert_channel_unfavourable_description">A new analysis of one of your communes has an unfavourable published conclusion.</string>
-    <!-- Notification text, under the title commune_and_unit. %1$s: date the sample was taken, formatted for the language. -->
+    <!-- Notification text, under the title, the commune name. %1$s: date the sample was taken, formatted for the language. -->
     <string name="alert_notification_new">New analysis published: sample taken on %1$s</string>
     <!-- Notification header (one short line) above an unfavourable conclusion, which is shown as published, in French. %1$s: date the sample was taken, formatted for the language. -->
     <string name="alert_notification_date">Sample of %1$s</string>

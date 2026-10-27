@@ -134,14 +134,11 @@ class AlertNotifier(
     private fun notification(event: AlertEvent): android.app.Notification {
         val follow = event.follow
         val locale = locale()
-        // bidiWrap starts the title with a mark of the language's direction,
-        // although it starts with API data. The conclusion, shown alone,
-        // keeps its own direction (SPEC §11.2).
-        val title = appContext.getString(
-            R.string.commune_and_unit,
-            bidiWrap(follow.communeName, locale),
-            bidiWrap(follow.udiName, locale),
-        )
+        // The commune alone: the unit's name, an operator's code, would crowd
+        // the title. bidiWrap starts it with a mark of the language's direction,
+        // although it is API data. The conclusion, shown alone, keeps its own
+        // direction (SPEC §11.2).
+        val title = bidiWrap(follow.communeName, locale)
         val date = formatSampleDate(event.sample.date, locale)
         val conclusion = if (event.unfavourable) {
             conclusionText(event.sample.conclusion)?.let { apiParagraph(it, locale) }
