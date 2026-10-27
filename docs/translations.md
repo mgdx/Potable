@@ -138,7 +138,7 @@ référentiel des communes, en français, isolé par le code.
 | `history_selected_point` | `%1$s` date, `%2$s` valeur publiée avec son unité (*donnée*) |
 | `history_chart_description` (pluriel) | `%1$d` nombre de mesures, `%2$s` et `%3$s` première et dernière dates, `%4$s` et `%5$s` plus basse et plus haute valeurs (*données*) |
 | `history_legend_limit_*`, `history_legend_reference*` | `%1$s` limite ou référence publiée (*donnée*) |
-| `follows_move_up`, `follows_move_down`, `follows_set_primary_description`, `follows_remove` | `%1$s` le libellé `commune_and_unit` |
+| `follows_move_up`, `follows_move_down`, `follows_remove` | `%1$s` le libellé `commune_and_unit` |
 | `follows_remove_title` | `%1$s` commune (*donnée*) |
 | `follows_remove_text` | `%1$s` unité de distribution (*donnée*) |
 | `settings_years` (pluriel) | `%d` 1, 3, 5 ou 10 ; puce et bouton radio, une dizaine de caractères |

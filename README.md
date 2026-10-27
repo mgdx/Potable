@@ -93,7 +93,7 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
 - ⭐ **Plusieurs communes suivies, consultables hors ligne.** Le domicile, une
   résidence secondaire, la famille : chaque commune suivie garde sa dernière
   analyse et son historique sur le téléphone, s’affiche en mode avion avec la
-  date de ses données, et la commune principale s’ouvre au démarrage.
+  date de ses données.
 
 - 🔔 **Des alertes sobres.** Désactivées par défaut. Si vous les activez,
   Potable vérifie chaque semaine (ou toutes les deux ou quatre semaines) s’il

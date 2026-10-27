@@ -2,19 +2,21 @@ package io.github.mgdx.potable.ui.follows
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -22,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,9 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,15 +68,18 @@ fun FollowsScreen(
             is FollowsUiState.Loaded -> if (current.follows.isEmpty()) {
                 EmptyFollows(onSearch, modifier)
             } else {
-                FollowList(
-                    follows = current.follows,
-                    onOpen = onOpen,
-                    onMoveUp = viewModel::moveUp,
-                    onMoveDown = viewModel::moveDown,
-                    onSetPrimary = viewModel::setPrimary,
-                    onRemove = viewModel::requestRemoval,
-                    modifier = modifier,
-                )
+                Column(modifier = modifier.fillMaxSize()) {
+                    FollowFilterField(query = current.query, onQueryChange = viewModel::setQuery)
+                    FollowList(
+                        follows = current.shown,
+                        canReorder = !current.isFiltered,
+                        onOpen = onOpen,
+                        onMoveUp = viewModel::moveUp,
+                        onMoveDown = viewModel::moveDown,
+                        onRemove = viewModel::requestRemoval,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
     }
@@ -112,13 +118,46 @@ private fun EmptyFollows(onSearch: () -> Unit, modifier: Modifier) {
     }
 }
 
+/** Filters the list; above it, so that it stays in place while the list scrolls. */
+@Composable
+private fun FollowFilterField(query: String, onQueryChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        label = { Text(stringResource(R.string.follows_filter_label)) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = stringResource(R.string.action_clear_search),
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+    )
+}
+
+/**
+ * [follows] as shown. While a query filters them, [canReorder] is false and
+ * the move buttons are hidden: moving within a partial list would move past
+ * rows the user cannot see.
+ */
 @Composable
 private fun FollowList(
     follows: List<Follow>,
+    canReorder: Boolean,
     onOpen: (Follow) -> Unit,
     onMoveUp: (Follow) -> Unit,
     onMoveDown: (Follow) -> Unit,
-    onSetPrimary: (Follow) -> Unit,
     onRemove: (Follow) -> Unit,
     modifier: Modifier,
 ) {
@@ -132,15 +171,27 @@ private fun FollowList(
             )
             HorizontalDivider()
         }
+        if (follows.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.follows_filter_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                )
+            }
+        }
         itemsIndexed(follows, key = { _, follow -> follow.id }) { index, follow ->
             FollowRow(
                 follow = follow,
+                canReorder = canReorder,
                 isFirst = index == 0,
                 isLast = index == follows.lastIndex,
                 onOpen = { onOpen(follow) },
                 onMoveUp = { onMoveUp(follow) },
                 onMoveDown = { onMoveDown(follow) },
-                onSetPrimary = { onSetPrimary(follow) },
                 onRemove = { onRemove(follow) },
             )
             HorizontalDivider()
@@ -151,12 +202,12 @@ private fun FollowList(
 @Composable
 private fun FollowRow(
     follow: Follow,
+    canReorder: Boolean,
     isFirst: Boolean,
     isLast: Boolean,
     onOpen: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
-    onSetPrimary: () -> Unit,
     onRemove: () -> Unit,
 ) {
     val label = stringResource(
@@ -178,25 +229,6 @@ private fun FollowRow(
                 style = MaterialTheme.typography.bodyMedium.asApiText(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (follow.isPrimary) {
-                // The text carries the information; the icon only echoes it.
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Home,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.follows_primary),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
         }
         Row(
             modifier = Modifier
@@ -204,32 +236,21 @@ private fun FollowRow(
                 .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowUp,
-                    contentDescription = stringResource(R.string.follows_move_up, label),
-                )
-            }
-            IconButton(onClick = onMoveDown, enabled = !isLast) {
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = stringResource(R.string.follows_move_down, label),
-                )
-            }
-            // The rest of the row: with a large font or a long translation,
-            // "Set as primary" wraps rather than pushing the delete button out.
-            Box(modifier = Modifier.weight(1f)) {
-                if (!follow.isPrimary) {
-                    val description =
-                        stringResource(R.string.follows_set_primary_description, label)
-                    TextButton(
-                        onClick = onSetPrimary,
-                        modifier = Modifier.semantics { contentDescription = description },
-                    ) {
-                        Text(stringResource(R.string.follows_set_primary))
-                    }
+            if (canReorder) {
+                IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.follows_move_up, label),
+                    )
+                }
+                IconButton(onClick = onMoveDown, enabled = !isLast) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = stringResource(R.string.follows_move_down, label),
+                    )
                 }
             }
+            Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onRemove) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,

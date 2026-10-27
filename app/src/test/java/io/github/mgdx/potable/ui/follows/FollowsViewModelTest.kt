@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -16,13 +17,16 @@ class FollowsViewModelTest {
     @get:Rule
     val main = MainDispatcherRule()
 
-    private val first = follow(1, udiCode = "A", isPrimary = true)
+    private val first = follow(1, udiCode = "A")
     private val second = follow(2, udiCode = "B")
     private val third = follow(3, udiCode = "C")
     private val repository = FakeFollowRepository(listOf(first, second, third))
 
     private fun FollowsViewModel.ids() =
         (state.value as FollowsUiState.Loaded).follows.map { it.id }
+
+    private fun FollowsViewModel.shownIds() =
+        (state.value as FollowsUiState.Loaded).shown.map { it.id }
 
     @Test
     fun `the follows are listed in order`() = runTest(main.dispatcher) {
@@ -62,12 +66,29 @@ class FollowsViewModelTest {
     }
 
     @Test
-    fun `another follow becomes primary`() = runTest(main.dispatcher) {
+    fun `a query filters the list shown, not the follows`() = runTest(main.dispatcher) {
         val viewModel = FollowsViewModel(repository)
         advanceUntilIdle()
-        viewModel.setPrimary(second)
+        viewModel.setQuery("udi b")
         advanceUntilIdle()
-        assertEquals(listOf(2L), repository.current.filter { it.isPrimary }.map { it.id })
+        assertEquals(listOf(2L), viewModel.shownIds())
+        assertEquals(listOf(1L, 2L, 3L), viewModel.ids())
+        assertTrue((viewModel.state.value as FollowsUiState.Loaded).isFiltered)
+
+        viewModel.setQuery("")
+        advanceUntilIdle()
+        assertEquals(listOf(1L, 2L, 3L), viewModel.shownIds())
+    }
+
+    @Test
+    fun `the order does not change while a query filters the list`() = runTest(main.dispatcher) {
+        val viewModel = FollowsViewModel(repository)
+        advanceUntilIdle()
+        viewModel.setQuery("udi c")
+        advanceUntilIdle()
+        viewModel.moveUp(third)
+        advanceUntilIdle()
+        assertEquals(listOf(1L, 2L, 3L), viewModel.ids())
     }
 
     @Test

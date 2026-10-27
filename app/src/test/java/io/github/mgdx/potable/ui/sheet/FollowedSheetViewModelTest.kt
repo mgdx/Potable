@@ -32,7 +32,7 @@ class FollowedSheetViewModelTest {
     val main = MainDispatcherRule()
 
     private val water = FakeWaterRepository()
-    private val follows = FakeFollowRepository(listOf(follow(1, isPrimary = true)))
+    private val follows = FakeFollowRepository(listOf(follow(1)))
     private val clock = Clock.fixed(Instant.parse("2026-10-25T10:00:00Z"), ZoneOffset.UTC)
 
     private val latest = sample(date = Instant.parse("2026-10-01T08:00:00Z"))

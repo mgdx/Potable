@@ -166,7 +166,10 @@ physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
 ### F6 — Communes suivies
 
 - Plusieurs communes/UDI suivies simultanément.
-- Une est marquée « principale » et s'ouvre au démarrage.
+- Aucune n'est « principale » : l'application s'ouvre toujours sur la
+  recherche (voir `docs/decisions.md`, 2026-10-27).
+- Recherche dans la liste par nom de commune ou d'UDI (sans casse ni
+  accents), non mémorisée.
 - Ajout, retrait, réordonnancement.
 
 ### F7 — Alertes
@@ -207,7 +210,8 @@ dans `docs/decisions.md`) — jamais de jeu national.
 Tables minimales :
 
 - `commune` (référentiel embarqué, lecture seule)
-- `suivi` (code_commune, code_reseau, libellé, position, principale)
+- `suivi` (code_commune, code_reseau, libellé, position ; colonne `principale`
+  conservée mais inutilisée depuis 2026-10-27)
 - `prelevement` (code_prelevement, code_reseau, date, conclusions, distributeur)
 - `resultat` (code_prelevement, code_parametre, libellé, valeur, unité, limite)
 - `synchro` (par unité en cache : horodatage de la dernière requête réussie ;

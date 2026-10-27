@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.map
 
 /**
  * [FollowRepository] over the `suivi` table. Positions are kept contiguous
- * (0 to n - 1) and exactly one follow is primary as soon as there is one.
+ * (0 to n - 1). The `principale` column is a leftover of the primary
+ * commune, dropped in 0.1.2 (docs/decisions.md, 2026-10-27): it stays in the
+ * schema to avoid a migration, is written false and never read.
  * Unfollowing keeps the unit's cache (it is that of any unit looked at) and
  * forgets the date its alerts have seen.
  */
@@ -35,7 +37,7 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
                     udiCode = udiCode,
                     udiName = udiName,
                     position = count,
-                    principale = count == 0,
+                    principale = false,
                 )
             row.copy(id = dao.insert(row)).toFollow()
         }
@@ -53,7 +55,6 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
             remaining.forEachIndexed { index, row ->
                 if (row.position != index) dao.setPosition(row.id, index)
             }
-            if (removed.principale) remaining.firstOrNull()?.let { dao.makePrimary(it.id) }
         }
     }
 
@@ -70,12 +71,6 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
         }
     }
 
-    override suspend fun setPrimary(id: Long) {
-        database.withTransaction {
-            if (dao.byId(id) != null) dao.makePrimary(id)
-        }
-    }
-
     override suspend fun find(communeCode: String, udiCode: String): Follow? =
         dao.find(communeCode, udiCode)?.toFollow()
 
@@ -86,6 +81,5 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
         udiCode = udiCode,
         udiName = udiName,
         position = position,
-        isPrimary = principale,
     )
 }

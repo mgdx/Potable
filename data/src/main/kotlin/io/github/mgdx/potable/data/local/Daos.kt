@@ -29,9 +29,6 @@ internal interface FollowDao {
 
     @Query("UPDATE suivi SET position = :position WHERE id = :id")
     suspend fun setPosition(id: Long, position: Int)
-
-    @Query("UPDATE suivi SET principale = (id = :id)")
-    suspend fun makePrimary(id: Long)
 }
 
 @Dao

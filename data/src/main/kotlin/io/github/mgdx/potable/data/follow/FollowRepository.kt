@@ -16,7 +16,6 @@ data class Follow(
     val udiCode: String,
     val udiName: String,
     val position: Int,
-    val isPrimary: Boolean,
 )
 
 /** Implemented with Room. */
@@ -26,8 +25,7 @@ interface FollowRepository {
 
     /**
      * Follows a unit. Idempotent on (communeCode, udiCode): returns the
-     * existing follow if there is one. The first follow becomes primary;
-     * a new one is appended at the end.
+     * existing follow if there is one. A new one is appended at the end.
      */
     suspend fun follow(
         communeCode: String,
@@ -37,15 +35,12 @@ interface FollowRepository {
     ): Follow
 
     /**
-     * Stops following and deletes the unit's cached samples and history. If the primary
-     * follow is removed, the first remaining one becomes primary.
+     * Stops following and deletes the unit's cached samples and history.
      */
     suspend fun unfollow(id: Long)
 
     /** Moves a follow to [newPosition] (0-based, clamped), shifting the others. */
     suspend fun move(id: Long, newPosition: Int)
-
-    suspend fun setPrimary(id: Long)
 
     suspend fun find(communeCode: String, udiCode: String): Follow?
 }

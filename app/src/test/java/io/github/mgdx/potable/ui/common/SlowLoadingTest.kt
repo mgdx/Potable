@@ -144,7 +144,7 @@ class SlowLoadingTest {
 
     @Test
     fun `a sheet without cache shows a single indicator on retry`() = runTest(main.dispatcher) {
-        val follows = FakeFollowRepository(listOf(follow(1, isPrimary = true)))
+        val follows = FakeFollowRepository(listOf(follow(1)))
         water.refreshAnswer.completeExceptionally(IllegalStateException())
         val viewModel = sheet(follows)
         advanceUntilIdle()
