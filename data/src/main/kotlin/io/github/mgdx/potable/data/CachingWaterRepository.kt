@@ -27,7 +27,8 @@ import java.time.ZoneId
 /**
  * [WaterRepository] that answers [udis] and [latestSample] from [network]
  * (Hub'Eau, unchanged) and keeps in [database] the latest sample of every
- * unit looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`).
+ * unit looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`),
+ * as long as it stays followed or among the recent ones ([pruneUnreferenced]).
  * Only the alert state ([lastSeenSampleDate]) is restricted to the followed
  * units.
  */
@@ -72,7 +73,9 @@ class CachingWaterRepository(
         val generation = database.cacheGeneration.get()
         val choice = network.udis(communeCode)
         synchronized(udiChoices) {
-            if (database.unchangedSince(generation)) udiChoices[communeCode] = today to choice
+            if (database.unchangedSince(generation, communeCode)) {
+                udiChoices[communeCode] = today to choice
+            }
         }
         choice
     }
@@ -112,7 +115,7 @@ class CachingWaterRepository(
         val retention = preferences.retentionYears.first()
         database.withTransaction {
             // The cache was purged while the request ran: it stays purged.
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, communeCode, udiCode)) return@withTransaction
             for (sample in samples) {
                 cache.deleteResults(communeCode, udiCode, sample.code)
                 cache.deleteSample(communeCode, udiCode, sample.code)
@@ -164,7 +167,7 @@ class CachingWaterRepository(
     override suspend fun purgeCommune(communeCode: String) {
         synchronized(udiChoices) { udiChoices.remove(communeCode) }
         val followed = database.withTransaction {
-            database.cacheGeneration.incrementAndGet()
+            database.markCommunePurged(communeCode)
             cache.deleteCommuneResults(communeCode)
             cache.deleteCommuneSamples(communeCode)
             // A followed unit keeps the date its alerts have seen.
@@ -181,10 +184,42 @@ class CachingWaterRepository(
         if (!followed) preferences.forgetRememberedUdi(communeCode)
     }
 
+    /**
+     * Both lists are read inside the transaction, the follows from this
+     * database and the recent units from [preferences]: a unit recorded as
+     * recent before its sheet fetched (as the sheet does) is always kept,
+     * whatever the order in which the writes land. A fetch in flight for a
+     * pruned unit writes nothing ([PotableDatabase.markUnitsPurged]); those
+     * of the units kept are not affected.
+     */
+    override suspend fun pruneUnreferenced() {
+        database.withTransaction {
+            val cached = cache.cachedUnitKeys()
+            if (cached.isEmpty()) return@withTransaction
+            val keep = follows.all().mapTo(HashSet()) { UnitKey(it.communeCode, it.udiCode) }
+            preferences.recentUnits.first().mapTo(keep) { UnitKey(it.communeCode, it.udiCode) }
+            val orphans = cached.filterNot { it in keep }
+            if (orphans.isEmpty()) return@withTransaction
+            database.markUnitsPurged(orphans)
+            val history = database.history()
+            for ((communeCode, udiCode) in orphans) {
+                cache.deleteUnitResults(communeCode, udiCode)
+                cache.deleteUnitSamples(communeCode, udiCode)
+                // Not followed, so no alert state to keep; kept all the same if there is one.
+                cache.clearUnitLastSuccess(communeCode, udiCode)
+                cache.deleteUnitSyncWithoutLastSeen(communeCode, udiCode)
+                history.deleteUnitPoints(communeCode, udiCode)
+                history.deleteUnitSeries(communeCode, udiCode)
+                history.deleteUnitTimeline(communeCode, udiCode)
+                history.deleteUnitTimelineSync(communeCode, udiCode)
+            }
+        }
+    }
+
     override suspend fun purgeCache() {
         synchronized(udiChoices) { udiChoices.clear() }
         database.withTransaction {
-            database.cacheGeneration.incrementAndGet()
+            database.markAllPurged()
             cache.deleteAllResults()
             cache.deleteAllSamples()
             cache.deleteAllSync()

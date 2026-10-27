@@ -38,7 +38,7 @@ class CachingSampleRepository(
         val retention = preferences.retentionYears.first()
         database.withTransaction {
             // Purged while the request ran: it stays purged.
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, communeCode, udiCode)) return@withTransaction
             // A refresh may have stored it meanwhile, as one of the latest.
             if (cache.sample(communeCode, udiCode, sampleCode) != null) return@withTransaction
             cache.insertSample(fetched.toEntity(communeCode, udiCode, latest = false))

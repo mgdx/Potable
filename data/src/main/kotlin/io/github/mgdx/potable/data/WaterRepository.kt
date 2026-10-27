@@ -92,4 +92,14 @@ interface WaterRepository {
      * otherwise this purge only runs after a refresh.
      */
     suspend fun purgeOlderThanRetention() {}
+
+    /**
+     * Deletes the whole cache (latest samples, kept reports, series,
+     * timeline, sync state) of every unit that is neither followed nor among
+     * the recent ones (SPEC §7), unit by unit: another unit of the same
+     * commune that is still referenced keeps its cache. Run by
+     * [CacheJanitor]; never touches the follows, the recent list, the
+     * remembered units, nor the date the alerts have seen.
+     */
+    suspend fun pruneUnreferenced() {}
 }

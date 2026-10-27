@@ -31,15 +31,18 @@ autre application ne peut lire :
   noms de la commune et de l’unité), proposées par l’écran de recherche ;
   chacune s’en retire d’un geste sur cet écran.
 - **Vos communes suivies**, avec leur unité de distribution.
-- **Le cache des données publiques des communes consultées**, suivies ou
-  non : leur dernier prélèvement, les prélèvements ouverts depuis
-  l’historique, les séries des paramètres consultés, la
+- **Le cache des données publiques des communes suivies et des cinq
+  dernières consultées** : leur dernier prélèvement, les prélèvements
+  ouverts depuis l’historique, les séries des paramètres consultés, la
   frise de leurs conclusions, et, pour les seules communes suivies, la date
   du dernier prélèvement vu par les alertes. Ce sont des données publiées par
-  Hub’Eau, les mêmes pour tout le monde. Elles sont purgées au-delà de la
-  durée de conservation choisie (3 ans par défaut) ; dans les réglages,
-  « Vider le cache » les efface toutes, et la liste des communes en cache
-  permet de n’effacer que celles d’une commune.
+  Hub’Eau, les mêmes pour tout le monde. Celles d’une unité de distribution
+  sont effacées dès qu’elle n’est plus ni suivie ni parmi les communes
+  consultées récemment (retirée de la liste, poussée hors de la liste par une
+  nouvelle, ou retirée des communes suivies). Elles sont aussi purgées
+  au-delà de la durée de conservation choisie (3 ans par défaut) ; dans les
+  réglages, « Vider le cache » les efface toutes, et la liste des communes
+  en cache permet de n’effacer que celles d’une commune.
 
 Désinstaller l’application efface l’ensemble.
 

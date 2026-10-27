@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import io.github.mgdx.potable.data.UnitKey
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -154,6 +155,42 @@ internal interface CacheDao {
             ") GROUP BY code_commune, code_reseau",
     )
     fun observeCachedUnits(): Flow<List<CachedUnitRow>>
+
+    /**
+     * Every unit with a row in a cache table, once. A sync row that only
+     * keeps the alert state of a unit ([SyncEntity.lastSeenSampleDate]) is
+     * not a cache and does not count.
+     */
+    @Query(
+        "SELECT code_commune AS communeCode, code_reseau AS udiCode FROM synchro " +
+            "WHERE dernier_succes IS NOT NULL OR dernier_prelevement_vu IS NULL " +
+            "UNION SELECT code_commune, code_reseau FROM prelevement " +
+            "UNION SELECT code_commune, code_reseau FROM resultat " +
+            "UNION SELECT code_commune, code_reseau FROM serie " +
+            "UNION SELECT code_commune, code_reseau FROM serie_point " +
+            "UNION SELECT code_commune, code_reseau FROM historique_prelevement " +
+            "UNION SELECT code_commune, code_reseau FROM historique_synchro",
+    )
+    suspend fun cachedUnitKeys(): List<UnitKey>
+
+    @Query("DELETE FROM resultat WHERE code_commune = :communeCode AND code_reseau = :udiCode")
+    suspend fun deleteUnitResults(communeCode: String, udiCode: String)
+
+    @Query("DELETE FROM prelevement WHERE code_commune = :communeCode AND code_reseau = :udiCode")
+    suspend fun deleteUnitSamples(communeCode: String, udiCode: String)
+
+    /** Forgets a unit's fetches, keeping only the date its alerts have seen, if any. */
+    @Query(
+        "UPDATE synchro SET dernier_succes = NULL " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun clearUnitLastSuccess(communeCode: String, udiCode: String)
+
+    @Query(
+        "DELETE FROM synchro WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
+            "AND dernier_prelevement_vu IS NULL",
+    )
+    suspend fun deleteUnitSyncWithoutLastSeen(communeCode: String, udiCode: String)
 
     @Query("DELETE FROM resultat WHERE code_commune = :communeCode")
     suspend fun deleteCommuneResults(communeCode: String)

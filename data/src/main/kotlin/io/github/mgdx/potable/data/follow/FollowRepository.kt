@@ -38,7 +38,9 @@ interface FollowRepository {
     ): Follow
 
     /**
-     * Stops following and deletes the unit's cached samples and history.
+     * Stops following and forgets the date the alerts have seen. The unit's
+     * cache is then pruned by [io.github.mgdx.potable.data.CacheJanitor],
+     * unless the unit is among the recent ones.
      */
     suspend fun unfollow(id: Long)
 
