@@ -14,7 +14,10 @@ import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
+import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.data.preferences.RememberedUdi
+import io.github.mgdx.potable.data.preferences.withRecentUnit
+import io.github.mgdx.potable.data.preferences.withoutRecentUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -200,6 +203,19 @@ class FakeAppPreferences(
         remembered[communeCode] = udiCode
         rememberedNames[communeCode] = udiName
         writes.value++
+    }
+
+    /** The "recent" list, kept as the DataStore implementation keeps it. */
+    val recent = MutableStateFlow<List<RecentUnit>>(emptyList())
+
+    override val recentUnits: Flow<List<RecentUnit>> = recent
+
+    override suspend fun addRecentUnit(unit: RecentUnit) {
+        recent.value = withRecentUnit(recent.value, unit)
+    }
+
+    override suspend fun removeRecentUnit(communeCode: String, udiCode: String) {
+        recent.value = withoutRecentUnit(recent.value, communeCode, udiCode)
     }
 }
 

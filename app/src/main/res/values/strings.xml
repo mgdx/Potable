@@ -95,6 +95,10 @@
     <string name="search_published_under">Water data published under the parent commune: %1$s</string>
     <!-- Under a “commune, unit” row of the results: the unit is followed (see sheet_following). Short: about 15 characters. -->
     <string name="search_unit_followed">Followed</string>
+    <!-- Heading above the units whose sheet was last opened, shown while nothing is typed. -->
+    <string name="search_recent_title">Recent</string>
+    <!-- Screen reader label of the button that takes a unit off the recent list. %1$s: commune_and_unit, "commune, unit". -->
+    <string name="search_recent_remove">Remove %1$s from recent</string>
     <!-- Button of the search screen that finds the commune of the device position. Short: about 20 characters. Quoted in about_privacy. -->
     <string name="nearby_action">Near me</string>
     <string name="nearby_locating">Finding the commune you are in…</string>

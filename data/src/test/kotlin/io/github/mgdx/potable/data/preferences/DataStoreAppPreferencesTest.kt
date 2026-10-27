@@ -225,4 +225,37 @@ class DataStoreAppPreferencesTest {
         store.edit { it[intPreferencesKey("alert_period_weeks")] = 52 }
         assertEquals(AppPreferences.DEFAULT_ALERT_WEEKS, preferences.alertPeriodWeeks.first())
     }
+
+    @Test
+    fun `the recent units survive a restart, most recent first`() = runBlocking {
+        val file = storeFile()
+        val orleans = RecentUnit("45234", "Orléans", "045000123", "ORLEANS")
+        val paris = RecentUnit("75056", "Paris", "075000456", "PARIS SUD")
+        preferences(file).run {
+            addRecentUnit(orleans)
+            addRecentUnit(paris)
+            addRecentUnit(orleans)
+        }
+        closeAll()
+
+        val preferences = preferences(file)
+        assertEquals(listOf(orleans, paris), preferences.recentUnits.first())
+        preferences.removeRecentUnit("45234", "045000123")
+        assertEquals(listOf(paris), preferences.recentUnits.first())
+    }
+
+    @Test
+    fun `the recent units are kept to the limit and are not remembered units`() = runBlocking {
+        val preferences = preferences(storeFile())
+        val units = (1..AppPreferences.RECENT_LIMIT + 2).map {
+            RecentUnit("0100$it", "Commune $it", "00100$it", "UDI $it")
+        }
+        units.forEach { preferences.addRecentUnit(it) }
+
+        assertEquals(
+            units.reversed().take(AppPreferences.RECENT_LIMIT),
+            preferences.recentUnits.first(),
+        )
+        assertTrue(preferences.rememberedUdis.first().isEmpty())
+    }
 }

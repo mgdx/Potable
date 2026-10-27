@@ -11,6 +11,7 @@ import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
+import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.data.preferences.RememberedUdi
 import io.github.mgdx.potable.location.LocationOutcome
 import io.github.mgdx.potable.location.Locator
@@ -161,6 +162,11 @@ class SearchViewModel(
             ::knownUdis,
         ).stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
+    /** The units last opened, most recent first, offered while nothing is typed (SPEC §5 F1). */
+    val recentUnits: StateFlow<List<RecentUnit>> = preferences.recentUnits
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     init {
         viewModelScope.launch {
             // Reading the referential takes seconds on a phone: start as soon
@@ -239,6 +245,19 @@ class SearchViewModel(
                 throw e
             } catch (_: Exception) {
                 // Unwritable local data: the sheet opens all the same.
+            }
+        }
+    }
+
+    /** Takes [unit] off the "recent" list. */
+    fun removeRecent(unit: RecentUnit) {
+        viewModelScope.launch {
+            try {
+                preferences.removeRecentUnit(unit.communeCode, unit.udiCode)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Unwritable local data: the entry stays listed.
             }
         }
     }

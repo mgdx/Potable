@@ -273,6 +273,17 @@ fun PotableNavHost(
                         ),
                     )
                 },
+                onRecentSelected = { unit ->
+                    navController.navigate(
+                        Routes.sheet(
+                            unit.communeCode,
+                            unit.udiCode,
+                            unit.communeName,
+                            unit.udiName,
+                            change = true,
+                        ),
+                    )
+                },
                 onMyCommunes = { navController.navigate(Routes.FOLLOWS) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onAbout = { navController.navigate(Routes.ABOUT) },

@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.ButtonDefaults
@@ -52,6 +53,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Commune
+import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.asApiText
@@ -64,11 +66,13 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     onCommuneSelected: (commune: Commune, choose: Boolean) -> Unit,
     onKnownUdiSelected: (commune: Commune, communeName: String, udi: KnownUdi) -> Unit,
+    onRecentSelected: (RecentUnit) -> Unit,
     onMyCommunes: () -> Unit,
     onSettings: () -> Unit,
     onAbout: () -> Unit,
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val recentUnits by viewModel.recentUnits.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val nearby by viewModel.nearby.collectAsStateWithLifecycle()
     val knownUdis by viewModel.knownUdis.collectAsStateWithLifecycle()
@@ -85,12 +89,15 @@ fun SearchScreen(
         state = state,
         nearby = nearby,
         knownUdis = knownUdis,
+        recentUnits = recentUnits,
         onQueryChange = viewModel::onQueryChange,
         onCommuneSelected = onCommuneSelected,
         onKnownUdiSelected = { commune, communeName, udi ->
             viewModel.rememberChoice(commune.queryCode, udi)
             onKnownUdiSelected(commune, communeName, udi)
         },
+        onRecentSelected = onRecentSelected,
+        onRecentRemoved = viewModel::removeRecent,
         onNearby = {
             val granted = ContextCompat.checkSelfPermission(
                 context,
@@ -115,9 +122,12 @@ private fun SearchContent(
     state: SearchUiState,
     nearby: NearbyState,
     knownUdis: Map<String, List<KnownUdi>>,
+    recentUnits: List<RecentUnit>,
     onQueryChange: (String) -> Unit,
     onCommuneSelected: (Commune, Boolean) -> Unit,
     onKnownUdiSelected: (Commune, String, KnownUdi) -> Unit,
+    onRecentSelected: (RecentUnit) -> Unit,
+    onRecentRemoved: (RecentUnit) -> Unit,
     onNearby: () -> Unit,
     onMyCommunes: () -> Unit,
     onSettings: () -> Unit,
@@ -183,7 +193,13 @@ private fun SearchContent(
                 },
             )
             when (state) {
-                SearchUiState.Idle -> if (nearby !is NearbyState.Found) {
+                SearchUiState.Idle -> if (recentUnits.isNotEmpty()) {
+                    RecentSection(
+                        recentUnits = recentUnits,
+                        onSelected = onRecentSelected,
+                        onRemoved = onRecentRemoved,
+                    )
+                } else if (nearby !is NearbyState.Found) {
                     EmptyState(stringResource(R.string.search_hint))
                 }
                 SearchUiState.Loading -> LoadingState(stringResource(R.string.search_loading))
@@ -350,6 +366,57 @@ private fun KnownUdiRow(communeName: String, udi: KnownUdi, onClick: () -> Unit)
         },
     )
 }
+
+/** The units last opened, most recent first: each opens its sheet, or leaves the list. */
+@Composable
+private fun RecentSection(
+    recentUnits: List<RecentUnit>,
+    onSelected: (RecentUnit) -> Unit,
+    onRemoved: (RecentUnit) -> Unit,
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item(key = RECENT_TITLE_KEY) {
+            Text(
+                text = stringResource(R.string.search_recent_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                    .semantics { heading() },
+            )
+        }
+        items(recentUnits, key = { "${it.communeCode}/${it.udiCode}" }) { unit ->
+            ListItem(
+                modifier = Modifier.clickable { onSelected(unit) },
+                headlineContent = {
+                    Text(unit.communeName, style = LocalTextStyle.current.asApiText())
+                },
+                supportingContent = {
+                    Text(unit.udiName, style = LocalTextStyle.current.asApiText())
+                },
+                trailingContent = {
+                    IconButton(onClick = { onRemoved(unit) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = stringResource(
+                                R.string.search_recent_remove,
+                                stringResource(
+                                    R.string.commune_and_unit,
+                                    bidiWrap(unit.communeName),
+                                    bidiWrap(unit.udiName),
+                                ),
+                            ),
+                        )
+                    }
+                },
+            )
+            HorizontalDivider()
+        }
+    }
+}
+
+/** Unit keys hold a "/": none equals the title's. */
+private const val RECENT_TITLE_KEY = "recent"
 
 /** The first postal code, followed by "+n" when the commune has more. */
 @Composable
