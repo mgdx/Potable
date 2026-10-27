@@ -147,7 +147,7 @@ class CachingSampleRepositoryTest {
         report("OLD")
         assertEquals(
             listOf(CachedCommune("45234", setOf(UDI), null)),
-            water.cachedCommunes().first(),
+            water.cachedCommunes().first().map { it.copy(sizeBytes = 0) },
         )
 
         water.purgeCommune("45234")

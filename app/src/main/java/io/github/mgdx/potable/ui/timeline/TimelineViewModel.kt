@@ -145,10 +145,12 @@ class TimelineViewModel(
 
     /** Pull-to-refresh: asks Hub'Eau again, even if the cache is from today. */
     fun refresh() {
+        // A request already running answers this pull too: restarting it
+        // would download the same window twice.
+        if (loadJob?.isActive == true) return
         val shown = _state.value is TimelineUiState.Loaded || _state.value is TimelineUiState.Empty
         // Nothing is shown: the loading state is the indicator.
         if (!shown) return retry()
-        if (loadJob?.isActive == true) return
         val years = _years.value ?: return
         _isRefreshing.value = true
         loadJob = viewModelScope.launch {

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -217,6 +218,7 @@ private fun CachedCommunes(
         return
     }
     val locale = currentLocale()
+    val context = LocalContext.current
     communes.forEach { commune ->
         Row(
             modifier = Modifier
@@ -241,6 +243,13 @@ private fun CachedCommunes(
                     )
                 }
             }
+            // Localised by the system ("42 kB", "42 ko").
+            Text(
+                text = Formatter.formatShortFileSize(context, commune.sizeBytes),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 8.dp),
+            )
             IconButton(onClick = { onClear(commune) }) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,

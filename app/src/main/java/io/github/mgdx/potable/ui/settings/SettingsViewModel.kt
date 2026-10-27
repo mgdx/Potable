@@ -51,12 +51,14 @@ enum class PurgeState {
 
 /**
  * A commune with something in the cache (SPEC §7): [name] from the embedded
- * referential, or null if it is not found there (the code is shown then).
+ * referential, or null if it is not found there (the code is shown then),
+ * and the approximate size of its cached data, in bytes.
  */
 data class CachedCommuneItem(
     val communeCode: String,
     val name: String?,
     val lastFetched: Instant?,
+    val sizeBytes: Long = 0,
 ) {
     /** What the screen shows: the name, or the code. */
     val label: String get() = name ?: communeCode
@@ -109,7 +111,14 @@ class SettingsViewModel(
      */
     val cachedCommunes: StateFlow<List<CachedCommuneItem>?> = water.cachedCommunes()
         .map { list ->
-            list.map { CachedCommuneItem(it.communeCode, nameOf(it.communeCode), it.lastFetched) }
+            list.map {
+                CachedCommuneItem(
+                    it.communeCode,
+                    nameOf(it.communeCode),
+                    it.lastFetched,
+                    it.sizeBytes,
+                )
+            }
                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label })
         }
         .catch { emit(emptyList()) }

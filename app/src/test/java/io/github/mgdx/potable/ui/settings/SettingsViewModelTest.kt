@@ -332,9 +332,9 @@ class SettingsViewModelTest {
             val water = FakeWater()
             val fetched = Instant.parse("2026-10-24T08:00:00Z")
             water.cached.value = listOf(
-                CachedCommune("45234", setOf("045000474"), fetched),
+                CachedCommune("45234", setOf("045000474"), fetched, sizeBytes = 42_000),
                 CachedCommune("75056", setOf("075000221", "075000222"), null),
-                CachedCommune("00000", setOf("000000001"), fetched),
+                CachedCommune("00000", setOf("000000001"), fetched, sizeBytes = 7),
             )
             val viewModel = SettingsViewModel(preferences, water, access, communes)
             assertNull(viewModel.cachedCommunes.value)
@@ -342,8 +342,8 @@ class SettingsViewModelTest {
             advanceUntilIdle()
             assertEquals(
                 listOf(
-                    CachedCommuneItem("00000", null, fetched),
-                    CachedCommuneItem("45234", "Orléans", fetched),
+                    CachedCommuneItem("00000", null, fetched, sizeBytes = 7),
+                    CachedCommuneItem("45234", "Orléans", fetched, sizeBytes = 42_000),
                     CachedCommuneItem("75056", "Paris", null),
                 ),
                 viewModel.cachedCommunes.value,

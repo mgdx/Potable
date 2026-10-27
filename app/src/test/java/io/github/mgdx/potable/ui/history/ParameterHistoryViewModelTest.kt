@@ -206,6 +206,29 @@ class ParameterHistoryViewModelTest {
     }
 
     @Test
+    fun `a refresh while a request runs does not ask again`() = runTest(main.dispatcher) {
+        history.gate = CompletableDeferred()
+        val viewModel = viewModel()
+        runCurrent()
+        // Pulled during the first load, then twice during a refresh.
+        viewModel.refresh()
+        runCurrent()
+        history.gate!!.complete(two)
+        advanceUntilIdle()
+        history.gate = CompletableDeferred()
+        viewModel.refresh()
+        runCurrent()
+        viewModel.refresh()
+        runCurrent()
+        history.gate!!.complete(two)
+        advanceUntilIdle()
+
+        assertEquals(listOf(false, true), history.calls.map { it.second })
+        assertEquals(HistoryUiState.Loaded(two), viewModel.state.value)
+        assertFalse(viewModel.isRefreshing.value)
+    }
+
+    @Test
     fun `a failed refresh keeps the data and says so`() = runTest(main.dispatcher) {
         history.answers += Result.success(two)
         history.answers += Result.failure(DataError.Http(500))

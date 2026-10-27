@@ -236,6 +236,21 @@ class TimelineViewModelTest {
         }
 
     @Test
+    fun `a pull during the first load does not ask again`() = runTest(main.dispatcher) {
+        history.gate = CompletableDeferred()
+        val viewModel = viewModel()
+        runCurrent()
+
+        viewModel.refresh()
+        runCurrent()
+        history.gate!!.complete(listOf(older))
+        advanceUntilIdle()
+
+        assertEquals(listOf(false), history.calls.map { it.second })
+        assertTrue(viewModel.state.value is TimelineUiState.Loaded)
+    }
+
+    @Test
     fun `a load longer than the threshold says Hub'Eau is slow`() = runTest(main.dispatcher) {
         history.gate = CompletableDeferred()
         val viewModel = viewModel()

@@ -28,9 +28,11 @@ import java.time.ZoneOffset
  * looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`).
  *
  * A unit's series (per set of parameter codes) or timeline is
- * fetched again only if [force], if its last successful fetch was not today
- * (Europe/Paris), or if [since] goes back before what is cached; otherwise
- * the cache answers. A failed fetch with something cached returns the cache
+ * fetched again only if [force] or if its last successful fetch was not today
+ * (Europe/Paris); otherwise the cache answers. When [since] goes back before
+ * what a cache of today covers, only the missing older days are asked for
+ * ([HistoryRepository.parameterSeriesBefore]) and joined to it: the sheet's
+ * twelve months, then the timeline's three years, cost one year and two. A failed fetch with something cached returns the cache
  * (possibly shorter than asked); without cache, the [DataError] is thrown.
  * After every successful fetch the retention purge runs on the history
  * tables.
@@ -59,8 +61,9 @@ class CachingHistoryRepository(
         val key = parameterCodes.sorted().joinToString(",")
         return fetching.withLock {
             val cached = history.series(communeCode, udiCode, key)
-            if (cached != null && !force && isFresh(cached.lastSuccess, cached.depuis, since)) {
-                return@withLock cachedSeries(cached, since)
+            if (cached != null && !force && fetchedToday(cached.lastSuccess)) {
+                if (cached.depuis <= since.toEpochDay()) return@withLock cachedSeries(cached, since)
+                return@withLock extendSeries(cached, parameterCodes, since)
             }
             val generation = database.cacheGeneration.get()
             val fetched =
@@ -85,8 +88,11 @@ class CachingHistoryRepository(
     ): List<SampleSummary> {
         return fetching.withLock {
             val sync = history.timelineSync(communeCode, udiCode)
-            if (sync != null && !force && isFresh(sync.lastSuccess, sync.depuis, since)) {
-                return@withLock cachedTimeline(communeCode, udiCode, since)
+            if (sync != null && !force && fetchedToday(sync.lastSuccess)) {
+                if (sync.depuis <= since.toEpochDay()) {
+                    return@withLock cachedTimeline(communeCode, udiCode, since)
+                }
+                return@withLock extendTimeline(sync, since)
             }
             val generation = database.cacheGeneration.get()
             val fetched =
@@ -99,6 +105,119 @@ class CachingHistoryRepository(
             storeTimeline(communeCode, udiCode, since, sync, fetched, generation)
             fetched
         }
+    }
+
+    /**
+     * A series fetched today that starts after [since]: asks only for the
+     * days before its coverage and joins them to it, in the cache and in
+     * the answer. A failed request returns the cache alone, as elsewhere.
+     */
+    private suspend fun extendSeries(
+        cached: SeriesEntity,
+        parameterCodes: Set<String>,
+        since: LocalDate,
+    ): ParameterSeries? {
+        val until = LocalDate.ofEpochDay(cached.depuis)
+        val generation = database.cacheGeneration.get()
+        val older =
+            try {
+                network.parameterSeriesBefore(
+                    cached.communeCode,
+                    cached.udiCode,
+                    parameterCodes,
+                    since,
+                    until,
+                )
+            } catch (_: DataError) {
+                return cachedSeries(cached, since)
+            }
+        val from = since.startUtc()
+        val olderPoints = older?.points.orEmpty()
+            .filter { !it.date.isBefore(from) && it.date.isBefore(until.startUtc()) }
+        val recent = cachedSeries(cached, since)
+        val retention = retentionCutoff(clock.instant())
+        database.withTransaction {
+            if (!database.unchangedSince(generation)) return@withTransaction
+            val current = history.series(cached.communeCode, cached.udiCode, cached.parameterKey)
+            if (current != cached) return@withTransaction
+            // The labels stay the newest published, unless only older measures exist.
+            val labelled = if (current.libelle == null && older != null) {
+                current.copy(
+                    parameterCode = older.parameterCode,
+                    libelle = older.label,
+                    unite = older.unit,
+                    limite = older.limitText,
+                    reference = older.referenceText,
+                )
+            } else {
+                current
+            }
+            history.upsertSeries(labelled.copy(depuis = since.toEpochDay()))
+            history.deletePointsBetween(
+                current.communeCode,
+                current.udiCode,
+                current.parameterKey,
+                from.toEpochMilli(),
+                until.startUtc().toEpochMilli(),
+            )
+            history.insertPoints(
+                olderPoints.map {
+                    SeriesPointEntity(
+                        communeCode = current.communeCode,
+                        udiCode = current.udiCode,
+                        parameterKey = current.parameterKey,
+                        sampleCode = it.sampleCode,
+                        date = it.date.toEpochMilli(),
+                        value = it.value,
+                        text = it.text,
+                        censure = it.censored,
+                    )
+                },
+            )
+            purge(retention)
+        }
+        return when {
+            recent != null -> recent.copy(points = olderPoints + recent.points)
+            older != null && olderPoints.isNotEmpty() -> older.copy(points = olderPoints)
+            else -> null
+        }
+    }
+
+    /** Same as [extendSeries], for the timeline. */
+    private suspend fun extendTimeline(
+        sync: TimelineSyncEntity,
+        since: LocalDate,
+    ): List<SampleSummary> {
+        val (communeCode, udiCode) = sync.communeCode to sync.udiCode
+        val until = LocalDate.ofEpochDay(sync.depuis)
+        val generation = database.cacheGeneration.get()
+        val older =
+            try {
+                network.sampleTimelineBefore(communeCode, udiCode, since, until)
+            } catch (_: DataError) {
+                return cachedTimeline(communeCode, udiCode, since)
+            }
+        val from = since.startUtc()
+        val olderSamples = older
+            .filter { !it.date.isBefore(from) && it.date.isBefore(until.startUtc()) }
+            .distinctBy { it.code }
+        val recent = cachedTimeline(communeCode, udiCode, since)
+        val retention = retentionCutoff(clock.instant())
+        database.withTransaction {
+            if (!database.unchangedSince(generation)) return@withTransaction
+            if (history.timelineSync(communeCode, udiCode) != sync) return@withTransaction
+            history.upsertTimelineSync(sync.copy(depuis = since.toEpochDay()))
+            history.deleteTimelineBetween(
+                communeCode,
+                udiCode,
+                from.toEpochMilli(),
+                until.startUtc().toEpochMilli(),
+            )
+            history.insertTimeline(olderSamples.map { it.toEntity(communeCode, udiCode) })
+            purge(retention)
+        }
+        // Newest first, as the cache and Hub'Eau give them.
+        return recent + olderSamples.sortedByDescending { it.date }
     }
 
     /**
@@ -267,11 +386,10 @@ class CachingHistoryRepository(
             )
         }
 
-    /** Fetched today (Paris) and covering [since]. */
-    private fun isFresh(lastSuccess: Long, depuis: Long, since: LocalDate): Boolean {
+    /** Fetched today (Paris). */
+    private fun fetchedToday(lastSuccess: Long): Boolean {
         val today = clock.instant().atZone(PARIS).toLocalDate()
-        val fetchedOn = Instant.ofEpochMilli(lastSuccess).atZone(PARIS).toLocalDate()
-        return fetchedOn == today && depuis <= since.toEpochDay()
+        return Instant.ofEpochMilli(lastSuccess).atZone(PARIS).toLocalDate() == today
     }
 
     private fun SampleSummary.toEntity(communeCode: String, udiCode: String) = TimelineSampleEntity(
@@ -291,7 +409,7 @@ class CachingHistoryRepository(
         val PARIS: ZoneId = ZoneId.of("Europe/Paris")
 
         /** Start of a day as Hub'Eau's date filters read it (published date, UTC). */
-        fun LocalDate.startInstant(): Instant = atStartOfDay(ZoneOffset.UTC).toInstant()
+        fun LocalDate.startInstant(): Instant = startUtc()
     }
 }
 

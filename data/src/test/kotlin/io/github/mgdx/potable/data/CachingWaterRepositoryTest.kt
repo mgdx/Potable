@@ -34,7 +34,13 @@ class CachingWaterRepositoryTest {
         var failure: DataError? = null
         var calls = 0
 
-        override suspend fun udis(communeCode: String): UdiChoice = UdiChoice.None
+        var udiCalls = 0
+
+        override suspend fun udis(communeCode: String): UdiChoice {
+            udiCalls++
+            failure?.let { throw it }
+            return UdiChoice.None
+        }
 
         override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? {
             calls++
@@ -102,6 +108,38 @@ class CachingWaterRepositoryTest {
         assertEquals(1, network.calls)
         // Not cached: this is not a refresh.
         assertNull(cached())
+    }
+
+    @Test
+    fun `the units of a commune are asked for once a day`() = runTest {
+        // The unit screen, then "Change distribution unit" from the sheet.
+        repository.udis("45234")
+        repository.udis("45234")
+        assertEquals(1, network.udiCalls)
+        repository.udis("75056")
+        assertEquals(2, network.udiCalls)
+
+        // 00:01 in Paris, the next day.
+        clock.now = Instant.parse("2026-10-24T22:01:00Z")
+        repository.udis("45234")
+        assertEquals(3, network.udiCalls)
+
+        // A failure is not kept; a purge forgets them.
+        clock.now = Instant.parse("2026-10-26T08:00:00Z")
+        network.failure = DataError.Network(IOException("offline"))
+        try {
+            repository.udis("45234")
+            fail("expected a DataError")
+        } catch (_: DataError) {
+        }
+        network.failure = null
+        repository.udis("45234")
+        repository.purgeCommune("45234")
+        repository.udis("45234")
+        repository.udis("75056")
+        repository.purgeCache()
+        repository.udis("75056")
+        assertEquals(8, network.udiCalls)
     }
 
     @Test
@@ -367,8 +405,32 @@ class CachingWaterRepositoryTest {
                 CachedCommune("45234", setOf(UDI, "045000999"), clock.now),
                 CachedCommune("75056", setOf("075000001"), clock.now),
             ),
-            repository.cachedCommunes().first(),
+            repository.cachedCommunes().first().map { it.copy(sizeBytes = 0) },
         )
+    }
+
+    @Test
+    fun `the cached communes carry the approximate size of their cache`() = runTest {
+        // A timeline sync row: two codes (5 + 9 bytes) and two numbers (8 each).
+        database.history().upsertTimelineSync(
+            TimelineSyncEntity("13055", "013000001", depuis = 0, lastSuccess = 1_000),
+        )
+        assertEquals(30L, repository.cachedCommunes().first().single().sizeBytes)
+
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z", results = 2)
+        repository.refreshCache("45234", UDI, force = false)
+        val small = repository.cachedCommunes().first().first { it.communeCode == "45234" }
+        assertTrue(small.sizeBytes > 0)
+
+        // More results, more bytes: the size follows a new fetch.
+        network.samples["45234" to UDI] = sample("P2", "2026-09-26T12:50:00Z", results = 50)
+        repository.refreshCache("45234", UDI, force = true)
+        val large = repository.cachedCommunes().first().first { it.communeCode == "45234" }
+        assertTrue(large.sizeBytes > small.sizeBytes)
+
+        // A purge takes the commune, and its size, out of the list.
+        repository.purgeCommune("45234")
+        assertEquals(listOf("13055"), repository.cachedCommunes().first().map { it.communeCode })
     }
 
     @Test

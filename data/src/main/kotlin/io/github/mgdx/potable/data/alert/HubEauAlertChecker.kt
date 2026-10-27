@@ -58,8 +58,14 @@ class HubEauAlertChecker internal constructor(
         if (!NewAnalysis.isNew(lastSeen, latest.date)) return null
         water.setLastSeenSampleDate(communeCode, udiCode, latest.date)
         // The notification opens the unit's page: give it the new sample,
-        // but announce it even if Hub'Eau fails this second time.
-        bestEffort { water.refreshCache(communeCode, udiCode, force = true) }
+        // unless the app already cached it (the sheet was opened since its
+        // publication), but announce it even if Hub'Eau fails this second time.
+        bestEffort {
+            val cached = water.cachedLatestSample(communeCode, udiCode).first()?.sample
+            if (cached == null || cached.date.isBefore(latest.date)) {
+                water.refreshCache(communeCode, udiCode, force = true)
+            }
+        }
         return AlertEvent(follow, latest, Unfavourable.isUnfavourable(latest))
     }
 

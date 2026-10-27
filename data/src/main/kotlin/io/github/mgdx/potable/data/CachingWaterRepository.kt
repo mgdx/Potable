@@ -21,6 +21,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -42,7 +43,39 @@ class CachingWaterRepository(
     /** Serialises refreshes: a second caller waits, then finds today's fetch. */
     private val refreshing = Mutex()
 
-    override suspend fun udis(communeCode: String): UdiChoice = network.udis(communeCode)
+    /**
+     * The units of the last communes asked for, and the day (Paris) they
+     * were fetched, most recently used last; in memory only, guarded by
+     * itself. Hub'Eau publishes them once a year.
+     */
+    private val udiChoices =
+        object : LinkedHashMap<String, Pair<LocalDate, UdiChoice>>(16, 0.75f, true) {
+            override fun removeEldestEntry(
+                eldest: MutableMap.MutableEntry<String, Pair<LocalDate, UdiChoice>>?,
+            ): Boolean = size > MAX_UDI_CHOICES
+        }
+
+    /** Serialises [udis]: a second caller for the same commune finds the first answer. */
+    private val fetchingUdis = Mutex()
+
+    /**
+     * The units of [communeCode], from Hub'Eau at most once a day (Paris,
+     * SPEC §7) while the process lives: the unit screen, then "Change
+     * distribution unit" from the sheet, ask only once. A failure is not
+     * kept; a purge forgets them all.
+     */
+    override suspend fun udis(communeCode: String): UdiChoice = fetchingUdis.withLock {
+        val today = today()
+        synchronized(udiChoices) { udiChoices[communeCode] }
+            ?.takeIf { (day, _) -> day == today }
+            ?.let { (_, choice) -> return@withLock choice }
+        val generation = database.cacheGeneration.get()
+        val choice = network.udis(communeCode)
+        synchronized(udiChoices) {
+            if (database.unchangedSince(generation)) udiChoices[communeCode] = today to choice
+        }
+        choice
+    }
 
     override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? =
         network.latestSample(communeCode, networkCode)
@@ -121,6 +154,7 @@ class CachingWaterRepository(
                         udiCodes = units.mapTo(sortedSetOf()) { it.udiCode },
                         lastFetched = units.mapNotNull { it.lastSuccess }.maxOrNull()
                             ?.let(Instant::ofEpochMilli),
+                        sizeBytes = units.sumOf { it.size },
                     )
                 }
                 .sortedBy { it.communeCode }
@@ -128,6 +162,7 @@ class CachingWaterRepository(
         .distinctUntilChanged()
 
     override suspend fun purgeCommune(communeCode: String) {
+        synchronized(udiChoices) { udiChoices.remove(communeCode) }
         val followed = database.withTransaction {
             database.cacheGeneration.incrementAndGet()
             cache.deleteCommuneResults(communeCode)
@@ -147,6 +182,7 @@ class CachingWaterRepository(
     }
 
     override suspend fun purgeCache() {
+        synchronized(udiChoices) { udiChoices.clear() }
         database.withTransaction {
             database.cacheGeneration.incrementAndGet()
             cache.deleteAllResults()
@@ -184,11 +220,15 @@ class CachingWaterRepository(
 
     private fun fetchedToday(sync: SyncEntity?): Boolean {
         val last = sync?.lastSuccess ?: return false
-        val today = clock.instant().atZone(PARIS).toLocalDate()
-        return Instant.ofEpochMilli(last).atZone(PARIS).toLocalDate() == today
+        return Instant.ofEpochMilli(last).atZone(PARIS).toLocalDate() == today()
     }
 
+    private fun today(): LocalDate = clock.instant().atZone(PARIS).toLocalDate()
+
     private companion object {
+        /** Communes whose units [udis] keeps: a few searches' worth. */
+        const val MAX_UDI_CHOICES = 16
+
         /** "Today" is the calendar day in France (SPEC §7). */
         val PARIS: ZoneId = ZoneId.of("Europe/Paris")
     }

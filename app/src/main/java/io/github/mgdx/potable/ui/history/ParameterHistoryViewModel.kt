@@ -109,9 +109,13 @@ class ParameterHistoryViewModel(
         load(force = false)
     }
 
-    /** Pull-to-refresh or the Refresh action: asks Hub'Eau again. */
+    /**
+     * Pull-to-refresh or the Refresh action: asks Hub'Eau again, unless a
+     * request is already running (a second pull, or the first load): it
+     * would be cancelled on screen but still downloaded, then asked again.
+     */
     fun refresh() {
-        if (_years.value == null) return
+        if (_years.value == null || loadJob?.isActive == true) return
         load(force = true)
     }
 

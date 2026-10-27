@@ -76,6 +76,33 @@ class RemoteHistoryRepositoryTest {
     }
 
     @Test
+    fun `the days before a cached window are one request ending at it`() = runTest {
+        server.enqueue(
+            response(page(1, null, listOf(resultRow("P1", "2024-03-01T09:00:00Z", "1340")))),
+        )
+        server.enqueue(response(page(0, null, emptyList())))
+        val until = LocalDate.parse("2025-10-24")
+
+        val series = repository.parameterSeriesBefore(
+            "45234",
+            "045000474",
+            setOf("1340"),
+            since,
+            until,
+        )
+        repository.sampleTimelineBefore("45234", "045000474", since, until)
+
+        assertEquals(listOf("P1"), series!!.points.map { it.sampleCode })
+        for (expected in listOf("1340", "1302,1382,1449")) {
+            val url = server.takeRequest().url
+            assertEquals(expected, url.queryParameter("code_parametre"))
+            assertEquals("2023-10-24", url.queryParameter("date_min_prelevement"))
+            // date_max_prelevement is exclusive: the cached day is not asked again.
+            assertEquals("2025-10-24", url.queryParameter("date_max_prelevement"))
+        }
+    }
+
+    @Test
     fun `no row is no series`() = runTest {
         server.enqueue(response(page(0, null, emptyList())))
 
