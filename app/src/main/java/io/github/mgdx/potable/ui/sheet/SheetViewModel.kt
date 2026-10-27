@@ -13,6 +13,8 @@ import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.FollowRepository
+import io.github.mgdx.potable.data.preferences.AppPreferences
+import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.SLOW_LOAD_THRESHOLD
 import io.github.mgdx.potable.ui.common.slowLoading
@@ -78,6 +80,8 @@ class SheetViewModel(
     private val udiName: String,
     private val clock: Clock,
     slowThreshold: Duration = SLOW_LOAD_THRESHOLD,
+    /** Where the unit is recorded as opened, for the search's "recent" list. */
+    private val recents: AppPreferences? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow<SheetUiState>(SheetUiState.Loading)
     val state: StateFlow<SheetUiState> = _state.asStateFlow()
@@ -121,6 +125,21 @@ class SheetViewModel(
     private var recentFor: String? = null
     private var cached: CachedSample? = null
     private var refreshError: LoadError? = null
+
+    init {
+        // Once per opening of the sheet, not on each reload.
+        if (recents != null && communeCode.isNotBlank() && udiCode.isNotBlank()) {
+            viewModelScope.launch {
+                try {
+                    recents.addRecentUnit(RecentUnit(communeCode, communeName, udiCode, udiName))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Unwritable local data: the sheet shows all the same.
+                }
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -275,6 +294,7 @@ class SheetViewModel(
                     communeName,
                     udiName,
                     Clock.systemUTC(),
+                    recents = container.preferences,
                 )
             }
         }

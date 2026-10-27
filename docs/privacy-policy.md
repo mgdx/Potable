@@ -26,7 +26,10 @@ autre application ne peut lire :
   alertes et leur périodicité, et l’unité de distribution choisie pour chaque
   commune où vous en avez choisi une. « Vider le cache » oublie ce choix pour
   toutes les communes que vous ne suivez pas ; vider le cache d’une seule
-  commune l’oublie pour elle si vous ne la suivez pas.
+  commune l’oublie pour elle si vous ne la suivez pas. S’y ajoutent les cinq
+  dernières unités de distribution dont vous avez ouvert la fiche (codes et
+  noms de la commune et de l’unité), proposées par l’écran de recherche ;
+  chacune s’en retire d’un geste sur cet écran.
 - **Vos communes suivies**, avec leur unité de distribution, leur ordre et
   celle qui est principale.
 - **Le cache des données publiques des communes consultées**, suivies ou

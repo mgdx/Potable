@@ -2,6 +2,7 @@ package io.github.mgdx.potable.data.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -66,6 +67,20 @@ interface AppPreferences {
     /** Forgets the unit remembered for [communeCode], code and name, if any (its cache was cleared). */
     suspend fun forgetRememberedUdi(communeCode: String) {}
 
+    // --- Recent units ---
+
+    /**
+     * The last opened units, most recent first, distinct by (communeCode,
+     * udiCode), at most [RECENT_LIMIT] (SPEC §5 F1).
+     */
+    val recentUnits: Flow<List<RecentUnit>> get() = flowOf(emptyList())
+
+    /** Puts [unit] at the top of [recentUnits], moving it if already there, and trims the list. */
+    suspend fun addRecentUnit(unit: RecentUnit) {}
+
+    /** Removes the unit [udiCode] of [communeCode] from [recentUnits], if there. */
+    suspend fun removeRecentUnit(communeCode: String, udiCode: String) {}
+
     // --- Alerts ---
 
     /** Notify each new analysis of a followed unit (SPEC §5 F7). Default off. */
@@ -93,6 +108,9 @@ interface AppPreferences {
 
         /** Values offered for the alert period, in weeks. */
         val ALERT_WEEK_CHOICES = listOf(1, 2, 4)
+
+        /** Length of the search's "recent" list. */
+        const val RECENT_LIMIT = 5
     }
 }
 
@@ -103,6 +121,39 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
  * before names were kept.
  */
 data class RememberedUdi(val code: String, val name: String?)
+
+/**
+ * A unit whose sheet was opened, for the search's "recent" list.
+ * [communeCode] is the code Hub'Eau publishes the commune under.
+ */
+data class RecentUnit(
+    val communeCode: String,
+    val communeName: String,
+    val udiCode: String,
+    val udiName: String,
+)
+
+/**
+ * [recent] with [unit] put first: an entry for the same commune and unit is
+ * replaced (its names may have changed), and the list is cut to [limit].
+ */
+fun withRecentUnit(
+    recent: List<RecentUnit>,
+    unit: RecentUnit,
+    limit: Int = AppPreferences.RECENT_LIMIT,
+): List<RecentUnit> =
+    (listOf(unit) + recent.filterNot { it.sameUnitAs(unit.communeCode, unit.udiCode) })
+        .take(limit)
+
+/** [recent] without the unit [udiCode] of [communeCode]. */
+fun withoutRecentUnit(
+    recent: List<RecentUnit>,
+    communeCode: String,
+    udiCode: String,
+): List<RecentUnit> = recent.filterNot { it.sameUnitAs(communeCode, udiCode) }
+
+private fun RecentUnit.sameUnitAs(communeCode: String, udiCode: String) =
+    this.communeCode == communeCode && this.udiCode == udiCode
 
 /** [AppPreferences] stored in a Preferences DataStore. Use one instance per process. */
 class DataStoreAppPreferences internal constructor(private val store: DataStore<Preferences>) :
@@ -193,6 +244,40 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         }
     }
 
+    override val recentUnits: Flow<List<RecentUnit>> = data
+        .map(::readRecent)
+        .distinctUntilChanged()
+
+    override suspend fun addRecentUnit(unit: RecentUnit) {
+        store.edit { writeRecent(it, withRecentUnit(readRecent(it), unit)) }
+    }
+
+    override suspend fun removeRecentUnit(communeCode: String, udiCode: String) {
+        store.edit { writeRecent(it, withoutRecentUnit(readRecent(it), communeCode, udiCode)) }
+    }
+
+    /** One key per position, from 0; an unreadable value is skipped. */
+    private fun readRecent(prefs: Preferences): List<RecentUnit> =
+        (0 until AppPreferences.RECENT_LIMIT).mapNotNull { index ->
+            prefs[recentKey(index)]?.split(FIELD_SEPARATOR)
+                ?.takeIf { it.size == RECENT_FIELDS }
+                ?.let { (communeCode, communeName, udiCode, udiName) ->
+                    RecentUnit(communeCode, communeName, udiCode, udiName)
+                }
+        }
+
+    private fun writeRecent(prefs: MutablePreferences, recent: List<RecentUnit>) {
+        (0 until AppPreferences.RECENT_LIMIT).forEach { prefs.remove(recentKey(it)) }
+        recent.take(AppPreferences.RECENT_LIMIT).forEachIndexed { index, unit ->
+            prefs[recentKey(index)] = listOf(
+                unit.communeCode,
+                unit.communeName,
+                unit.udiCode,
+                unit.udiName,
+            ).joinToString(FIELD_SEPARATOR) { it.replace(FIELD_SEPARATOR, "") }
+        }
+    }
+
     override val alertNewAnalysis: Flow<Boolean> = flag(ALERT_NEW_ANALYSIS)
 
     override suspend fun setAlertNewAnalysis(enabled: Boolean) {
@@ -251,6 +336,17 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         fun udiNameKey(communeCode: String) = stringPreferencesKey("$UDI_NAME_PREFIX$communeCode")
 
         const val UDI_PREFIX = "udi_"
+
+        /**
+         * The unit at [index] of the "recent" list. Starts with neither
+         * [UDI_PREFIX] nor [UDI_NAME_PREFIX]: never read as a remembered unit.
+         */
+        fun recentKey(index: Int) = stringPreferencesKey("recent_$index")
+
+        /** Between the fields of a recent unit: a control character no code nor name holds. */
+        const val FIELD_SEPARATOR = "\u001F"
+
+        const val RECENT_FIELDS = 4
 
         /** Does not start with [UDI_PREFIX]: no name key reads as a commune's unit. */
         const val UDI_NAME_PREFIX = "udiname_"

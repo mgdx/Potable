@@ -123,6 +123,12 @@ les expliquer en une phrase :
   permission au moment de l'usage, jamais au lancement. Refus de permission =
   l'application reste pleinement utilisable par la saisie.
 - L'application fonctionne sans jamais accorder la permission de localisation.
+- Champ vide : l'écran de recherche liste, sous « autour de moi », les
+  dernières communes consultées (« Consultées récemment ») : les cinq
+  dernières unités dont la fiche a été ouverte, la plus récente d'abord, sans
+  doublon (commune et UDI), nom de la commune puis nom de l'UDI. Toucher une
+  ligne rouvre la fiche ; un bouton par ligne la retire de la liste. Liste
+  vide : l'explication de la recherche s'affiche à la place.
 
 ### F2 — Choix de l'UDI
 
