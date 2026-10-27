@@ -113,6 +113,13 @@ les expliquer en une phrase :
   doivent être **vérifiés contre l'API** avant d'être figés dans le code.
   Aucun code paramètre ne doit être écrit en dur sans vérification.
 
+Une seconde table éditoriale, les **substances surveillées**, réunit les
+substances que les usagers cherchent d'abord mais qui sont rarement analysées
+à chaque prélèvement : somme des 20 PFAS, total des pesticides, TFA, chlorure
+de vinyle monomère, plomb, arsenic, perchlorate (codes vérifiés le 2026-10-28,
+`docs/hubeau-api.md` ; `WatchedSubstance`). Les nitrates restent dans la
+première table.
+
 ## 5. Fonctionnalités de la v1
 
 ### F1 — Choix de la commune
@@ -149,6 +156,14 @@ Une commune peut être desservie par plusieurs UDI (quartiers différents).
 - Nom du distributeur et du maître d'ouvrage si disponibles.
 - Conformités bactériologique et physico-chimique, limites et références
   distinguées.
+- Carte « Substances surveillées » (§4.3), sous les paramètres clés : pour
+  chaque substance, sa **dernière mesure connue sur l'UDI** dans la fenêtre
+  d'historique réglée, même plus ancienne que le dernier prélèvement (valeur
+  et limite telles que publiées, côte à côte, sans comparaison ; date et âge ;
+  une phrase d'explication). Une substance non mesurée n'a pas de ligne ;
+  aucune mesurée : une ligne le dit, avec le début de la période. Chargée
+  après le reste de la fiche, depuis le cache des séries (F5) ; un échec ne
+  touche que la carte. Toucher une ligne ouvre l'historique de la substance.
 - Accès au détail complet du prélèvement.
 - Encart permanent : source des données, date de dernière mise à jour.
 
