@@ -121,6 +121,19 @@ class FollowedSheetViewModelTest {
     }
 
     @Test
+    fun `a second pull while a refresh runs does not ask again`() = runTest(main.dispatcher) {
+        water.cache.value = CachedSample(latest, fetchedAt)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.pullToRefresh()
+        viewModel.pullToRefresh()
+        advanceUntilIdle()
+
+        assertEquals(listOf(false, true), water.refreshCalls)
+    }
+
+    @Test
     fun `a cache holding no sample gives the empty state with its date`() =
         runTest(main.dispatcher) {
             water.cache.value = CachedSample(null, fetchedAt)

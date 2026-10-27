@@ -39,10 +39,34 @@ class RemoteHistoryRepository(
         return formatChecked { Series.sampleSummaries(rows) }
     }
 
+    override suspend fun parameterSeriesBefore(
+        communeCode: String,
+        udiCode: String,
+        parameterCodes: Set<String>,
+        since: LocalDate,
+        until: LocalDate,
+    ): ParameterSeries? {
+        require(parameterCodes.isNotEmpty()) { "no parameter code" }
+        val rows =
+            allRows(communeCode, udiCode, parameterCodes.sorted(), since, SERIES_FIELDS, until)
+        return formatChecked { Series.parameterSeries(rows, parameterCodes) }
+    }
+
+    override suspend fun sampleTimelineBefore(
+        communeCode: String,
+        udiCode: String,
+        since: LocalDate,
+        until: LocalDate,
+    ): List<SampleSummary> {
+        val rows = allRows(communeCode, udiCode, TIMELINE_PARAMETERS, since, TIMELINE_FIELDS, until)
+        return formatChecked { Series.sampleSummaries(rows) }
+    }
+
     /**
-     * Every row since [since], newest first, page after page. The window is
-     * bounded on both sides (up to tomorrow in France), the form the API
-     * answers fastest.
+     * Every row from [since] to [until] (excluded: `date_max_prelevement` is
+     * exclusive, `docs/hubeau-api.md`), newest first, page after page. The
+     * window is bounded on both sides (by default up to tomorrow in France),
+     * the form the API answers fastest.
      */
     private suspend fun allRows(
         communeCode: String,
@@ -50,8 +74,8 @@ class RemoteHistoryRepository(
         parameterCodes: List<String>,
         since: LocalDate,
         fields: List<String>,
+        until: LocalDate = clock.instant().atZone(PARIS).toLocalDate().plusDays(1),
     ): List<ResultRow> {
-        val tomorrow = clock.instant().atZone(PARIS).toLocalDate().plusDays(1)
         val rows = mutableListOf<ResultRow>()
         for (page in 1..MAX_PAGES) {
             val result =
@@ -64,7 +88,7 @@ class RemoteHistoryRepository(
                     sortDesc = true,
                     codeParametre = parameterCodes.joinToString(","),
                     dateMin = since,
-                    dateMax = tomorrow,
+                    dateMax = until,
                 )
             rows += result.data
             if (result.next == null || result.data.size < PAGE_SIZE) break

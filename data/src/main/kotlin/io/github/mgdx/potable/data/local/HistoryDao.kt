@@ -44,6 +44,18 @@ internal interface HistoryDao {
         from: Long,
     )
 
+    @Query(
+        "DELETE FROM serie_point WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
+            "AND cle_parametres = :parameterKey AND date >= :from AND date < :until",
+    )
+    suspend fun deletePointsBetween(
+        communeCode: String,
+        udiCode: String,
+        parameterKey: String,
+        from: Long,
+        until: Long,
+    )
+
     @Insert
     suspend fun insertPoints(points: List<SeriesPointEntity>)
 
@@ -75,6 +87,12 @@ internal interface HistoryDao {
             "WHERE code_commune = :communeCode AND code_reseau = :udiCode AND date >= :from",
     )
     suspend fun deleteTimelineFrom(communeCode: String, udiCode: String, from: Long)
+
+    @Query(
+        "DELETE FROM historique_prelevement WHERE code_commune = :communeCode " +
+            "AND code_reseau = :udiCode AND date >= :from AND date < :until",
+    )
+    suspend fun deleteTimelineBetween(communeCode: String, udiCode: String, from: Long, until: Long)
 
     /**
      * Retention purge (SPEC §7) of points and samples published before

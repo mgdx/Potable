@@ -28,7 +28,7 @@ import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
 class CachingHistoryRepositoryTest {
-    /** Hub'Eau stand-in: answers from its maps, filtered on `since`, counts the calls. */
+    /** Hub'Eau stand-in: answers from its maps, filtered on the window, counts the calls. */
     private class FakeNetwork : HistoryRepository {
         var points = mutableListOf<SeriesPoint>()
         var label: String? = "Nitrates (en NO3)"
@@ -38,20 +38,53 @@ class CachingHistoryRepositoryTest {
         var seriesCalls = 0
         var timelineCalls = 0
 
+        /** The end of each window asked for (exclusive), null for "up to today". */
+        val seriesUntil = mutableListOf<LocalDate?>()
+        val timelineUntil = mutableListOf<LocalDate?>()
+
         override suspend fun parameterSeries(
             communeCode: String,
             udiCode: String,
             parameterCodes: Set<String>,
             since: LocalDate,
             force: Boolean,
+        ): ParameterSeries? = series(parameterCodes, since, null)
+
+        override suspend fun parameterSeriesBefore(
+            communeCode: String,
+            udiCode: String,
+            parameterCodes: Set<String>,
+            since: LocalDate,
+            until: LocalDate,
+        ): ParameterSeries? = series(parameterCodes, since, until)
+
+        override suspend fun sampleTimeline(
+            communeCode: String,
+            udiCode: String,
+            since: LocalDate,
+            force: Boolean,
+        ): List<SampleSummary> = timeline(since, null)
+
+        override suspend fun sampleTimelineBefore(
+            communeCode: String,
+            udiCode: String,
+            since: LocalDate,
+            until: LocalDate,
+        ): List<SampleSummary> = timeline(since, until)
+
+        private fun series(
+            codes: Set<String>,
+            since: LocalDate,
+            until: LocalDate?,
         ): ParameterSeries? {
             seriesCalls++
+            seriesUntil += until
             failure?.let { throw it }
-            val kept = points.filter { !it.date.isBefore(since.start()) }
+            val kept = points.filter { it.date in since to until }
             val name = label ?: return null
             if (kept.isEmpty()) return null
             return ParameterSeries(
-                parameterCode = parameterCodes.first(),
+                parameterCode = codes.first(),
                 label = name,
                 unit = "mg/L",
                 limitText = limitText,
@@ -62,17 +95,16 @@ class CachingHistoryRepositoryTest {
             )
         }
 
-        override suspend fun sampleTimeline(
-            communeCode: String,
-            udiCode: String,
-            since: LocalDate,
-            force: Boolean,
-        ): List<SampleSummary> {
+        private fun timeline(since: LocalDate, until: LocalDate?): List<SampleSummary> {
             timelineCalls++
+            timelineUntil += until
             failure?.let { throw it }
-            val from = since.start()
-            return samples.filter { !it.date.isBefore(from) }.sortedByDescending { it.date }
+            return samples.filter { it.date in since to until }.sortedByDescending { it.date }
         }
+
+        /** In the window from the first day to the second (excluded, or none). */
+        private operator fun Pair<LocalDate, LocalDate?>.contains(date: Instant): Boolean =
+            !date.isBefore(first.start()) && second?.let { date.isBefore(it.start()) } != false
     }
 
     private class FakePreferences(years: Int) : AppPreferences {
@@ -237,6 +269,74 @@ class CachingHistoryRepositoryTest {
             assertEquals(2, series()?.points?.size)
             assertEquals(2, network.seriesCalls)
         }
+
+    @Test
+    fun `a longer window asks only for the days a cache of today lacks`() = runTest {
+        givenHistory()
+        network.points += point("P0", "2018-05-01T09:00:00Z", 1.0)
+        network.samples += summary("S0", "2018-05-01T09:00:00Z")
+        val oneYear = LocalDate.parse("2025-10-24")
+        val tenYears = LocalDate.parse("2016-10-24")
+
+        // The sheet reads twelve months, then the history screens three years.
+        assertEquals(listOf("P2"), series(oneYear)?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2"), timeline(oneYear).map { it.code })
+        assertEquals(listOf("P1", "P2"), series()?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2", "S1"), timeline().map { it.code })
+        // The second request stops where the cache starts.
+        assertEquals(listOf(null, oneYear), network.seriesUntil)
+        assertEquals(listOf(null, oneYear), network.timelineUntil)
+
+        // The joined cache now answers the three years alone...
+        assertEquals(listOf("P1", "P2"), series()?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2", "S1"), timeline().map { it.code })
+        assertEquals(2, network.seriesCalls)
+        assertEquals(2, network.timelineCalls)
+        assertEquals(2, database.history().pointCount())
+        assertEquals(2, database.history().timelineCount())
+
+        // ...and ten years ask only for the seven before.
+        assertEquals(listOf("P0", "P1", "P2"), series(tenYears)?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2", "S1", "S0"), timeline(tenYears).map { it.code })
+        assertEquals(listOf(null, oneYear, threeYears), network.seriesUntil)
+        assertEquals(listOf(null, oneYear, threeYears), network.timelineUntil)
+
+        // The next day, the whole window again.
+        clock.now = Instant.parse("2026-10-25T08:00:00Z")
+        series(tenYears)
+        assertEquals(null, network.seriesUntil.last())
+    }
+
+    @Test
+    fun `older measures give their labels to a recent window without any`() = runTest {
+        network.points += point("P1", "2024-03-01T09:00:00Z", 3.0)
+        val oneYear = LocalDate.parse("2025-10-24")
+
+        assertNull(series(oneYear))
+        assertEquals(listOf("P1"), series()?.points?.map { it.sampleCode })
+
+        val cached = series()!!
+        assertEquals(2, network.seriesCalls)
+        assertEquals("Nitrates (en NO3)", cached.label)
+        assertEquals(listOf("P1"), cached.points.map { it.sampleCode })
+    }
+
+    @Test
+    fun `a failed request for the older days returns the cache`() = runTest {
+        givenHistory()
+        val oneYear = LocalDate.parse("2025-10-24")
+        series(oneYear)
+        timeline(oneYear)
+
+        network.failure = DataError.Network(IOException("offline"))
+        assertEquals(listOf("P2"), series()?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2"), timeline().map { it.code })
+
+        // Nothing was joined: the next try asks for the older days again.
+        network.failure = null
+        assertEquals(listOf("P1", "P2"), series()?.points?.map { it.sampleCode })
+        assertEquals(listOf(null, oneYear, oneYear), network.seriesUntil)
+    }
 
     @Test
     fun `a shorter fetch keeps the older cached points`() = runTest {

@@ -34,7 +34,13 @@ class CachingWaterRepositoryTest {
         var failure: DataError? = null
         var calls = 0
 
-        override suspend fun udis(communeCode: String): UdiChoice = UdiChoice.None
+        var udiCalls = 0
+
+        override suspend fun udis(communeCode: String): UdiChoice {
+            udiCalls++
+            failure?.let { throw it }
+            return UdiChoice.None
+        }
 
         override suspend fun latestSample(communeCode: String, networkCode: String?): Sample? {
             calls++
@@ -102,6 +108,38 @@ class CachingWaterRepositoryTest {
         assertEquals(1, network.calls)
         // Not cached: this is not a refresh.
         assertNull(cached())
+    }
+
+    @Test
+    fun `the units of a commune are asked for once a day`() = runTest {
+        // The unit screen, then "Change distribution unit" from the sheet.
+        repository.udis("45234")
+        repository.udis("45234")
+        assertEquals(1, network.udiCalls)
+        repository.udis("75056")
+        assertEquals(2, network.udiCalls)
+
+        // 00:01 in Paris, the next day.
+        clock.now = Instant.parse("2026-10-24T22:01:00Z")
+        repository.udis("45234")
+        assertEquals(3, network.udiCalls)
+
+        // A failure is not kept; a purge forgets them.
+        clock.now = Instant.parse("2026-10-26T08:00:00Z")
+        network.failure = DataError.Network(IOException("offline"))
+        try {
+            repository.udis("45234")
+            fail("expected a DataError")
+        } catch (_: DataError) {
+        }
+        network.failure = null
+        repository.udis("45234")
+        repository.purgeCommune("45234")
+        repository.udis("45234")
+        repository.udis("75056")
+        repository.purgeCache()
+        repository.udis("75056")
+        assertEquals(8, network.udiCalls)
     }
 
     @Test

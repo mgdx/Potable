@@ -165,6 +165,25 @@ class HubEauAlertCheckerTest {
     }
 
     @Test
+    fun `a new sample the app already cached is announced without fetching it again`() = runTest {
+        val follow = followOrleans()
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+        checker.check()
+        // The sheet was opened after the publication: the cache holds it.
+        network.samples[ORLEANS] = sample("P2", "2026-09-15T09:00:00Z")
+        water.refreshCache("45234", ORLEANS, force = false)
+        val newer = summary("P2", "2026-09-15T09:00:00Z")
+        latest[ORLEANS] = newer
+
+        val events = checker.check()
+
+        assertEquals(listOf(AlertEvent(follow, newer, unfavourable = false)), events)
+        // The sheet's fetch only, and the light request of each check.
+        assertEquals(1, network.calls)
+        assertEquals(listOf(ORLEANS, ORLEANS), requested)
+    }
+
+    @Test
     fun `an unfavourable sample is marked as such`() = runTest {
         followOrleans()
         latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
