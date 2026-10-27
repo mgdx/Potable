@@ -213,10 +213,12 @@
         <item quantity="one">%d year ago</item>
         <item quantity="other">%d years ago</item>
     </plurals>
-    <!-- %1$s: name of the water distributor, as published by Hub'Eau. -->
-    <string name="sheet_distributor">Distributor: %1$s</string>
-    <!-- %1$s: name of the public body responsible for the water service, as published by Hub'Eau (docs/glossary.md, authority). -->
-    <string name="sheet_owner">Responsible authority: %1$s</string>
+    <!-- Label of the sample date, shown before the date itself. -->
+    <string name="sheet_sampled_on_label">Sampled on</string>
+    <!-- Label of the water distributor's name, as published by Hub'Eau. -->
+    <string name="sheet_distributor_label">Distributor</string>
+    <!-- Label of the public body responsible for the water service, as published by Hub'Eau (docs/glossary.md, authority). -->
+    <string name="sheet_owner_label">Responsible authority</string>
     <!-- Heading of the four compliance codes. -->
     <string name="sheet_compliance_title">Compliance</string>
     <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
