@@ -124,7 +124,7 @@ référentiel des communes, en français, isolé par le code.
 | `commune_and_unit` | `%1$s` commune, `%2$s` unité de distribution (*données*) ; titre des notifications et libellé lu par les lecteurs d'écran |
 | `quality_limit`, `quality_reference` | `%1$s` limite ou référence publiée, `<=50 mg/L` (*donnée*) |
 | `search_no_results`, `sample_no_match` | `%1$s` texte saisi par l'utilisateur |
-| `search_postal_codes_more` | `%1$s` premier code postal (*donnée*), `%2$d` nombre de codes en plus |
+| `postal_codes_more` | `%1$s` premier code postal (*donnée*), `%2$d` nombre de codes en plus |
 | `search_published_under` | `%1$s` commune de rattachement ou son code INSEE (*donnée*) |
 | `sheet_data_from`, `sheet_refresh_failed` | `%1$s` date de la dernière mise à jour |
 | `sheet_parameter_history_action` | `%1$s` nom traduit du paramètre (`featured_*`) ; action lue par TalkBack, minuscule initiale |
