@@ -462,8 +462,10 @@ analyses dans le temps.
 | Accent clair (états, graphiques) | `#9CC8FF` |
 
 Le contraste blanc sur `#2350B5` est d'environ 7:1. La couleur principale sert
-aussi de `primary` au thème Material 3 clair. Le thème sombre en dérive une
-teinte éclaircie, dont le contraste est à vérifier.
+de fond (`background`, `surface`) au thème clair, dont le texte est blanc ; le
+thème sombre est un bleu nuit de la même teinte (`#0B1838`). L'accent clair est
+le `secondary` des deux thèmes (courbes, indicateurs). Les contrastes sont
+vérifiés par `ThemeContrastTest`.
 
 ### 18.3 Déclinaisons à produire
 

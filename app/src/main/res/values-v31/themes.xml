@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- values/themes.xml, plus the system splash screen of Android 12+: the
+         logo's tap and drop on the logo blue, the colour of the first frame. -->
+    <style name="Theme.Potable" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FF2350B5</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowSplashScreenBackground">#FF2350B5</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#FF2350B5</item>
+    </style>
+</resources>

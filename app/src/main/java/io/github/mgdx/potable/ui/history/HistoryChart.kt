@@ -225,7 +225,10 @@ private val WindowSaver = listSaver<ChartWindow, Double>(
  * The line chart of a parameter (SPEC §5 F5): measures joined in date order,
  * censored values as hollow markers, the quality limit as a solid line and
  * the quality reference as a dashed one. Colours come from the theme only and
- * never judge a value (SPEC §14).
+ * never judge a value (SPEC §14): the series in `secondary` (the brand's
+ * light accent), the limit in `onSurface`, the reference in
+ * `onSurfaceVariant`, the grid in `outlineVariant`, the axis in `outline`,
+ * the tooltip in `inverseSurface`.
  *
  * The time axis runs left to right in every language (SPEC §11.2): the
  * plotting area is laid out left to right; the tooltip inside it, like the
@@ -523,7 +526,7 @@ private fun DrawScope.drawChart(
         )
     }
     geometry.limitYs.forEach { y ->
-        drawLine(colors.onSurface, Offset(left, y), Offset(right, y), 1.5.dp.toPx())
+        drawLine(colors.onSurface, Offset(left, y), Offset(right, y), 2.dp.toPx())
     }
 
     // Zoomed in, measures out of the window are cut at the plot's edges; a
@@ -539,7 +542,7 @@ private fun DrawScope.drawChart(
             )
         }
 
-        val series = colors.primary
+        val series = colors.secondary
         val path = Path()
         geometry.pointXs.forEachIndexed { i, x ->
             if (i == 0) path.moveTo(x, geometry.pointYs[i]) else path.lineTo(x, geometry.pointYs[i])
