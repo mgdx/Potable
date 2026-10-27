@@ -66,6 +66,7 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.currentLocale
@@ -267,7 +268,7 @@ private fun SampleContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val sample = samples.first()
         if (samples.size == 1) {
@@ -281,7 +282,7 @@ private fun SampleContent(
             )
         }
         KeyParametersCard(sample, onParameterHistory)
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionCard(title = stringResource(R.string.sheet_sample_card_title)) {
             LabelValueRow(stringResource(R.string.sheet_sampled_on_label)) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -308,7 +309,6 @@ private fun SampleContent(
                 }
             }
         }
-        HorizontalDivider()
         ComplianceSection(sample)
         // With several samples, each has its own button in the conclusions.
         if (samples.size == 1 && sample.results.isNotEmpty()) {
@@ -347,22 +347,8 @@ private fun KeyParametersCard(
 ) {
     val present = remember(sample) { FeaturedParameters.present(sample.results) }
     if (present.isEmpty()) return
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.sheet_key_parameters_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.semantics { heading() },
-            )
+    SectionCard(title = stringResource(R.string.sheet_key_parameters_title)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             for ((parameter, result) in present) {
                 val name = stringResource(parameter.nameRes())
                 val actionLabel = stringResource(R.string.sheet_parameter_history_action, name)
@@ -422,6 +408,7 @@ private fun FeaturedParameter.explanationRes(): Int = when (this) {
 private fun ConclusionCard(conclusion: String?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
@@ -452,6 +439,7 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
     val locale = currentLocale()
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
@@ -522,47 +510,31 @@ private fun RecentUnfavourableCard(digest: UnfavourableDigest) {
     val date = remember(digest.latest.date, locale) {
         formatSampleDate(digest.latest.date, locale)
     }
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+    SectionCard(title = stringResource(R.string.sheet_recent_unfavourable_title)) {
+        // What was published, limits and references told apart (SPEC §5 F3).
+        listOf(
+            R.plurals.sheet_recent_limits to digest.limitsCount,
+            R.plurals.sheet_recent_references_only to digest.referencesOnlyCount,
+            R.plurals.sheet_recent_conclusion_only to digest.conclusionOnlyCount,
+        ).filter { it.second > 0 }.forEach { (res, count) ->
             Text(
-                text = stringResource(R.string.sheet_recent_unfavourable_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.semantics { heading() },
+                text = pluralStringResource(res, count, count),
+                style = MaterialTheme.typography.bodyMedium,
             )
-            // What was published, limits and references told apart (SPEC §5 F3).
-            listOf(
-                R.plurals.sheet_recent_limits to digest.limitsCount,
-                R.plurals.sheet_recent_references_only to digest.referencesOnlyCount,
-                R.plurals.sheet_recent_conclusion_only to digest.conclusionOnlyCount,
-            ).filter { it.second > 0 }.forEach { (res, count) ->
-                Text(
-                    text = pluralStringResource(res, count, count),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            if (digest.limitsCount + digest.referencesOnlyCount > 0) {
-                Text(
-                    text = stringResource(R.string.sheet_compliance_explanation),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        }
+        if (digest.limitsCount + digest.referencesOnlyCount > 0) {
             Text(
-                text = stringResource(R.string.sheet_recent_unfavourable_latest, date),
+                text = stringResource(R.string.sheet_compliance_explanation),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            ConclusionText(digest.latest.conclusion, style = MaterialTheme.typography.bodyMedium)
         }
+        Text(
+            text = stringResource(R.string.sheet_recent_unfavourable_latest, date),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ConclusionText(digest.latest.conclusion, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -597,12 +569,7 @@ private fun ConclusionText(
 
 @Composable
 private fun ComplianceSection(sample: Sample) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = stringResource(R.string.sheet_compliance_title),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
+    SectionCard(title = stringResource(R.string.sheet_compliance_title)) {
         Text(
             text = stringResource(R.string.sheet_compliance_explanation),
             style = MaterialTheme.typography.bodySmall,

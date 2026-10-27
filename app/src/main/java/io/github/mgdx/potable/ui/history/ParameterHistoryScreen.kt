@@ -48,6 +48,7 @@ import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PeriodSelector
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.publishedDate
@@ -156,21 +157,22 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                 MeasureList(series)
             }
             else -> {
-                HistoryChart(
-                    series = series,
-                    model = model,
-                    selected = selected,
-                    onSelect = { selected = it },
-                    onOpenSample = onOpenSample,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-                Legend(series, model)
-                Text(
-                    text = stringResource(R.string.history_gesture_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+                // The chart, what its marks stand for and how to use it, as one block.
+                SectionCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    HistoryChart(
+                        series = series,
+                        model = model,
+                        selected = selected,
+                        onSelect = { selected = it },
+                        onOpenSample = onOpenSample,
+                    )
+                    Legend(series, model)
+                    Text(
+                        text = stringResource(R.string.history_gesture_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 // The label starts at the content edge, like the texts above.
                 TextButton(
                     onClick = { showList = !showList },
@@ -222,10 +224,7 @@ private enum class LegendMark { MEASURE, CENSORED, LIMIT, REFERENCE }
 @Composable
 private fun Legend(series: ParameterSeries, model: ChartModel) {
     val locale = currentLocale()
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         LegendRow(LegendMark.MEASURE, stringResource(R.string.history_legend_measure))
         if (model.hasCensored) {
             LegendRow(LegendMark.CENSORED, stringResource(R.string.history_legend_censored))

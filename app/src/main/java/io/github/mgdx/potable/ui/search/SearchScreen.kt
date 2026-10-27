@@ -7,13 +7,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Close
@@ -54,6 +56,7 @@ import io.github.mgdx.potable.ui.common.CenteredColumn
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PillSearchField
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.postalCodesText
@@ -192,6 +195,7 @@ private fun SearchContent(
                         recentUnits = recentUnits,
                         onSelected = onRecentSelected,
                         onRemoved = onRecentRemoved,
+                        modifier = Modifier.weight(1f, fill = false).then(ListCardMargins),
                     )
                 } else if (nearby !is NearbyState.Found) {
                     SearchInvitation()
@@ -204,8 +208,9 @@ private fun SearchContent(
                     val rows = remember(state.communes, knownUdis) {
                         searchRows(state.communes, knownUdis)
                     }
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(rows, key = { it.key() }) { row ->
+                    ListCard(modifier = Modifier.weight(1f, fill = false).then(ListCardMargins)) {
+                        itemsIndexed(rows, key = { _, row -> row.key() }) { index, row ->
+                            if (index > 0) ListDivider()
                             val commune = row.commune
                             val parentName = commune.hubEauCode?.let { state.parentNames[it] }
                             when (row) {
@@ -227,12 +232,41 @@ private fun SearchContent(
                                     )
                                 }
                             }
-                            ListDivider()
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/** Around a list card, which is as tall as its rows, up to this bottom margin. */
+private val ListCardMargins =
+    Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+
+/**
+ * A list of ListItems in a card that scrolls them, under an optional [title].
+ * Vertical padding only: ListItem brings its own horizontal inset, which the
+ * title takes too.
+ */
+@Composable
+private fun ListCard(
+    modifier: Modifier,
+    title: String? = null,
+    content: LazyListScope.() -> Unit,
+) {
+    SectionCard(modifier = modifier, contentPadding = PaddingValues(vertical = 8.dp)) {
+        title?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .semantics { heading() },
+            )
+        }
+        LazyColumn(content = content)
     }
 }
 
@@ -263,7 +297,7 @@ private fun ListDivider() {
     )
 }
 
-/** List rows sit on the screen's own background. */
+/** List rows sit on the background of what holds them. */
 @Composable
 private fun transparentListItemColors() =
     ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -399,19 +433,11 @@ private fun RecentSection(
     recentUnits: List<RecentUnit>,
     onSelected: (RecentUnit) -> Unit,
     onRemoved: (RecentUnit) -> Unit,
+    modifier: Modifier,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item(key = RECENT_TITLE_KEY) {
-            Text(
-                text = stringResource(R.string.search_recent_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp)
-                    .semantics { heading() },
-            )
-        }
-        items(recentUnits, key = { "${it.communeCode}/${it.udiCode}" }) { unit ->
+    ListCard(modifier = modifier, title = stringResource(R.string.search_recent_title)) {
+        itemsIndexed(recentUnits, key = { _, unit -> unit.key() }) { index, unit ->
+            if (index > 0) ListDivider()
             ListItem(
                 modifier = Modifier.clickable { onSelected(unit) },
                 colors = transparentListItemColors(),
@@ -437,10 +463,9 @@ private fun RecentSection(
                     }
                 },
             )
-            ListDivider()
         }
     }
 }
 
-/** Unit keys hold a "/": none equals the title's. */
-private const val RECENT_TITLE_KEY = "recent"
+/** Commune and unit codes have no "/": two units never share a key. */
+private fun RecentUnit.key(): String = "$communeCode/$udiCode"

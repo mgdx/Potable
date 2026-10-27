@@ -3,12 +3,13 @@ package io.github.mgdx.potable.ui.follows
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
@@ -34,6 +35,7 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.CenteredColumn
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PillSearchField
+import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.postalCodesText
@@ -118,7 +120,10 @@ private fun FollowFilterField(query: String, onQueryChange: (String) -> Unit) {
     )
 }
 
-/** [follows] as shown, sorted by name, with the [postalCodes] of their communes. */
+/**
+ * [follows] as shown, sorted by name, with the [postalCodes] of their communes:
+ * the explanation above, then one card that holds the rows and scrolls them.
+ */
 @Composable
 private fun FollowList(
     follows: List<Follow>,
@@ -127,39 +132,48 @@ private fun FollowList(
     onRemove: (Follow) -> Unit,
     modifier: Modifier,
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-        item {
-            Text(
-                text = stringResource(R.string.follows_explanation),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
-            )
-        }
+    Column(modifier = modifier.fillMaxSize()) {
+        Text(
+            text = stringResource(R.string.follows_explanation),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+        )
         if (follows.isEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.follows_filter_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                )
+            Text(
+                text = stringResource(R.string.follows_filter_empty),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+            )
+        } else {
+            // As tall as its rows, up to the screen's bottom margin.
+            SectionCard(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                LazyColumn {
+                    itemsIndexed(follows, key = { _, follow -> follow.id }) { index, follow ->
+                        if (index > 0) {
+                            // Inset like the text of the rows.
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                            )
+                        }
+                        FollowRow(
+                            follow = follow,
+                            postalCodes = postalCodes[follow.communeCode].orEmpty(),
+                            onOpen = { onOpen(follow) },
+                            onRemove = { onRemove(follow) },
+                        )
+                    }
+                }
             }
-        }
-        items(follows, key = { it.id }) { follow ->
-            FollowRow(
-                follow = follow,
-                postalCodes = postalCodes[follow.communeCode].orEmpty(),
-                onOpen = { onOpen(follow) },
-                onRemove = { onRemove(follow) },
-            )
-            // Inset like the text of the rows.
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
         }
     }
 }
