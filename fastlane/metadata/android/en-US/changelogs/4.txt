@@ -1,0 +1,4 @@
+• My communes: sorted by name, each with its postal code; the search field also finds a postal code. No more manual reordering.
+• Only the followed and recently opened communes are kept offline; the others are deleted.
+• The 12-month box now sits at the bottom of the sheet, just above the sample history.
+• Leaving a screen stops its download from Hub'Eau at once.

@@ -1,0 +1,4 @@
+• Mes communes : triées par nom, chacune avec son code postal ; la recherche trouve aussi un code postal. Plus de réordonnancement manuel.
+• Seules les communes suivies ou consultées récemment restent hors ligne ; les autres sont supprimées.
+• L’encart « Sur les 12 derniers mois » passe en bas de la fiche, juste au-dessus de l’historique.
+• Quitter un écran interrompt aussitôt son téléchargement depuis Hub'Eau.
