@@ -21,5 +21,8 @@ class PotableApplication : Application() {
         container.alertNotifier.createChannels()
         // Keeps the periodic alert check in line with the settings (SPEC §5 F7).
         container.alertScheduler.start(scope)
+        // Prunes the cache of the units neither followed nor recent: once
+        // now, then on every change of either list (SPEC §7).
+        container.cacheJanitor.start(scope)
     }
 }

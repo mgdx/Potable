@@ -8,6 +8,7 @@ import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.alert.SystemNotificationAccess
 import io.github.mgdx.potable.alert.WorkManagerAlertWork
 import io.github.mgdx.potable.data.AssetCommuneRepository
+import io.github.mgdx.potable.data.CacheJanitor
 import io.github.mgdx.potable.data.CachingSampleRepository
 import io.github.mgdx.potable.data.CachingWaterRepository
 import io.github.mgdx.potable.data.CommuneRepository
@@ -75,6 +76,9 @@ class AppContainer(context: Context) {
     val samples: SampleRepository by lazy {
         CachingSampleRepository(RemoteSampleRepository(hubEau), database, preferences)
     }
+
+    /** Keeps the cache to the followed and recent units (SPEC §7). */
+    val cacheJanitor: CacheJanitor by lazy { CacheJanitor(follows, preferences, water) }
 
     /** Checks the followed units for new samples (SPEC §5 F7). */
     val alertChecker: AlertChecker by lazy { AlertChecker(hubEau, follows, water) }

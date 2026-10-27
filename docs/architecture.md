@@ -127,8 +127,12 @@ unité consultée, suivie ou non, le cache est la source d’affichage, rafraîc
 au premier affichage du jour, sur un tirer-pour-actualiser, et par la tâche
 d’alerte pour les suivis — jamais en boucle. Un échec réseau laisse le cache
 intact, et l’écran l’affiche avec la date de ses données. `CachingHistoryRepository`
-fait de même pour les séries et la frise. Retirer un suivi garde son cache et
-n’oublie que la date vue par les alertes. La rétention (3 ans par défaut) est
+fait de même pour les séries et la frise. Le cache ne garde que les unités
+suivies ou récentes : `CacheJanitor`, lancé par `PotableApplication`, observe
+les deux listes et appelle `pruneUnreferenced` au démarrage puis à chaque
+changement de leur union ; une unité qui en sort perd tout son cache. Retirer
+un suivi oublie la date vue par les alertes, et le cache de l’unité si elle
+n’est pas récente. La rétention (3 ans par défaut) est
 appliquée après chaque rafraîchissement réussi, en gardant toujours le dernier
 prélèvement de chaque unité. Les réglages listent les communes en cache
 (`cachedCommunes`) et vident tout le cache (`purgeCache`) ou celui d’une

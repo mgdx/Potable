@@ -112,6 +112,24 @@ internal interface HistoryDao {
     @Query("UPDATE historique_synchro SET depuis = :cutoffDay WHERE depuis < :cutoffDay")
     suspend fun clampTimelineCoverage(cutoffDay: Long)
 
+    @Query("DELETE FROM serie_point WHERE code_commune = :communeCode AND code_reseau = :udiCode")
+    suspend fun deleteUnitPoints(communeCode: String, udiCode: String)
+
+    @Query("DELETE FROM serie WHERE code_commune = :communeCode AND code_reseau = :udiCode")
+    suspend fun deleteUnitSeries(communeCode: String, udiCode: String)
+
+    @Query(
+        "DELETE FROM historique_prelevement " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun deleteUnitTimeline(communeCode: String, udiCode: String)
+
+    @Query(
+        "DELETE FROM historique_synchro " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun deleteUnitTimelineSync(communeCode: String, udiCode: String)
+
     @Query("DELETE FROM serie_point WHERE code_commune = :communeCode")
     suspend fun deleteCommunePoints(communeCode: String)
 

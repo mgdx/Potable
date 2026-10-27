@@ -206,7 +206,8 @@ physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
 
 - Périodicité des alertes, types de notification, fenêtre d'historique.
 - Thème clair / sombre / système.
-- Purge du cache.
+- Purge du cache (en entier ou par commune ; la purge des unités ni suivies
+  ni récentes est automatique, §7).
 - Sources, licences, crédits Hub'Eau et ministère chargé de la santé,
   avertissement du §14, lien vers le dépôt.
 
@@ -218,8 +219,8 @@ d'écran d'accueil, données de baignade ou de cours d'eau.
 
 ## 7. Stockage local
 
-Base **Room**. Cache des communes suivies **et consultées** (écart consigné
-dans `docs/decisions.md`) — jamais de jeu national.
+Base **Room**. Cache des communes suivies **et consultées récemment** (écarts
+consignés dans `docs/decisions.md`) — jamais de jeu national.
 
 Tables minimales :
 
@@ -235,10 +236,19 @@ Tables minimales :
 Règles :
 
 - Rétention configurable, 3 ans par défaut ; purge automatique au-delà.
+- Le cache ne garde que les unités (code commune publié par Hub'Eau, code
+  UDI) **suivies ou présentes dans « Consultées récemment »** (F1, cinq au
+  plus). Toute autre unité perd tout son cache (derniers prélèvements,
+  rapports, séries, frise, synchro) dès qu'elle sort de ces deux listes :
+  retirée à la main des récentes, poussée hors des récentes par une sixième,
+  ou retirée des suivis ; et au démarrage, pour les restes d'une version
+  précédente. Purge par unité : une autre UDI de la même commune encore
+  référencée garde le sien. Une unité qui quitte une liste en restant dans
+  l'autre garde son cache.
 - Purge manuelle de tout le cache, ou du cache d'une seule commune ; aucune
   ne touche aux suivis.
 - Le cache sert de source d'affichage : l'application est **consultable hors
-  ligne** pour toute commune déjà consultée, suivie ou non, avec un bandeau
+  ligne** pour toute commune suivie ou consultée récemment, avec un bandeau
   indiquant la fraîcheur.
 - Rafraîchissement au premier affichage du jour, sur pull-to-refresh, et par la
   tâche d'alerte. Jamais en boucle.

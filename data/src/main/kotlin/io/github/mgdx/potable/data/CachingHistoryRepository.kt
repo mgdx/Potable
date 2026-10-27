@@ -137,7 +137,9 @@ class CachingHistoryRepository(
         val recent = cachedSeries(cached, since)
         val retention = retentionCutoff(clock.instant())
         database.withTransaction {
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, cached.communeCode, cached.udiCode)) {
+                return@withTransaction
+            }
             val current = history.series(cached.communeCode, cached.udiCode, cached.parameterKey)
             if (current != cached) return@withTransaction
             // The labels stay the newest published, unless only older measures exist.
@@ -204,7 +206,7 @@ class CachingHistoryRepository(
         val recent = cachedTimeline(communeCode, udiCode, since)
         val retention = retentionCutoff(clock.instant())
         database.withTransaction {
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, communeCode, udiCode)) return@withTransaction
             if (history.timelineSync(communeCode, udiCode) != sync) return@withTransaction
             history.upsertTimelineSync(sync.copy(depuis = since.toEpochDay()))
             history.deleteTimelineBetween(
@@ -241,7 +243,7 @@ class CachingHistoryRepository(
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, communeCode, udiCode)) return@withTransaction
             val keepOlder = cached != null && cached.lastSuccess >= from
             val depuis = if (keepOlder) {
                 minOf(
@@ -303,7 +305,7 @@ class CachingHistoryRepository(
         val from = since.startInstant().toEpochMilli()
         val retention = retentionCutoff(now)
         database.withTransaction {
-            if (!database.unchangedSince(generation)) return@withTransaction
+            if (!database.unchangedSince(generation, communeCode, udiCode)) return@withTransaction
             val keepOlder = sync != null && sync.lastSuccess >= from
             history.upsertTimelineSync(
                 TimelineSyncEntity(

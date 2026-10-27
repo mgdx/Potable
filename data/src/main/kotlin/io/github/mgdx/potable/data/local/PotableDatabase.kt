@@ -5,6 +5,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import io.github.mgdx.potable.data.UnitKey
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -42,15 +43,58 @@ abstract class PotableDatabase : RoomDatabase() {
     internal abstract fun history(): HistoryDao
 
     /**
-     * Incremented by every purge of the cache, whole or of a commune. A
-     * fetch reads it before calling Hub'Eau and writes its result only if
-     * it has not changed meanwhile ([unchangedSince]): a purge made during
-     * the request is not undone by it.
+     * Incremented by every purge of the cache: whole, of a commune, or of the
+     * units no longer referenced. A fetch reads it before calling Hub'Eau
+     * and writes its result only if its unit was not purged meanwhile
+     * ([unchangedSince]): a purge made during the request is not undone by
+     * it, and a purge of other units does not drop it.
      */
     internal val cacheGeneration = AtomicLong()
 
-    /** Whether no purge happened since [generation] was read from [cacheGeneration]. */
-    internal fun unchangedSince(generation: Long): Boolean = cacheGeneration.get() == generation
+    /** Guards the generations below, at which the last purges happened. */
+    private val purges = Any()
+    private var allPurgedAt = 0L
+    private val communesPurgedAt = HashMap<String, Long>()
+    private val unitsPurgedAt = HashMap<UnitKey, Long>()
+
+    /** Records a purge of the whole cache; called in its transaction. */
+    internal fun markAllPurged() = synchronized(purges) {
+        allPurgedAt = cacheGeneration.incrementAndGet()
+        // Older marks are covered by this one.
+        communesPurgedAt.clear()
+        unitsPurgedAt.clear()
+    }
+
+    /** Records a purge of every unit of [communeCode]; called in its transaction. */
+    internal fun markCommunePurged(communeCode: String) = synchronized(purges) {
+        communesPurgedAt[communeCode] = cacheGeneration.incrementAndGet()
+    }
+
+    /** Records a purge of [units]; called in its transaction. */
+    internal fun markUnitsPurged(units: Collection<UnitKey>) = synchronized(purges) {
+        val generation = cacheGeneration.incrementAndGet()
+        units.forEach { unitsPurgedAt[it] = generation }
+    }
+
+    /**
+     * Whether neither the whole cache nor [communeCode] was purged since
+     * [generation] was read from [cacheGeneration].
+     */
+    internal fun unchangedSince(generation: Long, communeCode: String): Boolean =
+        synchronized(purges) {
+            allPurgedAt <= generation && (communesPurgedAt[communeCode] ?: 0) <= generation
+        }
+
+    /**
+     * Whether the unit [udiCode] of [communeCode] was not purged since
+     * [generation] was read from [cacheGeneration], by any purge that
+     * covers it.
+     */
+    internal fun unchangedSince(generation: Long, communeCode: String, udiCode: String): Boolean =
+        synchronized(purges) {
+            unchangedSince(generation, communeCode) &&
+                (unitsPurgedAt[UnitKey(communeCode, udiCode)] ?: 0) <= generation
+        }
 
     companion object {
         const val FILE_NAME = "potable.db"

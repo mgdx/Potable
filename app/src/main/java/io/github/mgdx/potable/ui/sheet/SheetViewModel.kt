@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -126,19 +127,16 @@ class SheetViewModel(
     private var cached: CachedSample? = null
     private var refreshError: LoadError? = null
 
+    /**
+     * Records the unit in the recent list. Every fetch waits for it: the
+     * cache keeps only the followed and recent units (SPEC §7), so what the
+     * fetch writes is never pruned as unreferenced.
+     */
+    private var recorded: Job? = null
+
     init {
         // Once per opening of the sheet, not on each reload.
-        if (recents != null && communeCode.isNotBlank() && udiCode.isNotBlank()) {
-            viewModelScope.launch {
-                try {
-                    recents.addRecentUnit(RecentUnit(communeCode, communeName, udiCode, udiName))
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    // Unwritable local data: the sheet shows all the same.
-                }
-            }
-        }
+        recorded = record(onlyIfAbsent = false)
     }
 
     init {
@@ -180,7 +178,8 @@ class SheetViewModel(
             try {
                 if (followed) {
                     val follow = follows.find(communeCode, udiCode) ?: return@launch
-                    // The cache stays: the data shown do not change.
+                    // The cache stays, the unit being among the recent
+                    // ones: the data shown do not change.
                     follows.unfollow(follow.id)
                 } else {
                     follows.follow(communeCode, communeName, udiCode, udiName)
@@ -197,7 +196,10 @@ class SheetViewModel(
         val purged = value == null && cached != null
         cached = value
         if (purged) {
-            // The cache was emptied (settings): load it again.
+            // The cache was emptied (settings), or pruned while this sheet
+            // was below others that pushed it out of the recent list: load
+            // it again, recorded again as recent so that it stays cached.
+            recorded = record(onlyIfAbsent = true)
             _state.value = SheetUiState.Loading
             _freshness.value = null
             refreshError = null
@@ -212,6 +214,7 @@ class SheetViewModel(
         // Without a cache the loading state shows: no second indicator.
         if (force && cached != null) _isRefreshing.value = true
         refreshJob = viewModelScope.launch {
+            recorded?.join()
             refreshError = try {
                 water.refreshCache(communeCode, udiCode, force)
                 null
@@ -257,12 +260,34 @@ class SheetViewModel(
         recentJob = viewModelScope.launch {
             val since = clock.instant().atZone(FRANCE_ZONE).toLocalDate()
                 .minusMonths(RECENT_MONTHS)
+            recorded?.join()
             _recentUnfavourable.value = try {
                 UnfavourableDigest.of(history.sampleTimeline(communeCode, udiCode, since))
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
                 null
+            }
+        }
+    }
+
+    /**
+     * Puts this unit at the top of the recent list, or, if [onlyIfAbsent],
+     * only if it is no longer there; null without a store or a unit.
+     */
+    private fun record(onlyIfAbsent: Boolean): Job? {
+        val store = recents ?: return null
+        if (communeCode.isBlank() || udiCode.isBlank()) return null
+        return viewModelScope.launch {
+            try {
+                val listed = if (onlyIfAbsent) store.recentUnits.first() else emptyList()
+                if (listed.none { it.communeCode == communeCode && it.udiCode == udiCode }) {
+                    store.addRecentUnit(RecentUnit(communeCode, communeName, udiCode, udiName))
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Unwritable local data: the sheet shows all the same.
             }
         }
     }
