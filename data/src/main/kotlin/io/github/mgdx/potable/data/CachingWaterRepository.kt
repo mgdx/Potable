@@ -121,6 +121,7 @@ class CachingWaterRepository(
                         udiCodes = units.mapTo(sortedSetOf()) { it.udiCode },
                         lastFetched = units.mapNotNull { it.lastSuccess }.maxOrNull()
                             ?.let(Instant::ofEpochMilli),
+                        sizeBytes = units.sumOf { it.size },
                     )
                 }
                 .sortedBy { it.communeCode }

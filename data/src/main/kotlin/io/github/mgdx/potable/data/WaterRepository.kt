@@ -24,12 +24,14 @@ data class CachedSample(val samples: List<Sample>, val fetchedAt: Instant) {
 /**
  * A commune with something in the cache (a latest sample, a series or a
  * timeline) for [udiCodes], and the most recent successful fetch of any of
- * them, if one is known.
+ * them, if one is known. [sizeBytes] approximates what its cached rows hold
+ * (text lengths plus 8 bytes per number, without SQLite's own overhead).
  */
 data class CachedCommune(
     val communeCode: String,
     val udiCodes: Set<String>,
     val lastFetched: Instant?,
+    val sizeBytes: Long = 0,
 )
 
 interface WaterRepository {

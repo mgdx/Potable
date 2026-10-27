@@ -136,18 +136,28 @@ internal interface CacheDao {
     suspend fun clearLastSeenSampleDate(communeCode: String, udiCode: String)
 
     /**
-     * Every unit with something cached, and the last successful fetch of
-     * each of its caches (latest sample, series, timeline), one row per
-     * cache, plus one row without date per cached sample (a sample kept
-     * from the history has no sync row); re-emitted on every change of
-     * these tables.
+     * Every unit with something cached, one row per unit: the last
+     * successful fetch of any of its caches (latest sample, series,
+     * timeline), null if none is known (a sample kept from the history has
+     * no sync row), and the approximate size of its cached rows in every
+     * cache table ([CachedUnitRow.size]); re-emitted on every change of
+     * these tables. A sync row that only keeps the alert state of a
+     * followed unit is not a cache.
      */
     @Query(
-        "SELECT code_commune, code_reseau, dernier_succes FROM synchro " +
-            "WHERE dernier_succes IS NOT NULL " +
-            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM serie " +
-            "UNION ALL SELECT code_commune, code_reseau, dernier_succes FROM historique_synchro " +
-            "UNION ALL SELECT code_commune, code_reseau, NULL FROM prelevement",
+        "SELECT code_commune, code_reseau, MAX(dernier_succes) AS dernier_succes, " +
+            "SUM(taille) AS taille FROM (" +
+            "SELECT code_commune, code_reseau, dernier_succes, $SYNC_SIZE AS taille " +
+            "FROM synchro WHERE dernier_succes IS NOT NULL " +
+            "UNION ALL SELECT code_commune, code_reseau, dernier_succes, $SERIES_SIZE FROM serie " +
+            "UNION ALL SELECT code_commune, code_reseau, dernier_succes, $SYNC_SIZE " +
+            "FROM historique_synchro " +
+            "UNION ALL SELECT code_commune, code_reseau, NULL, $SAMPLE_SIZE FROM prelevement " +
+            "UNION ALL SELECT code_commune, code_reseau, NULL, $RESULT_SIZE FROM resultat " +
+            "UNION ALL SELECT code_commune, code_reseau, NULL, $POINT_SIZE FROM serie_point " +
+            "UNION ALL SELECT code_commune, code_reseau, NULL, $TIMELINE_SIZE " +
+            "FROM historique_prelevement" +
+            ") GROUP BY code_commune, code_reseau",
     )
     fun observeCachedUnits(): Flow<List<CachedUnitRow>>
 
@@ -183,9 +193,64 @@ internal interface CacheDao {
 /** A day in milliseconds, for the queries on `prelevement.date`. */
 private const val DAY_MS = 86_400_000L
 
-/** One cache of a unit and its last successful fetch (epoch ms), see [CacheDao.observeCachedUnits]. */
+/*
+ * Approximate size of a cached row, in bytes, for the settings (SPEC §5 F8):
+ * the UTF-8 length of every text column (0 if null) plus 8 bytes per
+ * numeric or boolean column. It leaves out SQLite's own overhead (record
+ * headers, pages, indices), so the file takes more: an order of magnitude,
+ * not the room freed on disk by a purge.
+ */
+
+/** The UTF-8 length of the unit's codes, as SQL; and so on per table below. */
+private const val UNIT_TEXT =
+    "IFNULL(LENGTH(CAST(code_commune AS BLOB)), 0) + IFNULL(LENGTH(CAST(code_reseau AS BLOB)), 0)"
+
+private const val SYNC_SIZE = "($UNIT_TEXT + 16)"
+
+private const val COMPLIANCE_TEXT =
+    "IFNULL(LENGTH(CAST(conclusion AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(conformite_limites_bact AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(conformite_limites_pc AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(conformite_references_bact AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(conformite_references_pc AS BLOB)), 0)"
+
+private const val LABELS_TEXT =
+    "IFNULL(LENGTH(CAST(code_parametre AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(libelle AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(unite AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(limite AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(reference AS BLOB)), 0)"
+
+private const val SAMPLE_CODE_TEXT = "IFNULL(LENGTH(CAST(code_prelevement AS BLOB)), 0)"
+
+private const val SAMPLE_SIZE =
+    "($UNIT_TEXT + $SAMPLE_CODE_TEXT + $COMPLIANCE_TEXT " +
+        "+ IFNULL(LENGTH(CAST(reseau_prelevement AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(distributeur AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(maitre_ouvrage AS BLOB)), 0) + 16)"
+
+private const val RESULT_SIZE =
+    "($UNIT_TEXT + $SAMPLE_CODE_TEXT + $LABELS_TEXT " +
+        "+ IFNULL(LENGTH(CAST(type_parametre AS BLOB)), 0) " +
+        "+ IFNULL(LENGTH(CAST(resultat_texte AS BLOB)), 0) + 16)"
+
+private const val SERIES_SIZE =
+    "($UNIT_TEXT + IFNULL(LENGTH(CAST(cle_parametres AS BLOB)), 0) + $LABELS_TEXT + 16)"
+
+private const val POINT_SIZE =
+    "($UNIT_TEXT + IFNULL(LENGTH(CAST(cle_parametres AS BLOB)), 0) + $SAMPLE_CODE_TEXT " +
+        "+ IFNULL(LENGTH(CAST(resultat_texte AS BLOB)), 0) + 24)"
+
+private const val TIMELINE_SIZE = "($UNIT_TEXT + $SAMPLE_CODE_TEXT + $COMPLIANCE_TEXT + 8)"
+
+/**
+ * A unit with something cached, its last successful fetch (epoch ms) and
+ * the approximate size of its cached rows in bytes, see
+ * [CacheDao.observeCachedUnits].
+ */
 internal data class CachedUnitRow(
     @ColumnInfo(name = "code_commune") val communeCode: String,
     @ColumnInfo(name = "code_reseau") val udiCode: String,
     @ColumnInfo(name = "dernier_succes") val lastSuccess: Long?,
+    @ColumnInfo(name = "taille") val size: Long,
 )
