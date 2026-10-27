@@ -361,6 +361,9 @@ fun PotableNavHost(
             // alone (a back stack restored oddly), it shows no back arrow and
             // offers the search in its top bar instead, rather than a dead end.
             val isRoot = remember(entry) { navController.previousBackStackEntry == null }
+            val fromFollows = remember(entry) {
+                navController.previousBackStackEntry?.destination?.route == Routes.FOLLOWS
+            }
             val onChangeUdi: (() -> Unit)? = if (entry.flag(Routes.ARG_CHANGE)) {
                 {
                     val route = Routes.udis(communeCode, communeName, choose = true)
@@ -386,7 +389,15 @@ fun PotableNavHost(
                         Routes.parameterHistory(communeCode, udiCode, parameter.codes, label),
                     )
                 },
-                onMyCommunes = { navController.navigate(Routes.FOLLOWS) },
+                // Opened from My communes: going there again would stack a
+                // second copy, so the bar offers the overflow menu instead.
+                onMyCommunes = if (fromFollows) {
+                    null
+                } else {
+                    { navController.navigate(Routes.FOLLOWS) }
+                },
+                onSettings = { navController.navigate(Routes.SETTINGS) },
+                onAbout = { navController.navigate(Routes.ABOUT) },
                 onSearch = if (isRoot) ({ navController.openSearch() }) else null,
                 onChangeUdi = onChangeUdi,
             )

@@ -70,6 +70,7 @@ import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.currentLocale
+import io.github.mgdx.potable.ui.settings.OverflowMenu
 import java.time.Instant
 import java.time.ZoneId
 
@@ -93,7 +94,9 @@ fun SheetScreen(
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
     onParameterHistory: (parameter: FeaturedParameter, label: String) -> Unit,
-    onMyCommunes: () -> Unit,
+    onMyCommunes: (() -> Unit)?,
+    onSettings: () -> Unit,
+    onAbout: () -> Unit,
     onSearch: (() -> Unit)?,
     onChangeUdi: (() -> Unit)?,
 ) {
@@ -118,11 +121,15 @@ fun SheetScreen(
                 onBack = onBack,
                 actions = {
                     isFollowed?.let { FollowButton(it, viewModel::toggleFollow) }
-                    IconButton(onClick = onMyCommunes) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = stringResource(R.string.follows_title),
-                        )
+                    if (onMyCommunes != null) {
+                        IconButton(onClick = onMyCommunes) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.List,
+                                contentDescription = stringResource(R.string.follows_title),
+                            )
+                        }
+                    } else {
+                        OverflowMenu(onSettings = onSettings, onAbout = onAbout)
                     }
                     onSearch?.let { search ->
                         IconButton(onClick = search) {
