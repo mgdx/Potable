@@ -2,7 +2,9 @@ package io.github.mgdx.potable.ui.sheet
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,11 +24,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
@@ -64,7 +67,6 @@ import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.asApiText
-import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.currentLocale
 import java.time.Instant
@@ -111,6 +113,7 @@ fun SheetScreen(
                 subtitle = udiName,
                 titleIsData = true,
                 subtitleIsData = true,
+                onSubtitleClick = onChangeUdi,
                 onBack = onBack,
                 actions = {
                     isFollowed?.let { FollowButton(it, viewModel::toggleFollow) }
@@ -135,14 +138,6 @@ fun SheetScreen(
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             freshness?.let { FreshnessBanner(it) }
-            onChangeUdi?.let { change ->
-                TextButton(
-                    onClick = change,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
-                    Text(stringResource(R.string.sheet_change_udi))
-                }
-            }
             val content = @Composable {
                 when (val current = state) {
                     SheetUiState.Loading ->
@@ -223,10 +218,13 @@ private fun FreshnessBanner(freshness: Freshness) {
         } else {
             MaterialTheme.colorScheme.onSecondaryContainer
         },
-        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -242,7 +240,7 @@ private fun FreshnessBanner(freshness: Freshness) {
                     if (failed) R.string.sheet_refresh_failed else R.string.sheet_data_from,
                     date,
                 ),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.labelLarge,
             )
         }
     }
@@ -283,28 +281,38 @@ private fun SampleContent(
             )
         }
         KeyParametersCard(sample, onParameterHistory)
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = stringResource(R.string.sheet_sampled_on, formatDate(sample.date)),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                text = relativeAgeText(age),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LabelValueRow(stringResource(R.string.sheet_sampled_on_label)) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = formatDate(sample.date),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.End,
+                    )
+                    Text(
+                        text = relativeAgeText(age),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                    )
+                }
+            }
             sample.distributor?.let {
-                Text(stringResource(R.string.sheet_distributor, bidiWrap(it)))
+                LabelValueRow(stringResource(R.string.sheet_distributor_label)) {
+                    ApiValueText(it)
+                }
             }
             sample.owner?.let {
-                Text(stringResource(R.string.sheet_owner, bidiWrap(it)))
+                LabelValueRow(stringResource(R.string.sheet_owner_label)) {
+                    ApiValueText(it)
+                }
             }
         }
         HorizontalDivider()
         ComplianceSection(sample)
         // With several samples, each has its own button in the conclusions.
         if (samples.size == 1 && sample.results.isNotEmpty()) {
-            OutlinedButton(
+            FilledTonalButton(
                 onClick = { onShowAllResults(sample) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -313,7 +321,7 @@ private fun SampleContent(
         }
         // Just above the history it opens.
         recentUnfavourable?.let { RecentUnfavourableCard(it) }
-        OutlinedButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
+        FilledTonalButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Filled.DateRange,
                 contentDescription = null,
@@ -424,8 +432,8 @@ private fun ConclusionCard(conclusion: String?) {
         ) {
             Text(
                 text = stringResource(R.string.sheet_conclusion_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
             )
             ConclusionText(conclusion)
@@ -454,8 +462,8 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
         ) {
             Text(
                 text = stringResource(R.string.sheet_conclusions_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
             )
             Text(
@@ -484,7 +492,15 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
                 )
                 ConclusionText(sample.conclusion)
                 if (sample.results.isNotEmpty()) {
-                    TextButton(onClick = { onShowAllResults(sample) }) {
+                    // No start padding: the label lines up with the conclusion.
+                    TextButton(
+                        onClick = { onShowAllResults(sample) },
+                        contentPadding = PaddingValues(
+                            horizontal = 0.dp,
+                            vertical = ButtonDefaults.TextButtonContentPadding
+                                .calculateTopPadding(),
+                        ),
+                    ) {
                         Text(stringResource(R.string.sheet_show_all_results))
                     }
                 }
@@ -554,7 +570,7 @@ private fun RecentUnfavourableCard(digest: UnfavourableDigest) {
 @Composable
 private fun ConclusionText(
     conclusion: String?,
-    style: TextStyle = MaterialTheme.typography.titleMedium,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
 ) {
     if (conclusion.isNullOrBlank()) {
         Text(
@@ -611,12 +627,7 @@ private fun ComplianceRow(labelRes: Int, compliance: Compliance) {
     } else {
         MaterialTheme.colorScheme.onSurface
     }
-    Column {
-        Text(
-            text = stringResource(labelRes),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    LabelValueRow(stringResource(labelRes)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -633,9 +644,45 @@ private fun ComplianceRow(labelRes: Int, compliance: Compliance) {
                 text = stringResource(compliance.labelRes()),
                 style = MaterialTheme.typography.bodyLarge,
                 color = valueColor,
+                textAlign = TextAlign.End,
             )
         }
     }
+}
+
+/**
+ * A label at the start and its value at the end of the same line; a long
+ * value wraps under itself, aligned to the end.
+ */
+@Composable
+private fun LabelValueRow(label: String, value: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier = Modifier.weight(1f, fill = false),
+            contentAlignment = Alignment.TopEnd,
+        ) {
+            value()
+        }
+    }
+}
+
+/** A name published by Hub'Eau, laid out in its own direction ([asApiText]). */
+@Composable
+private fun ApiValueText(value: String) {
+    Text(
+        text = value,
+        style = MaterialTheme.typography.bodyLarge.asApiText(),
+        textAlign = TextAlign.End,
+    )
 }
 
 private fun Compliance.labelRes(): Int = when (this) {
@@ -654,18 +701,18 @@ private fun Compliance.labelRes(): Int = when (this) {
 @Composable
 private fun SourceNotice(pinned: Boolean) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shape = if (pinned) RectangleShape else MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = stringResource(R.string.sheet_source_notice),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (pinned) Modifier.navigationBarsPadding() else Modifier)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }

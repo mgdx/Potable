@@ -152,8 +152,9 @@
         <item quantity="many">Il y a %d ans</item>
         <item quantity="other">Il y a %d ans</item>
     </plurals>
-    <string name="sheet_distributor">Distributeur : %1$s</string>
-    <string name="sheet_owner">Collectivité responsable : %1$s</string>
+    <string name="sheet_sampled_on_label">Prélevé le</string>
+    <string name="sheet_distributor_label">Distributeur</string>
+    <string name="sheet_owner_label">Collectivité responsable</string>
     <string name="sheet_compliance_title">Conformité</string>
     <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>
     <string name="sheet_show_all_results">Voir tous les paramètres analysés</string>
