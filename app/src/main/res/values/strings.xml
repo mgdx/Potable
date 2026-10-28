@@ -148,10 +148,10 @@
     <string name="sheet_unfollow_description">Following. Tap to stop following this distribution unit</string>
     <!-- Text button under the top bar, when the commune has several units. -->
     <string name="sheet_change_udi">Change distribution unit</string>
-    <!-- Banner. %1$s: date of the last successful update from Hub'Eau, formatted for the language. -->
-    <string name="sheet_data_from">Data from %1$s</string>
-    <!-- Warning banner. %1$s: date of the last successful update from Hub'Eau, formatted for the language. -->
-    <string name="sheet_refresh_failed">Could not refresh — showing data from %1$s</string>
+    <!-- Banner of the sheet, and line of a commune in the settings. %1$s: date the data were last downloaded from Hub'Eau, formatted for the language. Not the date of a sample: say "downloaded", so that it cannot be read as one. -->
+    <string name="sheet_data_from">Data downloaded on %1$s</string>
+    <!-- Warning banner. %1$s: date the data were last downloaded from Hub'Eau, formatted for the language. -->
+    <string name="sheet_refresh_failed">Could not refresh — data downloaded on %1$s</string>
     <string name="sheet_loading">Loading the latest sample…</string>
     <string name="sheet_no_sample">No sample has been published for this distribution unit.</string>
     <!-- Heading of the card that shows the conclusion of the regional health agency, as published, in French. -->
@@ -519,4 +519,8 @@
         <item>AndroidX Room, SQLite — Apache License 2.0</item>
         <item>AndroidX WorkManager — Apache License 2.0</item>
     </string-array>
+    <!-- Under the heading of the conclusion card of the sheet. %1$s: date the sample was taken, formatted for the language ("26 August 2026"); %2$s: how long ago (age_today, age_days…). -->
+    <string name="sheet_conclusion_sampled_on">Sampled on %1$s · %2$s</string>
+    <!-- Same line when several samples were taken on the latest day; the sentence sheet_same_day_samples ("on that day") follows it. %1$s: their date, formatted for the language; %2$s: how long ago (age_today, age_days…). -->
+    <string name="sheet_conclusions_sampled_on">Samples of %1$s · %2$s</string>
 </resources>

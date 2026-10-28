@@ -95,8 +95,8 @@
     <string name="sheet_follow_description">Suivre cette unité de distribution</string>
     <string name="sheet_unfollow_description">Suivie. Appuyez pour ne plus suivre cette unité de distribution</string>
     <string name="sheet_change_udi">Changer d’unité de distribution</string>
-    <string name="sheet_data_from">Données du %1$s</string>
-    <string name="sheet_refresh_failed">Impossible d’actualiser — données du %1$s</string>
+    <string name="sheet_data_from">Données téléchargées le %1$s</string>
+    <string name="sheet_refresh_failed">Impossible d’actualiser — données téléchargées le %1$s</string>
     <string name="sheet_loading">Chargement du dernier prélèvement…</string>
     <string name="sheet_no_sample">Aucun prélèvement n’a été publié pour cette unité de distribution.</string>
     <string name="sheet_conclusion_title">Conclusion sanitaire du dernier prélèvement</string>
@@ -347,4 +347,6 @@
     <string name="about_donate">Potable est un logiciel libre et gratuit, sans publicité ni pistage. S’il vous est utile, vous pouvez soutenir son développement par un don.</string>
     <string name="about_donate_link">Faire un don sur Liberapay</string>
     <string name="about_open_link_failed">Aucune application ne permet d’ouvrir ce lien.</string>
+    <string name="sheet_conclusion_sampled_on">Prélevé le %1$s · %2$s</string>
+    <string name="sheet_conclusions_sampled_on">Prélèvements du %1$s · %2$s</string>
 </resources>
