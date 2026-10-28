@@ -213,9 +213,9 @@ private fun NavHostController.openSheet(target: SheetTarget, names: SheetNames) 
     navigate(Routes.sheet(target.communeCode, target.udiCode, names.communeName, names.udiName))
 }
 
-/** [target]'s names from Potable's own data, or null (unknown, or unreadable). */
+/** [target]'s names from its follow, or null (not followed, or unreadable). */
 private suspend fun sheetNames(container: AppContainer, target: SheetTarget): SheetNames? = try {
-    target.names(container.follows, container.communes)
+    target.names(container.follows)
 } catch (e: CancellationException) {
     throw e
 } catch (_: Exception) {
@@ -234,7 +234,8 @@ private fun NavHostController.openFollows() {
  *
  * [alertTarget], from an alert notification (a sheet, or "My communes" for
  * the summary of several), is opened on top of the search as soon as the
- * graph is there; [onAlertTargetOpened] is then called, once.
+ * graph is there, a sheet only for a followed unit ("My communes" otherwise);
+ * [onAlertTargetOpened] is then called, once.
  */
 @Composable
 fun PotableNavHost(
@@ -246,8 +247,11 @@ fun PotableNavHost(
     LaunchedEffect(alertTarget) {
         when (alertTarget) {
             null -> return@LaunchedEffect
+            // Only a followed unit's sheet opens; else "My communes", where a
+            // unit unfollowed since its notification is visibly missing.
             is SheetTarget -> sheetNames(container, alertTarget)
                 ?.let { navController.openSheet(alertTarget, it) }
+                ?: navController.openFollows()
             FollowsTarget -> navController.openFollows()
         }
         onAlertTargetOpened()

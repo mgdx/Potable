@@ -3,10 +3,7 @@ package io.github.mgdx.potable.alert
 import android.content.Context
 import android.content.Intent
 import io.github.mgdx.potable.MainActivity
-import io.github.mgdx.potable.core.model.Commune
-import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.ui.FakeFollowRepository
-import io.github.mgdx.potable.ui.commune
 import io.github.mgdx.potable.ui.follow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,18 +17,6 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class AlertIntentTest {
     private val context: Context = RuntimeEnvironment.getApplication()
-
-    /** The embedded referential, reduced to Orléans. */
-    private val communes = object : CommuneRepository {
-        private val orleans = commune("45234", "Orléans")
-
-        override suspend fun search(query: String, limit: Int) = listOf(orleans)
-
-        override suspend fun nearest(latitude: Double, longitude: Double, maxDistanceKm: Double?) =
-            orleans
-
-        override suspend fun byCode(code: String): Commune? = orleans.takeIf { it.code == code }
-    }
 
     @Test
     fun `the notification intent opens the main activity on the unit's sheet`() {
@@ -80,24 +65,26 @@ class AlertIntentTest {
                 .putExtra("io.github.mgdx.potable.extra.UDI_NAME", "PARIS CENTRE")
             assertEquals(
                 SheetNames("Commune 45234", "UDI 045000123"),
-                intent.sheetTarget()!!.names(follows, communes),
+                intent.sheetTarget()!!.names(follows),
             )
         }
 
     @Test
-    fun `a unit no longer followed takes the commune's name from the referential`() = runTest {
-        val intent = sheetIntent(context, follow(1))
+    fun `a unit that is not followed has no names, so its sheet does not open`() = runTest {
+        // The forged intent of the acceptance report (A6): Paris, unit EST.
+        val intent = Intent(context, MainActivity::class.java)
+            .setAction(Intent.ACTION_VIEW)
+            .putExtra("io.github.mgdx.potable.extra.COMMUNE", "75056")
+            .putExtra("io.github.mgdx.potable.extra.UDI", "075000227")
             .putExtra("io.github.mgdx.potable.extra.COMMUNE_NAME", "Paris")
-        assertEquals(
-            SheetNames("Orléans", "045000123"),
-            intent.sheetTarget()!!.names(FakeFollowRepository(), communes),
-        )
+        val follows = FakeFollowRepository(listOf(follow(1)))
+        assertNull(intent.sheetTarget()!!.names(follows))
     }
 
     @Test
-    fun `a commune Potable does not know opens nothing`() = runTest {
-        val intent = sheetIntent(context, follow(1, communeCode = "99999"))
-        assertNull(intent.sheetTarget()!!.names(FakeFollowRepository(), communes))
+    fun `a unit no longer followed has no names`() = runTest {
+        val intent = sheetIntent(context, follow(1))
+        assertNull(intent.sheetTarget()!!.names(FakeFollowRepository()))
     }
 
     @Test
