@@ -225,6 +225,16 @@ radioactivité, 3 autres.
   `reference_analyse`, `code_installation_amont` ; dans `communes_udi`,
   `debut_alim`. Redondants avec ce que l'appli affiche déjà, ou sans sens
   pour l'utilisateur.
+- `nom_quartier` de `communes_udi` (sondage du 2026-10-28,
+  `communes_udi?annee=2026`, 49 475 lignes) : la valeur la plus fréquente
+  est **`-`** (25 561 lignes : Brest 29019, Montpellier 34172…), puis
+  « totalité » sous diverses casses ; `_` une fois ; aucune autre valeur sans
+  lettre ni chiffre, aucune chaîne vide. `UdiSelection` ne montre pas de
+  quartier fait **sans lettre ni chiffre** (tiret, soulignement, espaces),
+  comme pour « totalité » et le vide. Restent affichés tels quels d'autres
+  équivalents de « toute la commune » (« en totalité » 843 lignes,
+  « commune » 419, « commune entière » 276, « ensemble » 208, « toute la
+  commune » 207…).
 
 ## Seuils : `limite_qualite_parametre` et `reference_qualite_parametre`
 

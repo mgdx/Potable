@@ -13,7 +13,8 @@ object UdiSelection {
      * the commune in an earlier year but no longer does is dropped, SPEC §15),
      * then one [Udi] per `code_reseau`. The name is the network's name that
      * year; the districts of a network listed several times are joined with
-     * ", ", without duplicates; "totalité" or an empty district gives null.
+     * ", ", without duplicates; "totalité", an empty district or one without
+     * any letter or digit ("-") gives null.
      * Rows whose `annee` is missing or unreadable are ignored.
      *
      * No UDI gives [UdiChoice.None], one [UdiChoice.Single], several
@@ -40,8 +41,12 @@ object UdiSelection {
         .thenBy { it.name }
         .thenBy { it.code }
 
+    /**
+     * A district with neither letter nor digit is a placeholder, not a name:
+     * Hub'Eau publishes "-" for most units (and once "_").
+     */
     private fun district(group: List<UdiRow>): String? = group
-        .mapNotNull { it.nomQuartier?.trim()?.takeIf(String::isNotEmpty) }
+        .mapNotNull { it.nomQuartier?.trim()?.takeIf { name -> name.any(Char::isLetterOrDigit) } }
         .filter { TextNormalizer.normalize(it) != WHOLE_COMMUNE }
         .distinct()
         .joinToString(", ")
