@@ -3,7 +3,6 @@ package io.github.mgdx.potable.alert
 import android.content.Context
 import android.content.Intent
 import io.github.mgdx.potable.MainActivity
-import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 
@@ -112,13 +111,12 @@ fun Intent.sheetTarget(): SheetTarget? {
 }
 
 /**
- * The names the sheet is shown under: the follow's (a notification is only
- * ever about a followed unit), else, for a unit no longer followed, the
- * commune's name in the embedded referential and the unit's code; null, and
- * nothing opens, for a commune Potable does not know.
+ * The names the sheet is shown under: the follow's, a notification being only
+ * ever about a followed unit; null for a unit that is not followed, whose
+ * sheet does not open. The main activity is exported: any application can
+ * send these codes, and only a followed unit may open its sheet (and enter the
+ * recent units) this way. A unit no longer followed when its notification is
+ * touched leads to "My communes" instead.
  */
-suspend fun SheetTarget.names(follows: FollowRepository, communes: CommuneRepository): SheetNames? {
-    follows.find(communeCode, udiCode)?.let { return SheetNames(it.communeName, it.udiName) }
-    val commune = communes.byCode(communeCode) ?: return null
-    return SheetNames(commune.name, udiCode)
-}
+suspend fun SheetTarget.names(follows: FollowRepository): SheetNames? =
+    follows.find(communeCode, udiCode)?.let { SheetNames(it.communeName, it.udiName) }

@@ -71,6 +71,26 @@ class UdiSelectionTest {
     }
 
     @Test
+    fun `a district without letter or digit gives no district`() {
+        // Brest (29019) and Montpellier (34172) publish "-".
+        for (district in listOf("-", " - ", "--", "_", "–", "  ")) {
+            val choice = UdiSelection.choose(listOf(row("R1", "RESEAU", "2026", district)))
+            assertEquals(UdiChoice.Single(Udi("R1", "RESEAU", null, 2026)), choice)
+        }
+    }
+
+    @Test
+    fun `a placeholder district is left out of the joined districts`() {
+        val rows = listOf(
+            row("R1", "RESEAU", "2026", "-"),
+            row("R1", "RESEAU", "2026", "zone distribution 1"),
+            row("R1", "RESEAU", "2026", "8e"),
+        )
+        val expected = Udi("R1", "RESEAU", "zone distribution 1, 8e", 2026)
+        assertEquals(UdiChoice.Single(expected), UdiSelection.choose(rows))
+    }
+
+    @Test
     fun `a row with an unreadable year is ignored`() {
         val rows = listOf(row("R1", "A", "2026"), row("R2", "B", null), row("R3", "C", "deux"))
         assertEquals(UdiChoice.Single(Udi("R1", "A", null, 2026)), UdiSelection.choose(rows))
