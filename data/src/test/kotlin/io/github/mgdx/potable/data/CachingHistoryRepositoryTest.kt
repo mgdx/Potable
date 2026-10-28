@@ -321,16 +321,30 @@ class CachingHistoryRepositoryTest {
         assertEquals(listOf("P1"), cached.points.map { it.sampleCode })
     }
 
+    private suspend inline fun <reified E : DataError> assertFails(block: () -> Unit) {
+        try {
+            block()
+            fail("expected ${E::class.simpleName}")
+        } catch (e: DataError) {
+            if (e !is E) throw AssertionError("expected ${E::class.simpleName}, got $e", e)
+        }
+    }
+
     @Test
-    fun `a failed request for the older days returns the cache`() = runTest {
+    fun `a failed request for the older days is thrown, not the shorter cache`() = runTest {
         givenHistory()
         val oneYear = LocalDate.parse("2025-10-24")
         series(oneYear)
         timeline(oneYear)
 
+        // A wider window that cannot be fetched (A2): never the year cached
+        // under the three years asked for.
         network.failure = DataError.Network(IOException("offline"))
-        assertEquals(listOf("P2"), series()?.points?.map { it.sampleCode })
-        assertEquals(listOf("S2"), timeline().map { it.code })
+        assertFails<DataError.Network> { series() }
+        assertFails<DataError.Network> { timeline() }
+        // The window the cache covers still opens offline.
+        assertEquals(listOf("P2"), series(oneYear)?.points?.map { it.sampleCode })
+        assertEquals(listOf("S2"), timeline(oneYear).map { it.code })
 
         // Nothing was joined: the next try asks for the older days again.
         network.failure = null
@@ -385,18 +399,48 @@ class CachingHistoryRepositoryTest {
     }
 
     @Test
-    fun `a network error returns the cache`() = runTest {
+    fun `a network error on a stale cache covering the window returns the cache`() = runTest {
         followOrleans()
         givenHistory()
         val fetched = series()
         val fetchedTimeline = timeline()
 
+        // The next day, offline: the history stays readable (SPEC §7).
+        clock.now = Instant.parse("2026-10-25T08:00:00Z")
         network.failure = DataError.Network(IOException("offline"))
-        assertEquals(fetched, series(force = true))
-        assertEquals(fetchedTimeline, timeline(force = true))
-        // Even for a window the cache does not fully cover: what is there.
-        assertEquals(fetched, series(LocalDate.parse("2016-10-24")))
-        assertEquals(2, timeline(LocalDate.parse("2016-10-24")).size)
+        assertEquals(fetched, series())
+        assertEquals(fetchedTimeline, timeline())
+        assertEquals(
+            listOf("P2"),
+            series(LocalDate.parse("2025-10-24"))?.points?.map {
+                it.sampleCode
+            },
+        )
+        // A window the cache does not cover is not answered by a shorter one (A2).
+        assertFails<DataError.Network> { series(LocalDate.parse("2016-10-24")) }
+        assertFails<DataError.Network> { timeline(LocalDate.parse("2016-10-24")) }
+    }
+
+    @Test
+    fun `a forced refresh that fails is thrown, cache or not`() = runTest {
+        followOrleans()
+        givenHistory()
+        val fetched = series()
+        val fetchedTimeline = timeline()
+
+        // A3: the refresh asked for by the user fails, and says so.
+        network.failure = DataError.Timeout(IOException("stalled"))
+        assertFails<DataError.Timeout> { series(force = true) }
+        assertFails<DataError.Timeout> { timeline(force = true) }
+        clock.now = Instant.parse("2026-10-25T08:00:00Z")
+        assertFails<DataError.Timeout> { series(force = true) }
+        assertFails<DataError.Timeout> { timeline(force = true) }
+
+        // The cache is left as it was.
+        network.failure = null
+        clock.now = Instant.parse("2026-10-24T09:00:00Z")
+        assertEquals(fetched, series())
+        assertEquals(fetchedTimeline, timeline())
     }
 
     @Test

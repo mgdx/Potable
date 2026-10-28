@@ -32,8 +32,13 @@ import java.time.ZoneOffset
  * (Europe/Paris); otherwise the cache answers. When [since] goes back before
  * what a cache of today covers, only the missing older days are asked for
  * ([HistoryRepository.parameterSeriesBefore]) and joined to it: the sheet's
- * twelve months, then the timeline's three years, cost one year and two. A failed fetch with something cached returns the cache
- * (possibly shorter than asked); without cache, the [DataError] is thrown.
+ * twelve months, then the timeline's three years, cost one year and two.
+ *
+ * A failed fetch throws its [DataError], except for an ordinary opening
+ * (not [force]) whose whole window the cache covers: the cache answers, so
+ * that the history stays readable offline (SPEC §7). The answer is thus
+ * never shorter than asked, and a refresh that fails says so
+ * (`docs/decisions.md`, 2026-10-28).
  * After every successful fetch the retention purge runs on the history
  * tables.
  *
@@ -61,8 +66,9 @@ class CachingHistoryRepository(
         val key = parameterCodes.sorted().joinToString(",")
         return fetching.withLock {
             val cached = history.series(communeCode, udiCode, key)
+            val covers = cached != null && cached.depuis <= since.toEpochDay()
             if (cached != null && !force && fetchedToday(cached.lastSuccess)) {
-                if (cached.depuis <= since.toEpochDay()) return@withLock cachedSeries(cached, since)
+                if (covers) return@withLock cachedSeries(cached, since)
                 return@withLock extendSeries(cached, parameterCodes, since)
             }
             val generation = database.cacheGeneration.get()
@@ -70,7 +76,8 @@ class CachingHistoryRepository(
                 try {
                     network.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
                 } catch (e: DataError) {
-                    if (cached == null) throw e
+                    // Offline opening of a covered window: the cache, whole.
+                    if (force || !covers) throw e
                     return@withLock cachedSeries(cached, since)
                 }
             storeSeries(communeCode, udiCode, key, since, cached, fetched, generation)
@@ -88,10 +95,9 @@ class CachingHistoryRepository(
     ): List<SampleSummary> {
         return fetching.withLock {
             val sync = history.timelineSync(communeCode, udiCode)
+            val covers = sync != null && sync.depuis <= since.toEpochDay()
             if (sync != null && !force && fetchedToday(sync.lastSuccess)) {
-                if (sync.depuis <= since.toEpochDay()) {
-                    return@withLock cachedTimeline(communeCode, udiCode, since)
-                }
+                if (covers) return@withLock cachedTimeline(communeCode, udiCode, since)
                 return@withLock extendTimeline(sync, since)
             }
             val generation = database.cacheGeneration.get()
@@ -99,7 +105,8 @@ class CachingHistoryRepository(
                 try {
                     network.sampleTimeline(communeCode, udiCode, since, force)
                 } catch (e: DataError) {
-                    if (sync == null) throw e
+                    // Offline opening of a covered window: the cache, whole.
+                    if (force || !covers) throw e
                     return@withLock cachedTimeline(communeCode, udiCode, since)
                 }
             storeTimeline(communeCode, udiCode, since, sync, fetched, generation)
@@ -110,7 +117,9 @@ class CachingHistoryRepository(
     /**
      * A series fetched today that starts after [since]: asks only for the
      * days before its coverage and joins them to it, in the cache and in
-     * the answer. A failed request returns the cache alone, as elsewhere.
+     * the answer. A failed request throws its [DataError]: the cache alone
+     * would be shorter than asked.
+     * @throws DataError
      */
     private suspend fun extendSeries(
         cached: SeriesEntity,
@@ -120,17 +129,13 @@ class CachingHistoryRepository(
         val until = LocalDate.ofEpochDay(cached.depuis)
         val generation = database.cacheGeneration.get()
         val older =
-            try {
-                network.parameterSeriesBefore(
-                    cached.communeCode,
-                    cached.udiCode,
-                    parameterCodes,
-                    since,
-                    until,
-                )
-            } catch (_: DataError) {
-                return cachedSeries(cached, since)
-            }
+            network.parameterSeriesBefore(
+                cached.communeCode,
+                cached.udiCode,
+                parameterCodes,
+                since,
+                until,
+            )
         val from = since.startUtc()
         val olderPoints = older?.points.orEmpty()
             .filter { !it.date.isBefore(from) && it.date.isBefore(until.startUtc()) }
@@ -193,12 +198,7 @@ class CachingHistoryRepository(
         val (communeCode, udiCode) = sync.communeCode to sync.udiCode
         val until = LocalDate.ofEpochDay(sync.depuis)
         val generation = database.cacheGeneration.get()
-        val older =
-            try {
-                network.sampleTimelineBefore(communeCode, udiCode, since, until)
-            } catch (_: DataError) {
-                return cachedTimeline(communeCode, udiCode, since)
-            }
+        val older = network.sampleTimelineBefore(communeCode, udiCode, since, until)
         val from = since.startUtc()
         val olderSamples = older
             .filter { !it.date.isBefore(from) && it.date.isBefore(until.startUtc()) }
