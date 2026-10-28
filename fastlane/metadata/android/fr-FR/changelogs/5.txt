@@ -1,0 +1,6 @@
+• Nouvelle apparence aux couleurs du logo, fiche regroupée en cartes.
+• Substances surveillées : dernière mesure des PFAS, pesticides, TFA, chlorure de vinyle, plomb, arsenic et perchlorate.
+• La conclusion indique la date du prélèvement.
+• Installation en amont et mesures sur place affichées.
+• L’historique signale quand il ne peut être téléchargé ; un blocage de Hub'Eau est relancé une fois.
+• Avertissement de premier lancement balayable ; texte justifié avec césure.

@@ -1,0 +1,6 @@
+• New look in the logo colours, with the sheet grouped into cards.
+• Watched substances: latest measure of PFAS, pesticides, TFA, vinyl chloride, lead, arsenic and perchlorate.
+• The conclusion now shows when the sample was taken.
+• Upstream facility and on-site measures shown.
+• History says when it cannot be fetched; Hub'Eau stalls are retried once.
+• Swipeable first-launch notice; justified, hyphenated text.
