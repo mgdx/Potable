@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -21,10 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.R
+import kotlinx.coroutines.launch
 
 /**
  * Shows the first-launch notice (SPEC §14) until it is acknowledged, then
@@ -56,12 +56,17 @@ fun DisclaimerGate(container: AppContainer, content: @Composable () -> Unit) {
 
 @Composable
 private fun DisclaimerScreen(onAccept: () -> Unit) {
-    // Two pages: the SPEC §14 notice, then what the alerts do (SPEC §5 F7).
-    var page by rememberSaveable { mutableIntStateOf(0) }
-    BackHandler(enabled = page > 0) { page-- }
+    // Two pages, swiped or turned by the button: the SPEC §14 notice, then
+    // what the alerts do (SPEC §5 F7). The pager state is saved (rotation,
+    // process death); it lays the pages out in the layout direction (RTL).
+    val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
+    val scope = rememberCoroutineScope()
+    val page = pagerState.currentPage
+    BackHandler(enabled = page > 0) {
+        scope.launch { pagerState.animateScrollToPage(page - 1) }
+    }
     val isLast = page == PAGE_COUNT - 1
     val button = if (isLast) R.string.disclaimer_accept else R.string.disclaimer_next
-    val title = if (page == 0) R.string.disclaimer_title else R.string.intro_alerts_title
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -76,7 +81,13 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
                 ) {
                     PageIndicator(page = page, count = PAGE_COUNT)
                     Button(
-                        onClick = { if (isLast) onAccept() else page++ },
+                        onClick = {
+                            if (isLast) {
+                                onAccept()
+                            } else {
+                                scope.launch { pagerState.animateScrollToPage(page + 1) }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(button))
@@ -85,12 +96,18 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
             }
         },
     ) { innerPadding ->
-        // Keyed on the page so that the second one starts scrolled to the top.
-        key(page) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalAlignment = Alignment.Top,
+        ) { index ->
+            // Each page scrolls on its own, so the second one starts at the top.
+            val title = if (index == 0) R.string.disclaimer_title else R.string.intro_alerts_title
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -100,7 +117,7 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.semantics { heading() },
                 )
-                if (page == 0) DisclaimerPoints() else AlertPoints()
+                if (index == 0) DisclaimerPoints() else AlertPoints()
             }
         }
     }
