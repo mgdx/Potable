@@ -54,6 +54,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
@@ -93,6 +94,13 @@ private const val FRENCH_LANGUAGE_TAG = "fr-FR"
  * screen at 200 % (docs/decisions.md).
  */
 private const val PINNED_NOTICE_MAX_FONT_SCALE = 1.3f
+
+/**
+ * Above this font scale, running text is no longer justified but aligned on
+ * its start: a column of a few words per line leaves gaps between them that
+ * hyphenation cannot fill (docs/decisions.md).
+ */
+private const val JUSTIFIED_MAX_FONT_SCALE = 1.3f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -294,9 +302,9 @@ private fun SampleContent(
     ) {
         val sample = samples.first()
         if (samples.size == 1) {
-            ConclusionCard(sample.conclusion)
+            ConclusionCard(sample, age)
         } else {
-            SameDayConclusionsCard(samples, onShowAllResults)
+            SameDayConclusionsCard(samples, age, onShowAllResults)
             Text(
                 text = stringResource(R.string.sheet_details_of_latest),
                 style = MaterialTheme.typography.bodySmall,
@@ -587,13 +595,38 @@ private fun formatDay(day: LocalDate): String {
     return remember(day, locale) { localizedDateFormatter(FormatStyle.LONG, locale).format(day) }
 }
 
-/** Running text justified, words hyphenated in the language of the text. */
-private fun TextStyle.justified(): TextStyle =
-    copy(textAlign = TextAlign.Justify, hyphens = Hyphens.Auto)
+/**
+ * Running text justified, words hyphenated in the language of the text.
+ * [Hyphens.Auto] needs [LineBreak.Paragraph]: the default, [LineBreak.Simple],
+ * is Android's simple break strategy, which adds no automatic hyphen. Above
+ * [JUSTIFIED_MAX_FONT_SCALE], the text is aligned on its start instead.
+ */
+@Composable
+private fun TextStyle.justified(): TextStyle {
+    val justify = LocalDensity.current.fontScale <= JUSTIFIED_MAX_FONT_SCALE
+    return copy(
+        textAlign = if (justify) TextAlign.Justify else TextAlign.Start,
+        lineBreak = LineBreak.Paragraph,
+        hyphens = Hyphens.Auto,
+    )
+}
+
+/**
+ * When the sample(s) of a conclusion card were taken, with their age (SPEC §5
+ * F3), right under its heading, so that the first screen dates the conclusion.
+ */
+@Composable
+private fun SampledOnLine(textRes: Int, date: Instant, age: RelativeAge) {
+    Text(
+        text = stringResource(textRes, formatDate(date), relativeAgeText(age)),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
 
 /** The ARS conclusion, verbatim: never translated, summarised or scored (SPEC §14). */
 @Composable
-private fun ConclusionCard(conclusion: String?) {
+private fun ConclusionCard(sample: Sample, age: RelativeAge) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -611,7 +644,8 @@ private fun ConclusionCard(conclusion: String?) {
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
             )
-            ConclusionText(conclusion)
+            SampledOnLine(R.string.sheet_conclusion_sampled_on, sample.date, age)
+            ConclusionText(sample.conclusion)
         }
     }
 }
@@ -622,7 +656,11 @@ private fun ConclusionCard(conclusion: String?) {
  * do not tell them apart, and each with access to its results.
  */
 @Composable
-private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sample) -> Unit) {
+private fun SameDayConclusionsCard(
+    samples: List<Sample>,
+    age: RelativeAge,
+    onShowAllResults: (Sample) -> Unit,
+) {
     val times = remember(samples) { distinctSampleTimes(samples.map { it.date }) }
     val locale = currentLocale()
     Card(
@@ -642,6 +680,7 @@ private fun SameDayConclusionsCard(samples: List<Sample>, onShowAllResults: (Sam
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },
             )
+            SampledOnLine(R.string.sheet_conclusions_sampled_on, samples.first().date, age)
             Text(
                 text = pluralStringResource(
                     R.plurals.sheet_same_day_samples,
@@ -807,7 +846,8 @@ private fun ComplianceRow(labelRes: Int, compliance: Compliance) {
 
 /**
  * A label at the start and its value at the end of the same line; a long
- * value wraps under itself, aligned to the end.
+ * value wraps under itself, aligned to the end. The value fills its half of
+ * the line, so that a short one sits at the end too, not just after the label.
  */
 @Composable
 private fun LabelValueRow(label: String, value: @Composable () -> Unit) {
@@ -822,7 +862,7 @@ private fun LabelValueRow(label: String, value: @Composable () -> Unit) {
             modifier = Modifier.weight(1f),
         )
         Box(
-            modifier = Modifier.weight(1f, fill = false),
+            modifier = Modifier.weight(1f),
             contentAlignment = Alignment.TopEnd,
         ) {
             value()
