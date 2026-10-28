@@ -1,7 +1,9 @@
 package io.github.mgdx.potable.ui.history
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -53,9 +55,15 @@ class ParameterHistoryViewModel(
     private val udiCode: String,
     private val parameterCodes: Set<String>,
     private val clock: Clock,
+    private val savedState: SavedStateHandle,
     slowThreshold: Duration = SLOW_LOAD_THRESHOLD,
 ) : ViewModel() {
-    private val _years = MutableStateFlow<Int?>(null)
+    // The window picked on this screen outlives the death of the process;
+    // otherwise the screen would come back on the setting while a zoom of the
+    // chart, saved by the UI, still spans the old window.
+    private val _years = MutableStateFlow(
+        savedState.get<Int>(YEARS_KEY)?.takeIf { it in AppPreferences.YEAR_CHOICES },
+    )
 
     /** The window, in years; null until the setting is read. */
     val years: StateFlow<Int?> = _years.asStateFlow()
@@ -80,18 +88,22 @@ class ParameterHistoryViewModel(
     private var loadJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            val setting = try {
-                preferences.historyYears.first()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                AppPreferences.DEFAULT_YEARS
-            }
-            if (_years.value == null) {
-                _years.value = setting.takeIf { it in AppPreferences.YEAR_CHOICES }
-                    ?: AppPreferences.DEFAULT_YEARS
-                load(force = false)
+        if (_years.value != null) {
+            load(force = false)
+        } else {
+            viewModelScope.launch {
+                val setting = try {
+                    preferences.historyYears.first()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    AppPreferences.DEFAULT_YEARS
+                }
+                if (_years.value == null) {
+                    _years.value = setting.takeIf { it in AppPreferences.YEAR_CHOICES }
+                        ?: AppPreferences.DEFAULT_YEARS
+                    load(force = false)
+                }
             }
         }
     }
@@ -100,6 +112,7 @@ class ParameterHistoryViewModel(
     fun selectYears(years: Int) {
         if (years !in AppPreferences.YEAR_CHOICES || years == _years.value) return
         _years.value = years
+        savedState[YEARS_KEY] = years
         load(force = false)
     }
 
@@ -164,6 +177,8 @@ class ParameterHistoryViewModel(
     private fun today(): LocalDate = clock.instant().atZone(FRANCE_ZONE).toLocalDate()
 
     companion object {
+        private const val YEARS_KEY = "years"
+
         fun factory(
             container: AppContainer,
             communeCode: String,
@@ -178,6 +193,7 @@ class ParameterHistoryViewModel(
                     udiCode,
                     parameterCodes,
                     Clock.systemUTC(),
+                    createSavedStateHandle(),
                 )
             }
         }

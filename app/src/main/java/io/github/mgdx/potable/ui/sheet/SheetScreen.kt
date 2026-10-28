@@ -96,11 +96,12 @@ private const val FRENCH_LANGUAGE_TAG = "fr-FR"
 private const val PINNED_NOTICE_MAX_FONT_SCALE = 1.3f
 
 /**
- * Above this font scale, running text is no longer justified but aligned on
- * its start: a column of a few words per line leaves gaps between them that
- * hyphenation cannot fill (docs/decisions.md).
+ * Above this font scale (the system's 115 % step), running text is no longer
+ * justified but aligned on its start: a column of a few words per line leaves
+ * gaps between them that hyphenation cannot fill; at 130 % on a 1080 px phone
+ * the conclusions kept gaps of about three spaces (docs/decisions.md).
  */
-private const val JUSTIFIED_MAX_FONT_SCALE = 1.3f
+private const val JUSTIFIED_MAX_FONT_SCALE = 1.15f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

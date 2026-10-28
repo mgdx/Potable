@@ -522,5 +522,5 @@
     <!-- Under the heading of the conclusion card of the sheet. %1$s: date the sample was taken, formatted for the language ("26 August 2026"); %2$s: how long ago (age_today, age_days…). -->
     <string name="sheet_conclusion_sampled_on">Sampled on %1$s · %2$s</string>
     <!-- Same line when several samples were taken on the latest day; the sentence sheet_same_day_samples ("on that day") follows it. %1$s: their date, formatted for the language; %2$s: how long ago (age_today, age_days…). -->
-    <string name="sheet_conclusions_sampled_on">Samples of %1$s · %2$s</string>
+    <string name="sheet_conclusions_sampled_on">Samples from %1$s · %2$s</string>
 </resources>

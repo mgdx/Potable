@@ -204,6 +204,19 @@ const val MIN_WINDOW_DAYS = 14.0
 fun fullWindow(time: TimeAxis): ChartWindow =
     ChartWindow(time.startDay.toDouble(), time.endDay.toDouble())
 
+/**
+ * [window] when it lies within [time], the whole of [time] otherwise: a
+ * window saved for another period, restored after the death of the process,
+ * would squeeze the measures into a corner of the plot.
+ */
+fun windowWithin(window: ChartWindow, time: TimeAxis): ChartWindow {
+    val full = fullWindow(time)
+    val inside = window.start >= full.start - WINDOW_EPSILON &&
+        window.end <= full.end + WINDOW_EPSILON &&
+        window.span > 0.0
+    return if (inside) window else full
+}
+
 /** True when [window] shows less than the whole of [time]. */
 fun isZoomed(window: ChartWindow, time: TimeAxis): Boolean =
     window.span < fullWindow(time).span - WINDOW_EPSILON

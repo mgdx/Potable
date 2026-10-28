@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.ui.timeline
 
+import androidx.lifecycle.SavedStateHandle
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SampleSummary
@@ -96,14 +97,16 @@ class TimelineViewModelTest {
         physicochemicalReferences = Compliance.NON_COMPLIANT,
     )
 
-    private fun viewModel(years: Int = 3) = TimelineViewModel(
-        history,
-        YearsPreferences(years),
-        "45234",
-        "045000123",
-        clock,
-        slowThreshold = 10.seconds,
-    )
+    private fun viewModel(years: Int = 3, savedState: SavedStateHandle = SavedStateHandle()) =
+        TimelineViewModel(
+            history,
+            YearsPreferences(years),
+            "45234",
+            "045000123",
+            clock,
+            savedState,
+            slowThreshold = 10.seconds,
+        )
 
     @Test
     fun `the window starts at the setting, counted back from today in France`() =
@@ -119,6 +122,20 @@ class TimelineViewModelTest {
             // Newest first, whatever the order received.
             assertEquals(listOf("B", "A"), loaded.entries.map { it.sample.code })
         }
+
+    @Test
+    fun `the window picked outlives the death of the process`() = runTest(main.dispatcher) {
+        repeat(3) { history.answers += Result.success(listOf(older, newer)) }
+        val savedState = SavedStateHandle()
+        viewModel(savedState = savedState).selectYears(10)
+        advanceUntilIdle()
+        history.calls.clear()
+        // A new view model over the same saved state, as after the process died.
+        val restored = viewModel(savedState = savedState)
+        advanceUntilIdle()
+        assertEquals(10, restored.years.value)
+        assertEquals(listOf(LocalDate.of(2016, 10, 25) to false), history.calls)
+    }
 
     @Test
     fun `only the compliances published as non-compliant are listed`() = runTest(main.dispatcher) {
