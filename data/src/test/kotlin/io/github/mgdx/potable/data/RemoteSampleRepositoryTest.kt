@@ -124,7 +124,8 @@ class RemoteSampleRepositoryTest {
 
     @Test(expected = DataError.Http::class)
     fun sample_propagatesErrors() = runTest {
-        server.enqueue(MockResponse.Builder().code(503).build())
+        // Twice: the client retries a 503 once.
+        repeat(2) { server.enqueue(MockResponse.Builder().code(503).build()) }
 
         repository.sample("45234", "045000474", "P1")
     }

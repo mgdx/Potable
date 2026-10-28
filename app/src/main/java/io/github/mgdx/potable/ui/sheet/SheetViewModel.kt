@@ -24,6 +24,8 @@ import io.github.mgdx.potable.ui.common.SLOW_LOAD_THRESHOLD
 import io.github.mgdx.potable.ui.common.slowLoading
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +36,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -346,7 +350,7 @@ class SheetViewModel(
     }
 
     /**
-     * Reads, substance after substance, the series of every
+     * Reads, [WATCHED_REQUESTS] substances at a time, the series of every
      * [WatchedSubstance] over the history window, from the history cache
      * when it is fresh, and keeps the latest measure of each
      * ([WatchedSubstances.latest]). Only once per newest sample [sampleCode]
@@ -364,18 +368,37 @@ class SheetViewModel(
             val since = clock.instant().atZone(FRANCE_ZONE).toLocalDate()
                 .minusYears(years.toLong())
             recorded?.join()
+            // A request held by Hub'Eau then delays only its own substance
+            // (docs/hubeau-api.md, "Blocages"); the bound spares the API.
+            val gate = Semaphore(WATCHED_REQUESTS)
+            val reads = WatchedSubstance.entries.map { substance ->
+                async {
+                    gate.withPermit {
+                        try {
+                            Result.success(
+                                history.parameterSeries(
+                                    communeCode,
+                                    udiCode,
+                                    substance.codes,
+                                    since,
+                                ),
+                            )
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Result.failure(e)
+                        }
+                    }
+                }
+            }.awaitAll()
             val series = LinkedHashMap<WatchedSubstance, ParameterSeries?>()
             var error: LoadError? = null
-            for (substance in WatchedSubstance.entries) {
-                try {
-                    series[substance] =
-                        history.parameterSeries(communeCode, udiCode, substance.codes, since)
-                } catch (e: DataError) {
-                    error = error ?: LoadError.from(e)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    error = error ?: LoadError.UNEXPECTED
+            for ((substance, read) in WatchedSubstance.entries.zip(reads)) {
+                val e = read.exceptionOrNull()
+                when {
+                    e == null -> series[substance] = read.getOrNull()
+                    e is DataError -> error = error ?: LoadError.from(e)
+                    else -> error = error ?: LoadError.UNEXPECTED
                 }
             }
             val measures = WatchedSubstances.latest(series)
@@ -418,6 +441,9 @@ class SheetViewModel(
     companion object {
         /** The period of [recentUnfavourable]. */
         const val RECENT_MONTHS = 12L
+
+        /** Series of [WatchedSubstance] read at once ([loadWatched]). */
+        const val WATCHED_REQUESTS = 3
 
         fun factory(
             container: AppContainer,

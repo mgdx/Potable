@@ -11,6 +11,8 @@ import io.github.mgdx.potable.data.local.MutableClock
 import io.github.mgdx.potable.data.local.PotableDatabase
 import io.github.mgdx.potable.data.local.inMemoryDatabase
 import io.github.mgdx.potable.data.preferences.AppPreferences
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -18,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -574,6 +577,38 @@ class CachingHistoryRepositoryTest {
         // A window beyond the retention cannot come from the cache.
         series(tenYears)
         assertEquals(2, network.seriesCalls)
+    }
+
+    @Test
+    fun `a stalled fetch does not hold up another series nor the timeline`() = runTest {
+        givenHistory()
+        val stalled = CompletableDeferred<Unit>()
+        val stalling = object : HistoryRepository by network {
+            override suspend fun parameterSeries(
+                communeCode: String,
+                udiCode: String,
+                parameterCodes: Set<String>,
+                since: LocalDate,
+                force: Boolean,
+            ): ParameterSeries? {
+                if ("1340" in parameterCodes) stalled.await()
+                return network.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
+            }
+        }
+        val repository = CachingHistoryRepository(stalling, database, preferences, clock)
+
+        val blocked = async { repository.parameterSeries("45234", UDI, setOf("1340"), threeYears) }
+        // A4: Hub'Eau holds the nitrates (a watched substance); the pH and
+        // the timeline asked meanwhile answer without waiting for them.
+        assertEquals(
+            2,
+            repository.parameterSeries("45234", UDI, setOf("1302"), threeYears)?.points?.size,
+        )
+        assertEquals(2, repository.sampleTimeline("45234", UDI, threeYears).size)
+        assertTrue(blocked.isActive)
+
+        stalled.complete(Unit)
+        assertEquals(2, blocked.await()?.points?.size)
     }
 
     @Test

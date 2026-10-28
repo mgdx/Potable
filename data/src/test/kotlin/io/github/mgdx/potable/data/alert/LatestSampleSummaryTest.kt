@@ -102,7 +102,8 @@ class LatestSampleSummaryTest {
 
     @Test
     fun `an HTTP error is reported as such`() = runTest {
-        server.enqueue(MockResponse.Builder().code(503).build())
+        // Twice: the client retries a 503 once.
+        repeat(2) { server.enqueue(MockResponse.Builder().code(503).build()) }
 
         try {
             client.latestSampleSummary("45234", "045000474")

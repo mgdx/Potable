@@ -105,7 +105,7 @@ class RemoteHistoryRepository(
     companion object {
         /**
          * Rows per request. 5 000 rows answer in about 10 s; one request of
-         * 20 000 took up to 60 s, the client's read timeout.
+         * 20 000 took up to 60 s, beyond the client's read timeout.
          */
         const val PAGE_SIZE = 5_000
 

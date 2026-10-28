@@ -17,8 +17,8 @@ Ce fichier décrit ce que l'API **fait**, pas ce que sa documentation annonce ;
 | Requête trop lente côté serveur | `503`, page HTML d'Apache, après **≈ 120 s** |
 
 Conséquences pour le client : `206` est un succès ; on arrête de paginer sur
-`next == null` **ou** sur une page vide ; un délai de lecture de 60 s coupe
-avant le `503`.
+`next == null` **ou** sur une page vide ; le délai de lecture (15 ou 30 s)
+coupe avant le `503`, et la requête est relancée une fois (« Blocages »).
 
 ## Taille de page
 
@@ -101,7 +101,9 @@ Requêtes ciblées (une commune, `size` ≤ 500) : 0,2 à 1 s. `size=20000` avec
 `fields` réduit : 5 à 8 s. Un filtre de date sur une commune entière
 (`date_min=2026-01-01`, sans `date_max`) a donné un `503` au bout de 120 s, alors
 que la même fenêtre bornée des deux côtés répondait en 0,2 s. Le client fixe
-connexion 15 s, lecture 60 s, et ne réessaie jamais.
+connexion 15 s ; lecture 15 s pour les petites requêtes, 30 s pour les pages de
+plus de 500 lignes ; et relance **une** fois une requête retenue (voir
+« Blocages »).
 
 ## Longueur d'URL
 
@@ -461,3 +463,42 @@ conditionnelle (« au-delà », « en cas de », « si »). Sur le corpus, le te
 seul signale 661 prélèvements sans code `N` ; les 61 conclusions distinctes relues correspondent toutes à
 une non-conformité ou une restriction publiée. Les cas ci-dessus sont les
 tests de `UnfavourableTest`.
+
+## Blocages (mesures du 2026-10-28)
+
+Mesures de la recette du 2026-10-28 (01:17-02:05), depuis un PC au `curl` et
+sur un Fairphone 3 : environ **4 à 5 %** des requêtes `resultats_dis` (6 sur
+≈ 130 au `curl`, 1 actualisation sur 25 dans l'application) ne reçoivent
+**aucun octet** après une connexion TLS normale (0,16 s), jusqu'à un `503`
+HTML d'Apache à 120 s. Ce n'est pas un cache froid : la même URL répétée chaque
+seconde bloque au 16ᵉ et au 26ᵉ essai sur 40, et **la même requête relancée
+aussitôt répond en moins de 3 s**. Les blocages viennent par vagues espacées
+d'1 à 2 min ; ils touchent toutes les formes de requête.
+
+Réponse du client (`HubEauClient`) :
+
+| Requête | Délai de lecture | Relance | Pire attente avant erreur |
+|---|---|---|---|
+| `communes_udi`, `resultats_dis` de `size` ≤ 500 (dernier prélèvement, rapports, alertes) | 15 s | une, aussitôt, sur délai dépassé ou `503` | ≈ 30 s |
+| `resultats_dis` de `size` > 500 (pages de 5 000 lignes de l'historique) | 30 s | idem | ≈ 60 s |
+
+Les petites requêtes répondent en 0,2 à 1,6 s (17 s vues une fois pendant une
+panne) ; une page de 5 000 lignes, premier octet en 7 à 11 s au pire mesuré.
+Un blocage coûte donc 15 s (petite requête) ou 30 s (page d'historique) plus la
+durée de la relance, au lieu de 60 s puis une erreur. Une relance seulement,
+jamais en boucle : un second échec est rendu tel quel (`DataError.Timeout`,
+« Hub'Eau a mis trop de temps », reste exact). Les autres erreurs (réseau,
+`4xx`, `500`) ne sont pas relancées. Pour la tâche d'alerte, une unité dont la
+requête est retenue coûte au plus deux requêtes, une seule sinon.
+
+Côté application : le verrou de `CachingHistoryRepository` est propre à
+chaque série (unité + codes) et à chaque frise, de sorte qu'une série retenue
+ne fait plus attendre l'historique d'un autre paramètre ; la carte
+« Substances surveillées » lit ses sept séries trois à la fois au lieu de
+l'une après l'autre (sept requêtes distinctes, gardées pour que chaque série
+reste en cache sous la clé qu'ouvre son historique).
+
+Non mesuré après correction sur l'appareil (pas d'accès à l'appareil pendant
+la correction) : le test JVM `HubEauClientTest.heldRequest_isRetriedOnce_andAnswersWithinTwentySeconds`
+simule une première réponse qui n'arrive jamais puis une réponse normale, avec
+les délais réels : succès en 15,0 s.

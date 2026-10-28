@@ -53,8 +53,16 @@ class CachingHistoryRepository(
 ) : HistoryRepository {
     private val history = database.history()
 
-    /** Serialises fetches: a second caller waits, then finds today's fetch. */
-    private val fetching = Mutex()
+    /**
+     * Serialises the fetches of one series or timeline: a second caller
+     * waits, then finds today's fetch. Other series and timelines do not
+     * wait (each writes its own rows; a purge in between is caught by
+     * [PotableDatabase.unchangedSince]). One small [Mutex] per key looked
+     * at in the process, never removed.
+     */
+    private val locks = HashMap<String, Mutex>()
+
+    private fun lock(key: String): Mutex = synchronized(locks) { locks.getOrPut(key) { Mutex() } }
 
     override suspend fun parameterSeries(
         communeCode: String,
@@ -64,7 +72,7 @@ class CachingHistoryRepository(
         force: Boolean,
     ): ParameterSeries? {
         val key = parameterCodes.sorted().joinToString(",")
-        return fetching.withLock {
+        return lock("series|$communeCode|$udiCode|$key").withLock {
             val cached = history.series(communeCode, udiCode, key)
             val covers = cached != null && cached.depuis <= since.toEpochDay()
             if (cached != null && !force && fetchedToday(cached.lastSuccess)) {
@@ -93,7 +101,7 @@ class CachingHistoryRepository(
         since: LocalDate,
         force: Boolean,
     ): List<SampleSummary> {
-        return fetching.withLock {
+        return lock("timeline|$communeCode|$udiCode").withLock {
             val sync = history.timelineSync(communeCode, udiCode)
             val covers = sync != null && sync.depuis <= since.toEpochDay()
             if (sync != null && !force && fetchedToday(sync.lastSuccess)) {
