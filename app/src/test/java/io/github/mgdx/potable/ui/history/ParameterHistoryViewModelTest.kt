@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.ui.history
 
+import androidx.lifecycle.SavedStateHandle
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.core.model.SeriesPoint
@@ -97,15 +98,17 @@ class ParameterHistoryViewModelTest {
         measure("2026-09-01T08:00:00Z", 23.0),
     )
 
-    private fun viewModel(years: Int = 3) = ParameterHistoryViewModel(
-        history,
-        WindowPreferences(years),
-        "45234",
-        "045000123",
-        setOf("1340"),
-        clock,
-        slowThreshold = 10.seconds,
-    )
+    private fun viewModel(years: Int = 3, savedState: SavedStateHandle = SavedStateHandle()) =
+        ParameterHistoryViewModel(
+            history,
+            WindowPreferences(years),
+            "45234",
+            "045000123",
+            setOf("1340"),
+            clock,
+            savedState,
+            slowThreshold = 10.seconds,
+        )
 
     @Test
     fun `the window starts at the setting, ending today in France`() = runTest(main.dispatcher) {
@@ -117,6 +120,23 @@ class ParameterHistoryViewModelTest {
         assertEquals(listOf(setOf("1340")), history.codes)
         assertEquals(HistoryUiState.Loaded(two), viewModel.state.value)
         assertFalse((viewModel.state.value as HistoryUiState.Loaded).singleMeasure)
+    }
+
+    @Test
+    fun `the window picked outlives the death of the process`() = runTest(main.dispatcher) {
+        history.answers += Result.success(two)
+        history.answers += Result.success(two)
+        history.answers += Result.success(two)
+        val savedState = SavedStateHandle()
+        viewModel(savedState = savedState).selectYears(10)
+        advanceUntilIdle()
+        history.calls.clear()
+        // A new view model over the same saved state, as after the process died.
+        val restored = viewModel(savedState = savedState)
+        advanceUntilIdle()
+        assertEquals(10, restored.years.value)
+        assertEquals(listOf(LocalDate.of(2016, 10, 25) to false), history.calls)
+        assertEquals(HistoryUiState.Loaded(two), restored.state.value)
     }
 
     @Test

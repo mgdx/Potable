@@ -264,6 +264,9 @@ fun HistoryChart(
     var window by rememberSaveable(model, stateSaver = WindowSaver) {
         mutableStateOf(fullWindow(model.time))
     }
+    // The first composition after the death of the process restores the saved
+    // window whatever the model: never keep one outside this time axis.
+    windowWithin(window, model.time).let { if (it != window) window = it }
     val zoomed = isZoomed(window, model.time)
     val description = chartDescription(series, model, locale)
     val selectedPoint = selected?.let {

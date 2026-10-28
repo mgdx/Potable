@@ -216,6 +216,15 @@ class ChartMathTest {
     }
 
     @Test
+    fun `a window outside the axis falls back to the whole axis`() {
+        val zoomed = ChartWindow(100.0, 200.0)
+        assertEquals(zoomed, windowWithin(zoomed, year))
+        // Saved for ten years, restored over a three-year axis.
+        assertWindow(0.0, 365.0, windowWithin(ChartWindow(-3000.0, 365.0), year))
+        assertWindow(0.0, 365.0, windowWithin(ChartWindow(300.0, 400.0), year))
+    }
+
+    @Test
     fun `zooming keeps the day under the fingers in place`() {
         val zoomed = zoomWindow(fullWindow(year), year, factor = 2.0, focus = 0.5)
         assertWindow(91.25, 273.75, zoomed)
