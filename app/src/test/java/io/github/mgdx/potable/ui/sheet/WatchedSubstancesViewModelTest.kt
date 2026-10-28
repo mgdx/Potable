@@ -5,6 +5,7 @@ import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
+import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.FakeHistoryRepository
@@ -12,6 +13,7 @@ import io.github.mgdx.potable.ui.FakeWaterRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.sample
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -104,6 +106,44 @@ class WatchedSubstancesViewModelTest {
             advanceUntilIdle()
             assertEquals(WatchedSubstance.entries.size, history.seriesCalls.size)
         }
+
+    @Test
+    fun `a substance held by Hub'Eau does not hold up the others`() = runTest(main.dispatcher) {
+        val held = CompletableDeferred<Unit>()
+        val holding = object : HistoryRepository by history {
+            override suspend fun parameterSeries(
+                communeCode: String,
+                udiCode: String,
+                parameterCodes: Set<String>,
+                since: LocalDate,
+                force: Boolean,
+            ): ParameterSeries? {
+                if (parameterCodes == WatchedSubstance.PFAS.codes) held.await()
+                return history.parameterSeries(communeCode, udiCode, parameterCodes, since, force)
+            }
+        }
+        water.refreshedCache = CachedSample(sample(), fetchedAt)
+        val viewModel = SheetViewModel(
+            water,
+            follows,
+            holding,
+            "45234",
+            "045000123",
+            "Orléans",
+            "ORLEANS",
+            clock,
+            recents = preferences,
+        )
+        advanceUntilIdle()
+
+        // A4: every other substance was asked while the first one waits.
+        assertEquals(WatchedSubstance.entries.size, history.seriesCalls.size + 1)
+        assertEquals(WatchedUiState.Loading, viewModel.watched.value)
+
+        held.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(viewModel.watched.value is WatchedUiState.Loaded)
+    }
 
     @Test
     fun `no substance measured gives an empty list, the none line`() = runTest(main.dispatcher) {

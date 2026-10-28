@@ -164,6 +164,82 @@ class HubEauClientTest {
 
         assertEquals(500, error.code)
         assertFalse(error.message.orEmpty().contains("45234"))
+        // Only a held request is sent again.
+        assertEquals(1, server.requestCount)
+    }
+
+    /** Hub'Eau holding a request: connected, and not a byte back. */
+    private fun held() = MockResponse.Builder().onResponseStart(SocketEffect.Stall).build()
+
+    @Test
+    fun heldRequest_isRetriedOnce_andAnswersWithinTwentySeconds() = runTest {
+        // The real timeouts: the request of the latest sample (size 500).
+        server.enqueue(held())
+        server.enqueue(
+            response(page(1, null, listOf(resultRow("P1", "2026-08-26T12:50:00Z", "1340")))),
+        )
+
+        val start = System.nanoTime()
+        val result = client().resultats("45234", "045000474", 1, 500, listOf("code_prelevement"))
+        val seconds = (System.nanoTime() - start) / 1e9
+
+        assertEquals("P1", result.data.single().codePrelevement)
+        assertEquals(2, server.requestCount)
+        assertTrue("took $seconds s", seconds < 20)
+        // The very same request, sent again.
+        assertEquals(server.takeRequest().url, server.takeRequest().url)
+    }
+
+    @Test
+    fun heldTwice_isTimeout_afterASingleRetry() = runTest {
+        server.enqueue(held())
+        server.enqueue(held())
+        server.enqueue(response(page(0, null, emptyList())))
+
+        assertThrows<DataError.Timeout> { impatientClient().communesUdi("45234") }
+
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun serviceUnavailable_isRetriedOnce() = runTest {
+        server.enqueue(MockResponse.Builder().code(503).body("<html>busy</html>").build())
+        server.enqueue(response(page(0, null, emptyList())))
+
+        assertTrue(client().communesUdi("45234").isEmpty())
+        assertEquals(2, server.requestCount)
+
+        server.enqueue(MockResponse.Builder().code(503).body("<html>busy</html>").build())
+        server.enqueue(MockResponse.Builder().code(503).body("<html>busy</html>").build())
+        server.enqueue(response(page(0, null, emptyList())))
+
+        val error = assertThrows<DataError.Http> { client().communesUdi("45234") }
+        assertEquals(503, error.code)
+        assertEquals(4, server.requestCount)
+    }
+
+    @Test
+    fun largePage_waitsLongerThanSmallRequest() = runTest {
+        val client = HubEauClient(
+            OkHttpClient(),
+            server.url("/api/v1/qualite_eau_potable/"),
+            readTimeout = Duration.ofSeconds(5),
+            quickReadTimeout = Duration.ofMillis(200),
+        )
+        fun slow() = MockResponse.Builder()
+            .headersDelay(600, TimeUnit.MILLISECONDS)
+            .code(200)
+            .body(page(0, null, emptyList()))
+            .build()
+
+        // A page of 5 000 rows (a history) may take its time...
+        server.enqueue(slow())
+        assertTrue(client.resultats("45234", null, 1, 5_000, null).data.isEmpty())
+        // ...a small one is held: retried, then too slow.
+        server.enqueue(slow())
+        server.enqueue(slow())
+        assertThrows<DataError.Timeout> { client.resultats("45234", null, 1, 500, null) }
+        assertEquals(3, server.requestCount)
     }
 
     @Test

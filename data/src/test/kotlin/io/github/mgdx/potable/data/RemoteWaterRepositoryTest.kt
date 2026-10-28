@@ -240,7 +240,8 @@ class RemoteWaterRepositoryTest {
 
     @Test(expected = DataError.Http::class)
     fun latestSample_propagatesErrors() = runTest {
-        server.enqueue(MockResponse.Builder().code(503).build())
+        // Twice: the client retries a 503 once.
+        repeat(2) { server.enqueue(MockResponse.Builder().code(503).build()) }
 
         repository.latestSample("45234", null)
     }
