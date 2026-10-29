@@ -178,8 +178,10 @@ fun PotableNavHost(
     }
     NavHost(navController = navController, startDestination = SearchRoute) {
         composable<SearchRoute> {
+            val searchViewModel: SearchViewModel =
+                viewModel(factory = SearchViewModel.factory(container))
             SearchScreen(
-                viewModel = viewModel(factory = SearchViewModel.factory(container)),
+                viewModel = searchViewModel,
                 onCommuneSelected = { commune, choose ->
                     // Hub'Eau is queried under the code it publishes the place under.
                     // With several known units, the full choice opens (choose).
@@ -204,7 +206,10 @@ fun PotableNavHost(
                             unit.udiCode,
                             unit.communeName,
                             unit.udiName,
-                            change = true,
+                            // Only a commune known to have several units
+                            // offers to change it: the others had nothing
+                            // to choose from.
+                            change = searchViewModel.offersUnitChoice(unit.communeCode),
                         ),
                     )
                 },

@@ -162,6 +162,23 @@ class SearchViewModel(
             ::knownUdis,
         ).stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
+    /**
+     * The communes whose unit was chosen among several (only such a choice is
+     * remembered, `UdiViewModel`), by the code Hub'Eau publishes them under.
+     */
+    private val communesWithChoice: StateFlow<Set<String>> = preferences.rememberedUdis
+        .map { it.keys }
+        .catch { emit(emptySet()) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    /**
+     * Whether the sheet of a recent unit of [communeCode] offers to change
+     * the unit: only for a commune known to have several, without asking
+     * Hub'Eau. A commune served by a single unit offers nothing to change.
+     */
+    fun offersUnitChoice(communeCode: String): Boolean =
+        communeCode in communesWithChoice.value || communeCode in knownUdis.value
+
     /** The units last opened, most recent first, offered while nothing is typed (SPEC §5 F1). */
     val recentUnits: StateFlow<List<RecentUnit>> = preferences.recentUnits
         .catch { emit(emptyList()) }

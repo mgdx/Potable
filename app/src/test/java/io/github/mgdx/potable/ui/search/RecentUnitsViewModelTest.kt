@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -154,4 +155,17 @@ class RecentUnitsViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf(orleans), viewModel.recentUnits.value)
     }
+
+    @Test
+    fun `a recent unit offers a change only for a commune with a choice`() =
+        runTest(main.dispatcher) {
+            // Paris: a unit was chosen among several, and remembered. Orléans:
+            // a single unit, nothing remembered, nothing to change.
+            preferences.rememberUdi(paris.communeCode, paris.udiCode, paris.udiName)
+            val viewModel = search()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.offersUnitChoice(paris.communeCode))
+            assertFalse(viewModel.offersUnitChoice(orleans.communeCode))
+        }
 }
