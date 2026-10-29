@@ -17,7 +17,7 @@ PKG=io.github.mgdx.potable
 
 | Commande | Effet |
 |---|---|
-| `adb shell am start -n $PKG/.debug.DebugAlertsActivity --es action age` | Recule d'un jour la date « dernier prélèvement vu » de chaque suivi (1970 s'il n'y en a pas encore) : à la vérification suivante, le dernier prélèvement est « nouveau ». |
+| `adb shell am start -n $PKG/.debug.DebugAlertsActivity --es action age` | Recule d'un jour la date « dernier prélèvement vu » de chaque suivi (1970 s'il n'y en a pas encore) et oublie les codes vus des prélèvements postérieurs à cette date : à la vérification suivante, les prélèvements des dernières 24 heures vues sont « nouveaux » (une seule notification par commune). Avec 1970 (aucune ligne de base), la vérification compare les dates sur un an au plus. |
 | `adb shell am start -n $PKG/.debug.DebugAlertsActivity --es action run` | Exécute la vérification tout de suite, une fois (`OneTimeWorkRequest` de `AlertWorker`, sans contrainte réseau ; une unité injoignable est sautée). |
 | `adb logcat -s PotableDebug` | Résultat des deux commandes ci-dessus. |
 
@@ -70,18 +70,34 @@ Une notification par commune suivie : titre « commune », texte « New
 analysis published: sample taken on <date> ». La toucher ouvre la fiche de
 l'unité (appli fermée comme ouverte) ; le retour revient à l'écran de départ.
 
+**Deux prélèvements le même jour.** Suivre Vatry (51595, unité `051000767`) :
+le 2026-08-31, Hub'Eau publie un prélèvement conforme (`05100146767`, 14:05,
+la ligne la plus récente) et un non conforme pour les pesticides
+(`05100146860`, 14:04). Désactiver « New analyses », activer « Unfavourable
+conclusions only », ligne de base, puis `age` et `run` : une notification,
+avec la conclusion du prélèvement non conforme. Couvert par
+`HubEauAlertCheckerTest` (même jour, publication tardive, plusieurs nouveaux,
+mise à jour depuis 0.3.1) et `NewAnalysisTest`.
+
+**Mise à jour depuis 0.3.1.** Installer la 0.3.1, suivre une commune, activer
+une alerte (ligne de base), puis installer ce build par-dessus et `run` :
+aucune notification (la première vérification compare encore les dates, puis
+enregistre les codes de la fenêtre). Migration Room v4 → v5 couverte par
+`MigrationTest`.
+
 **Ligne de base au suivi.** « New analyses » activé, suivre une commune
 depuis sa fiche, puis aussitôt `run` : aucune notification. La date
-« dernier prélèvement vu » est posée dès le suivi, depuis le dernier
-prélèvement en cache de la fiche (sinon une requête légère), et non à la
-première vérification périodique : un prélèvement publié entre le suivi et
-cette vérification sera annoncé. Couvert par `HubEauAlertCheckerTest`.
+« dernier prélèvement vu » et les codes vus sont posés dès le suivi, depuis
+les derniers prélèvements en cache de la fiche (codes de leur jour ; sinon les
+requêtes légères de la fenêtre), et non à la première vérification
+périodique : un prélèvement publié entre le suivi et cette vérification sera
+annoncé. Couvert par `HubEauAlertCheckerTest`.
 
 **« Clear cache » garde la ligne de base.** Une commune suivie, « New
 analyses » activé, ligne de base posée ; `age`, puis Réglages → « Clear
 cache » (confirmer), puis `run` : la notification arrive quand même. La
-date « dernier prélèvement vu » des unités suivies survit à la purge
-(seule la date de dernière requête est effacée) ; sans elle, la vérification
+date « dernier prélèvement vu » et les codes vus des unités suivies
+survivent à la purge (seule la date de dernière requête est effacée) ; sans elle, la vérification
 reprendrait une ligne de base et n'annoncerait rien.
 Couvert par `CachingWaterRepositoryTest`.
 

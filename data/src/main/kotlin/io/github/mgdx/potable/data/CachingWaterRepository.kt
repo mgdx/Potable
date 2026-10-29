@@ -3,8 +3,10 @@ package io.github.mgdx.potable.data
 import androidx.room.withTransaction
 import io.github.mgdx.potable.core.Samples
 import io.github.mgdx.potable.core.model.Sample
+import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.local.PotableDatabase
+import io.github.mgdx.potable.data.local.SeenSampleEntity
 import io.github.mgdx.potable.data.local.SyncEntity
 import io.github.mgdx.potable.data.local.resultEntities
 import io.github.mgdx.potable.data.local.toEntity
@@ -29,8 +31,8 @@ import java.time.ZoneId
  * (Hub'Eau, unchanged) and keeps in [database] the latest sample of every
  * unit looked at, followed or not (SPEC §7 as amended, `docs/decisions.md`),
  * as long as it stays followed or among the recent ones ([pruneUnreferenced]).
- * Only the alert state ([lastSeenSampleDate]) is restricted to the followed
- * units.
+ * Only the alert state ([lastSeenSampleDate], [seenSamples]) is restricted to
+ * the followed units.
  */
 class CachingWaterRepository(
     private val network: WaterRepository,
@@ -173,6 +175,8 @@ class CachingWaterRepository(
             // A followed unit keeps the date its alerts have seen.
             cache.clearCommuneLastSuccess(communeCode)
             cache.deleteCommuneSyncWithoutLastSeen(communeCode)
+            // Its seen codes too; those of no other unit go.
+            cache.deleteSeenSamplesWithoutLastSeen()
             val history = database.history()
             history.deleteCommunePoints(communeCode)
             history.deleteCommuneSeries(communeCode)
@@ -213,6 +217,8 @@ class CachingWaterRepository(
                 history.deleteUnitTimeline(communeCode, udiCode)
                 history.deleteUnitTimelineSync(communeCode, udiCode)
             }
+            // The seen codes follow the last seen dates, kept above.
+            cache.deleteSeenSamplesWithoutLastSeen()
         }
     }
 
@@ -227,6 +233,8 @@ class CachingWaterRepository(
             // sample as a new baseline and never announce it.
             cache.clearAllLastSuccess()
             cache.deleteSyncWithoutFollowedLastSeen()
+            // And the codes of the samples they have seen.
+            cache.deleteSeenSamplesWithoutLastSeen()
             // The history cache too.
             val history = database.history()
             history.deleteAllPoints()
@@ -257,6 +265,64 @@ class CachingWaterRepository(
         }
     }
 
+    /**
+     * What the alert task has seen for a unit: the date of the newest sample,
+     * and the codes of the samples taken from [SeenSamples.codesSince], or
+     * none while the unit is not followed by codes (see [SeenSamples]).
+     */
+    suspend fun seenSamples(communeCode: String, udiCode: String): SeenSamples {
+        val sync = cache.sync(communeCode, udiCode)
+        val lastSeen = sync?.lastSeenSampleDate?.let(Instant::ofEpochMilli)
+        val codesSince = sync?.seenCodesSince?.let(Instant::ofEpochMilli)
+        if (lastSeen == null || codesSince == null) return SeenSamples(lastSeen, null, null)
+        return SeenSamples(
+            lastSeen,
+            cache.seenSampleCodes(communeCode, udiCode).toSet(),
+            codesSince,
+        )
+    }
+
+    /**
+     * Records [samples] as seen by the alert task, [lastSeen] as the date of
+     * the newest one seen, and that the codes are kept from [codesSince]:
+     * the codes seen earlier stay, but those dated before [codesSince] go.
+     * Ignored for a unit that is not followed.
+     */
+    suspend fun recordSeenSamples(
+        communeCode: String,
+        udiCode: String,
+        lastSeen: Instant,
+        samples: Collection<SampleSummary>,
+        codesSince: Instant,
+    ) {
+        database.withTransaction {
+            if (follows.find(communeCode, udiCode) == null) return@withTransaction
+            cache.insertSyncIfAbsent(SyncEntity(communeCode, udiCode, null, null))
+            cache.setSeenState(
+                communeCode,
+                udiCode,
+                lastSeen.toEpochMilli(),
+                codesSince.toEpochMilli(),
+            )
+            cache.insertSeenSamples(
+                samples
+                    .filter { !it.date.isBefore(codesSince) }
+                    .map {
+                        SeenSampleEntity(communeCode, udiCode, it.code, it.date.toEpochMilli())
+                    },
+            )
+            cache.deleteSeenSamplesBefore(communeCode, udiCode, codesSince.toEpochMilli())
+        }
+    }
+
+    /**
+     * Forgets the codes seen for a unit dated after [date], so that the next
+     * check finds those samples new again: for the debug tools only.
+     */
+    suspend fun forgetSeenSamplesAfter(communeCode: String, udiCode: String, date: Instant) {
+        cache.deleteSeenSamplesAfter(communeCode, udiCode, date.toEpochMilli())
+    }
+
     private fun fetchedToday(sync: SyncEntity?): Boolean {
         val last = sync?.lastSuccess ?: return false
         return Instant.ofEpochMilli(last).atZone(PARIS).toLocalDate() == today()
@@ -272,3 +338,13 @@ class CachingWaterRepository(
         val PARIS: ZoneId = ZoneId.of("Europe/Paris")
     }
 }
+
+/**
+ * What the alert task (SPEC §5 F7) has seen for a followed unit:
+ * [lastSeen], the date of the newest sample, null before the first
+ * baseline; [codes], the `code_prelevement` of every sample seen taken from
+ * [codesSince], or null (and [codesSince] too) while the unit is not
+ * followed by codes: followed with 0.3.1 or earlier, it compares dates only
+ * until its next check records them.
+ */
+data class SeenSamples(val lastSeen: Instant?, val codes: Set<String>?, val codesSince: Instant?)

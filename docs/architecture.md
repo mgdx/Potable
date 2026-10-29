@@ -23,7 +23,7 @@ simplement pas le SDK Android.
 │  HubEauClient          OkHttp ───────────► hubeau.eaufrance.fr   │
 │  RemoteWaterRepository / CachingWaterRepository                  │
 │  RemoteHistoryRepository / CachingHistoryRepository              │
-│  alert/                AlertChecker : requête légère, dernier vu │
+│  alert/                AlertChecker : requêtes légères, codes vus│
 │  follow/               communes suivies                          │
 │  local/                Room, base potable.db                     │
 │  preferences/          DataStore                                 │
@@ -115,7 +115,8 @@ La base `potable.db` ne contient jamais de jeu national : seulement les
 |---|---|
 | `suivi` | commune, unité de distribution, libellés ; triés par nom à la lecture (colonnes `position` et `principale` inutilisées, gardées pour éviter une migration) |
 | `prelevement`, `resultat` | les derniers prélèvements de chaque unité consultée (tous ceux du dernier jour, `dernier = 1`) et les prélèvements plus anciens ouverts depuis l’historique (`dernier = 0`), avec leurs résultats |
-| `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes |
+| `synchro` | par unité : dernière requête réussie ; pour un suivi, dernier prélèvement vu par les alertes et date depuis laquelle ses codes sont gardés (`codes_vus_depuis`, schéma v5) |
+| `prelevement_vu` | pour un suivi : codes des prélèvements vus par les alertes sur la fenêtre de 92 jours (schéma v5) ; gardés par les purges comme la date vue, effacés au retrait du suivi |
 | `serie`, `serie_point` | séries de paramètres consultées (historique) |
 | `historique_prelevement`, `historique_synchro` | frise des conclusions |
 
@@ -131,7 +132,7 @@ fait de même pour les séries et la frise. Le cache ne garde que les unités
 suivies ou récentes : `CacheJanitor`, lancé par `PotableApplication`, observe
 les deux listes et appelle `pruneUnreferenced` au démarrage puis à chaque
 changement de leur union ; une unité qui en sort perd tout son cache. Retirer
-un suivi oublie la date vue par les alertes, et le cache de l’unité si elle
+un suivi oublie la date et les codes vus par les alertes, et le cache de l’unité si elle
 n’est pas récente. La rétention (3 ans par défaut) est
 appliquée après chaque rafraîchissement réussi, en gardant toujours le dernier
 prélèvement de chaque unité. Les réglages listent les communes en cache
@@ -164,17 +165,23 @@ graphiques ; l’axe du temps reste orienté de gauche à droite, même en mise 
 Désactivées par défaut. Quand l’utilisateur en active une :
 
 1. `AlertScheduler` (`:app`), qui observe les préférences, pose une **ligne de
-   base** — la date du dernier prélèvement de chaque unité suivie, pour ne pas
-   annoncer comme nouvelle une analyse déjà connue — puis planifie une tâche
+   base** — la date du dernier prélèvement de chaque unité suivie et les
+   codes des prélèvements de sa fenêtre, pour ne pas annoncer comme nouvelle
+   une analyse déjà connue — puis planifie une tâche
    périodique unique (`enqueueUniquePeriodicWork`), à la période choisie (1, 2
    ou 4 semaines), avec une contrainte réseau.
 2. À chaque exécution, `AlertWorker` délègue à `AlertRun`, qui ne contacte
    Hub’Eau que si une alerte est active et que les notifications peuvent
    s’afficher.
-3. `AlertChecker` (`:data`) fait, par unité suivie, une **requête d’une seule
-   ligne** (`size=1`, tri décroissant, champs d’en-tête) et compare sa date au
-   dernier vu (`NewAnalysis`, `:core`). Si elle est plus récente, il
-   enregistre la date, rafraîchit le cache de l’unité, et émet un événement.
+3. `AlertChecker` (`:data`) lit, par unité suivie, les **en-têtes des
+   prélèvements de la fenêtre** (des 92 jours précédant le dernier vu à
+   aujourd’hui ; lignes pH, plomb, E. coli, champs d’en-tête) et la **ligne la
+   plus récente** (`size=1`). Est nouveau tout prélèvement dont le code n’est
+   pas parmi ceux déjà vus (`NewAnalysis.newSamples`, `:core`) ; une unité
+   suivie avec la 0.3.1 ou avant, sans codes, compare encore les dates une fois. Il
+   enregistre tous les codes de la fenêtre, rafraîchit le cache de l’unité
+   s’il y a du nouveau, et émet un événement par unité : le plus récent des
+   nouveaux prélèvements défavorables, sinon le plus récent des nouveaux.
 4. `AlertNotifier` affiche une notification par commune, sur l’un des deux
    canaux (`new_analysis`, `unfavourable`) ; le texte d’une conclusion
    défavorable est la conclusion publiée, telle quelle. La toucher ouvre la

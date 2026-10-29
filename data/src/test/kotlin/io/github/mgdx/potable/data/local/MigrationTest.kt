@@ -144,6 +144,40 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun `v4 to v5 keeps the last seen dates, not yet followed by codes`() = runTest {
+        helper.createDatabase(NAME, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO suivi (id, code_commune, nom_commune, code_reseau, nom_reseau, " +
+                    "position, principale) VALUES (1, '45234', 'Orléans', '045000474', 'ORLEANS', 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO synchro (code_commune, code_reseau, dernier_prelevement_vu, " +
+                    "dernier_succes) VALUES ('45234', '045000474', 1787741400000, NULL)",
+            )
+        }
+
+        // Validates the migrated schema against 5.json.
+        helper.runMigrationsAndValidate(NAME, 5, true).close()
+
+        val database = Room
+            .databaseBuilder(RuntimeEnvironment.getApplication(), PotableDatabase::class.java, NAME)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val sync = database.cache().sync("45234", "045000474")!!
+            assertEquals(1787741400000, sync.lastSeenSampleDate)
+            // The first check after the update compares dates, then records the codes.
+            assertNull(sync.seenCodesSince)
+            assertEquals(
+                emptyList<String>(),
+                database.cache().seenSampleCodes("45234", "045000474"),
+            )
+        } finally {
+            database.close()
+        }
+    }
+
     private companion object {
         const val NAME = "migration-test.db"
     }

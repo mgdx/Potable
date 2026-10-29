@@ -12,10 +12,12 @@ import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 
 class LatestSampleSummaryTest {
     @get:Rule
@@ -97,6 +99,50 @@ class LatestSampleSummaryTest {
             fail("expected DataError.Format")
         } catch (_: DataError.Format) {
             // Expected.
+        }
+    }
+
+    @Test
+    fun `the window asks for the alert parameters and dates, page after page`() = runTest {
+        val full = List(ALERT_PAGE_SIZE) { headerRow("P${it / 2}", "2026-09-15T09:00:00Z", "C") }
+        server.enqueue(response(page(ALERT_PAGE_SIZE + 2, NEXT, full), partial = true))
+        server.enqueue(
+            response(
+                page(
+                    ALERT_PAGE_SIZE + 2,
+                    null,
+                    listOf(
+                        headerRow("Q1", "2026-08-31T14:04:00Z", "N"),
+                        headerRow("Q1", "2026-08-31T14:04:00Z", "N"),
+                    ),
+                ),
+                partial = true,
+            ),
+        )
+
+        val summaries =
+            client.alertSampleSummaries(
+                "45234",
+                "045000474",
+                LocalDate.parse("2026-05-25"),
+                LocalDate.parse("2026-10-26"),
+            )
+
+        // One summary per sample, newest first.
+        assertEquals(ALERT_PAGE_SIZE / 2 + 1, summaries.size)
+        assertEquals("Q1", summaries.last().code)
+        assertEquals(Compliance.NON_COMPLIANT, summaries.last().physicochemicalReferences)
+        assertEquals(2, server.requestCount)
+        for (expectedPage in listOf("1", "2")) {
+            val url = server.takeRequest().url
+            assertEquals("045000474", url.queryParameter("code_reseau"))
+            assertEquals("1302,1382,1449", url.queryParameter("code_parametre"))
+            assertEquals("2026-05-25", url.queryParameter("date_min_prelevement"))
+            assertEquals("2026-10-26", url.queryParameter("date_max_prelevement"))
+            assertEquals("desc", url.queryParameter("sort"))
+            assertEquals("$ALERT_PAGE_SIZE", url.queryParameter("size"))
+            assertEquals(expectedPage, url.queryParameter("page"))
+            assertTrue(url.queryParameter("fields")!!.startsWith("code_prelevement,code_commune,"))
         }
     }
 
