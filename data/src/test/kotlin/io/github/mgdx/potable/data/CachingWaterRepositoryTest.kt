@@ -5,6 +5,7 @@ import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.follow.RoomFollowRepository
 import io.github.mgdx.potable.data.local.MutableClock
 import io.github.mgdx.potable.data.local.PotableDatabase
+import io.github.mgdx.potable.data.local.SyncEntity
 import io.github.mgdx.potable.data.local.TimelineSyncEntity
 import io.github.mgdx.potable.data.local.inMemoryDatabase
 import io.github.mgdx.potable.data.local.sample
@@ -350,6 +351,32 @@ class CachingWaterRepositoryTest {
         // The sync state is gone too: the next display fetches again.
         assertTrue(repository.refreshCache("45234", UDI, force = false))
         assertEquals(2, network.calls)
+    }
+
+    @Test
+    fun `purgeCache keeps the date the alerts have seen for a followed unit`() = runTest {
+        followOrleans()
+        network.samples["45234" to UDI] = sample("P1", "2026-08-26T12:50:00Z")
+        network.samples["75056" to "075000001"] = sample("P2", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        repository.refreshCache("75056", "075000001", force = false)
+        val seen = Instant.parse("2026-08-26T12:50:00Z")
+        repository.setLastSeenSampleDate("45234", UDI, seen)
+        // A leftover alert date of a unit no longer followed is not kept.
+        database.cache().insertSyncIfAbsent(
+            SyncEntity("13055", "013000001", lastSeenSampleDate = 1_000, lastSuccess = 2_000),
+        )
+
+        repository.purgeCache()
+
+        assertEquals(seen, repository.lastSeenSampleDate("45234", UDI))
+        assertNull(database.cache().sync("75056", "075000001"))
+        assertNull(database.cache().sync("13055", "013000001"))
+        // Nothing is cached any more, and the next display fetches again.
+        assertNull(cached())
+        assertEquals(emptyList<CachedCommune>(), repository.cachedCommunes().first())
+        assertTrue(repository.refreshCache("45234", UDI, force = false))
+        assertEquals(seen, repository.lastSeenSampleDate("45234", UDI))
     }
 
     @Test

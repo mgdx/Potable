@@ -67,6 +67,14 @@ Une notification par commune suivie : titre « commune », texte « New
 analysis published: sample taken on <date> ». La toucher ouvre la fiche de
 l'unité (appli fermée comme ouverte) ; le retour revient à l'écran de départ.
 
+**« Clear cache » garde la ligne de base.** Une commune suivie, « New
+analyses » activé, ligne de base posée ; `age`, puis Réglages → « Clear
+cache » (confirmer), puis `run` : la notification arrive quand même. La
+date « dernier prélèvement vu » des unités suivies survit à la purge
+(seule la date de dernière requête est effacée) ; sans elle, la vérification
+reprendrait une ligne de base et n'annoncerait rien.
+Couvert par `CachingWaterRepositoryTest`.
+
 **« Unfavourable only ».** Désactiver « New analyses », activer
 « Unfavourable conclusions only », refaire `age` puis `run` : aucune
 notification pour une commune dont le dernier prélèvement est conforme ; une

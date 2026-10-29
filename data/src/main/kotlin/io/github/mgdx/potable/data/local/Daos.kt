@@ -217,8 +217,20 @@ internal interface CacheDao {
     @Query("DELETE FROM prelevement")
     suspend fun deleteAllSamples()
 
-    @Query("DELETE FROM synchro")
-    suspend fun deleteAllSync()
+    /** Forgets every fetch, keeping only the dates the alert task has seen. */
+    @Query("UPDATE synchro SET dernier_succes = NULL")
+    suspend fun clearAllLastSuccess()
+
+    /**
+     * Deletes every sync row but those that keep the date the alert task
+     * has seen for a followed unit ([SyncEntity.lastSeenSampleDate]).
+     */
+    @Query(
+        "DELETE FROM synchro WHERE dernier_prelevement_vu IS NULL OR NOT EXISTS (" +
+            "SELECT 1 FROM suivi WHERE suivi.code_commune = synchro.code_commune " +
+            "AND suivi.code_reseau = synchro.code_reseau)",
+    )
+    suspend fun deleteSyncWithoutFollowedLastSeen()
 }
 
 /** A day in milliseconds, for the queries on `prelevement.date`. */
