@@ -195,9 +195,16 @@ internal fun SampledOnLine(textRes: Int, date: Instant, age: RelativeAge) {
     )
 }
 
-/** The ARS conclusion, verbatim: never translated, summarised or scored (SPEC §14). */
+/**
+ * The ARS conclusion, verbatim: never translated, summarised or scored (SPEC
+ * §14), under [titleRes] (the sheet's latest sample by default).
+ */
 @Composable
-internal fun ConclusionCard(sample: Sample, age: RelativeAge) {
+internal fun ConclusionCard(
+    sample: Sample,
+    age: RelativeAge,
+    titleRes: Int = R.string.sheet_conclusion_title,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -210,7 +217,7 @@ internal fun ConclusionCard(sample: Sample, age: RelativeAge) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = stringResource(R.string.sheet_conclusion_title),
+                text = stringResource(titleRes),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.semantics { heading() },

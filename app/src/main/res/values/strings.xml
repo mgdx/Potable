@@ -311,6 +311,8 @@
     <string name="sample_report_not_found">Hub\'Eau no longer publishes this sample.</string>
     <!-- Top bar title of the full report of one sample, opened from the history of a parameter, one line. -->
     <string name="sample_report_title">Sample report</string>
+    <!-- Heading of the conclusion card of the report: the sample may be old, not the latest. -->
+    <string name="sample_report_conclusion_title">Sanitary conclusion of this sample</string>
     <string name="sample_no_results">No analysis result was published for this sample.</string>
     <!-- Label of the search field. -->
     <string name="sample_search_label">Search a parameter</string>

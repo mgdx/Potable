@@ -218,6 +218,7 @@
     <string name="sample_unavailable">Ce prélèvement n’est plus affiché sur la fiche. Revenez en arrière pour voir le plus récent.</string>
     <string name="sample_report_not_found">Hub\'Eau ne publie plus ce prélèvement.</string>
     <string name="sample_report_title">Rapport du prélèvement</string>
+    <string name="sample_report_conclusion_title">Conclusion sanitaire de ce prélèvement</string>
     <string name="sample_no_results">Aucun résultat d’analyse n’a été publié pour ce prélèvement.</string>
     <string name="sample_search_label">Rechercher un paramètre</string>
     <string name="sample_no_match">Aucun paramètre ne correspond à « %1$s ».</string>
