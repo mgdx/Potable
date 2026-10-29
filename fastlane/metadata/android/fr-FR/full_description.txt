@@ -17,13 +17,13 @@ Ces résultats sont établis par les agences régionales de santé (ARS) et publ
 <b>Ce que Potable ne fait pas</b>
 
 • Aucun score, aucune note, aucun classement : Potable montre les conclusions des ARS, avec leurs mots.
-• Aucun avis sanitaire : l’application ne vous dit pas si vous pouvez boire votre eau. En cas de doute, adressez-vous à votre agence régionale de santé (ARS) ou à votre distributeur d’eau.
+• Aucun avis sanitaire : l’application ne vous dit pas si vous pouvez boire votre eau. En cas de doute, chaque fiche nomme l’ARS et le distributeur d’eau.
 • Votre robinet n’est pas couvert : les analyses portent sur l’unité de distribution, et l’état des canalisations privées de votre immeuble n’y apparaît pas.
 • Les données sont mises à jour une fois par mois : un résultat affiché peut dater de plusieurs semaines.
 
 <b>Vie privée</b>
 
-• Un seul serveur contacté : hubeau.eaufrance.fr, uniquement en HTTPS. Les requêtes contiennent les codes de la commune et de l’unité de distribution consultées, et aucun identifiant.
+• Un seul serveur contacté : hubeau.eaufrance.fr, uniquement en HTTPS. Les requêtes contiennent les codes de la commune et de l’unité de distribution consultées, et aucun identifiant. Le site d’une ARS s’ouvre dans le navigateur.
 • Votre position n’est jamais transmise ni enregistrée : si vous utilisez « Autour de moi », elle sert une fois, sur le téléphone, à trouver la commune la plus proche, puis elle est écartée.
 • Aucune télémétrie, aucun rapport de plantage, aucune publicité, aucun compte. Vos communes suivies restent sur votre téléphone.
 

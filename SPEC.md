@@ -170,6 +170,11 @@ Une commune peut être desservie par plusieurs UDI (quartiers différents).
   prélèvement (`PesticideCounts`). Chargée
   après le reste de la fiche, depuis le cache des séries (F5) ; un échec ne
   touche que la carte. Toucher une ligne ouvre l'historique de la substance.
+- Carte « Vos questions sur cette eau », sous les conformités : pour une
+  question de santé, l'ARS de la commune (table embarquée département → ARS,
+  `RegionalHealthAgencies`, nom officiel et lien vers son site ouvert dans le
+  navigateur) ; pour une question sur le service (facture, coupure, travaux),
+  le distributeur publié par Hub'Eau, omis s'il est absent. Aucun avis.
 - Accès au détail complet du prélèvement.
 - Encart permanent : source des données, date de dernière mise à jour.
 
@@ -404,7 +409,8 @@ rien tant qu'elle est imposée dès l'écriture.
 - Les analyses portent sur l'unité de distribution, pas sur le robinet de
   l'utilisateur : l'état des canalisations privées n'est pas couvert.
 - L'application ne délivre **aucun avis sanitaire**. En cas de doute, se
-  référer à l'ARS ou au distributeur d'eau.
+  référer à l'ARS ou au distributeur d'eau, que la fiche de chaque commune
+  nomme (F3).
 - Aucun score, aucune note, aucune classification inventée par l'application.
 
 ## 15. Cas limites à traiter explicitement

@@ -17,13 +17,13 @@ These results are established by the regional health agencies (ARS) and publishe
 <b>What Potable does not do</b>
 
 • No score, no rating, no ranking: Potable shows the conclusions of the ARS, in their own words.
-• No health advice: the app does not tell you whether you can drink your water. If in doubt, contact your regional health agency (ARS) or your water distributor.
+• No health advice: the app does not tell you whether you can drink your water. If in doubt, the sheet of each commune names its regional health agency (ARS) and its water distributor.
 • Your own tap is not covered: samples are taken on the distribution unit, so the state of the private pipes in your building is not included.
 • The data are updated once a month: a result shown may be several weeks old.
 
 <b>Privacy</b>
 
-• A single server is contacted: hubeau.eaufrance.fr, over HTTPS only. Requests contain the codes of the commune and distribution unit you look up, and no identifier.
+• A single server is contacted: hubeau.eaufrance.fr, over HTTPS only. Requests contain the codes of the commune and distribution unit you look up, and no identifier. The website of an ARS opens in your browser.
 • Your position is never sent or stored: if you use “Near me”, it is used once, on the phone, to find the nearest commune, then discarded.
 • No telemetry, no crash reports, no advertising, no account. Your followed communes stay on your phone.
 

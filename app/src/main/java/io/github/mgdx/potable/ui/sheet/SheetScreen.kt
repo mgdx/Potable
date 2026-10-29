@@ -348,6 +348,7 @@ private fun SampleContent(
             }
         }
         ComplianceSection(sample)
+        HealthAgencyCard(sample.communeCode, sample.distributor)
         // With several samples, each has its own button in the conclusions.
         if (samples.size == 1 && sample.results.isNotEmpty()) {
             FilledTonalButton(

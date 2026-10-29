@@ -78,7 +78,7 @@
     <string name="disclaimer_point_source">The results come from the official sanitary control carried out by the regional health agencies (ARS), published by the French Ministry of Health through Hub\'Eau.</string>
     <string name="disclaimer_point_freshness">The data are updated once a month: a result shown here may be several weeks old.</string>
     <string name="disclaimer_point_scope">Tests are made on the distribution unit, not at your own tap: the state of the private pipes in your building is not covered.</string>
-    <string name="disclaimer_point_no_advice">Potable gives no health advice. If in doubt, contact your regional health agency (ARS) or your water distributor.</string>
+    <string name="disclaimer_point_no_advice">Potable gives no health advice. If in doubt, contact your regional health agency (ARS), named on the sheet of each commune, or your water distributor.</string>
     <string name="disclaimer_point_no_score">Potable adds no score, rating or classification of its own: it shows the official conclusions as published.</string>
     <!-- Full-width button of the first page of the notice, that shows the second one. -->
     <string name="disclaimer_next">Next</string>
@@ -278,6 +278,16 @@
     <string name="sheet_sample_card_title">Sample</string>
     <!-- Heading of the four compliance codes. -->
     <string name="sheet_compliance_title">Compliance</string>
+    <!-- Card of the sheet saying whom to contact (SPEC §5 F3). Facts only, no health advice. -->
+    <string name="sheet_contacts_title">Questions about this water</string>
+    <!-- Followed by the name of the regional health agency (ARS) of the commune, a French proper noun kept as is. -->
+    <string name="sheet_contacts_health">For a question about health, the regional health agency:</string>
+    <!-- Link button, opened in the browser. -->
+    <string name="sheet_contacts_website">Website</string>
+    <!-- Spoken by screen readers for the link button. %1$s: the name of the agency. -->
+    <string name="sheet_contacts_website_description">Website of %1$s, opens in the browser</string>
+    <!-- Followed by the distributor name as published by Hub'Eau. -->
+    <string name="sheet_contacts_service">For a question about the water service (bill, outage, works), the distributor:</string>
     <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
     <!-- Full-width button that opens the sample detail. -->
     <string name="sheet_show_all_results">See all analysed parameters</string>
