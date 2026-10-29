@@ -92,7 +92,7 @@ private fun ReportContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ConclusionCard(sample, age)
+        ConclusionCard(sample, age, R.string.sample_report_conclusion_title)
         KeyParametersCard(sample, onParameterHistory)
         SampleInfoCard(sample, age)
         ComplianceSection(sample)
