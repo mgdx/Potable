@@ -388,6 +388,22 @@ class HubEauAlertCheckerTest {
     }
 
     @Test
+    fun `a check is complete only if every unit was asked for`() = runTest {
+        assertTrue(checker.checkFollows().complete)
+        followOrleans()
+        followParis()
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+        latest[PARIS] = summary("Q1", "2026-08-20T08:00:00Z")
+        assertTrue(checker.checkFollows().complete)
+
+        failures[PARIS] = DataError.Timeout(IOException("slow"))
+        assertFalse(checker.checkFollows().complete)
+
+        failures.remove(PARIS)
+        assertTrue(checker.checkFollows().complete)
+    }
+
+    @Test
     fun `cancellation is not swallowed`() = runTest {
         followOrleans()
         failures[ORLEANS] = CancellationException("stopped")

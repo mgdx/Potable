@@ -9,6 +9,11 @@ import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
+import io.github.mgdx.potable.data.backup.BackupCodec
+import io.github.mgdx.potable.data.backup.BackupError
+import io.github.mgdx.potable.data.backup.BackupRead
+import io.github.mgdx.potable.data.backup.FollowsBackup
+import io.github.mgdx.potable.data.backup.ImportSummary
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.data.preferences.ThemeMode
@@ -66,6 +71,27 @@ data class CachedCommuneItem(
     val label: String get() = name ?: communeCode
 }
 
+/**
+ * When the alerts last asked Hub'Eau for every followed unit ([checkedAt]),
+ * and last failed to ([failedAt]); null when it never happened.
+ */
+data class LastAlertCheck(val checkedAt: Instant?, val failedAt: Instant?) {
+    /** The last attempt failed: [failedAt] is after [checkedAt]. */
+    val lastFailed: Boolean
+        get() = failedAt != null && (checkedAt == null || failedAt.isAfter(checkedAt))
+}
+
+/** What the backup section has to say once, in a snackbar. */
+sealed interface BackupMessage {
+    data object Exported : BackupMessage
+
+    data object ExportFailed : BackupMessage
+
+    data class Imported(val summary: ImportSummary) : BackupMessage
+
+    data class ImportFailed(val error: BackupError) : BackupMessage
+}
+
 /** The two alerts the user can switch on. */
 enum class AlertKind { NEW_ANALYSIS, UNFAVOURABLE }
 
@@ -91,6 +117,7 @@ class SettingsViewModel(
     private val notifications: NotificationAccess,
     private val communes: CommuneRepository,
     follows: FollowRepository? = null,
+    private val backup: FollowsBackup? = null,
 ) : ViewModel() {
     /** Null until the preferences are read, so that no wrong choice shows first. */
     val settings: StateFlow<Settings?> = combine(
@@ -115,6 +142,22 @@ class SettingsViewModel(
         .map { it?.isEmpty() ?: false }
         .catch { emit(false) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
+    /**
+     * When the alerts last checked the followed units: null (nothing shown)
+     * unless an alert is on and at least one unit is followed.
+     */
+    val lastAlertCheck: StateFlow<LastAlertCheck?> = combine(
+        settings,
+        (follows?.follows ?: flowOf(emptyList())).map { it.isNotEmpty() }.catch { emit(false) },
+        preferences.lastAlertCheck,
+        preferences.lastAlertFailure,
+    ) { current, anyFollowed, checkedAt, failedAt ->
+        val anyOn = current?.alerts?.let { it.newAnalysis || it.unfavourable } ?: false
+        if (anyOn && anyFollowed) LastAlertCheck(checkedAt, failedAt) else null
+    }
+        .catch { emit(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     private val _purge = MutableStateFlow(PurgeState.IDLE)
     val purge: StateFlow<PurgeState> = _purge.asStateFlow()
@@ -311,6 +354,72 @@ class SettingsViewModel(
         _communePurged.value = null
     }
 
+    private val _backupRunning = MutableStateFlow(false)
+
+    /** An export or an import is running: their buttons wait. */
+    val backupRunning: StateFlow<Boolean> = _backupRunning.asStateFlow()
+
+    private val _backupMessage = MutableStateFlow<BackupMessage?>(null)
+
+    /** The result of the last export or import, due once. */
+    val backupMessage: StateFlow<BackupMessage?> = _backupMessage.asStateFlow()
+
+    /** Writes the backup with [write] (the file the user chose); once at a time. */
+    fun exportBackup(write: suspend (String) -> Unit) {
+        val backup = backup ?: return
+        if (!_backupRunning.compareAndSet(expect = false, update = true)) return
+        viewModelScope.launch {
+            _backupMessage.value = try {
+                write(BackupCodec.encode(backup.export()))
+                BackupMessage.Exported
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                BackupMessage.ExportFailed
+            } finally {
+                _backupRunning.value = false
+            }
+        }
+    }
+
+    /**
+     * Reads a backup with [read] (the file the user chose, bounded by
+     * [BackupCodec.read]) and merges its follows; then sets the alert
+     * baseline of the new ones, after the result is shown.
+     */
+    fun importBackup(read: suspend () -> BackupRead) {
+        val backup = backup ?: return
+        if (!_backupRunning.compareAndSet(expect = false, update = true)) return
+        viewModelScope.launch {
+            val added = try {
+                when (val file = read()) {
+                    is BackupRead.Invalid -> {
+                        _backupMessage.value = BackupMessage.ImportFailed(file.error)
+                        emptyList()
+                    }
+                    is BackupRead.Valid -> {
+                        val summary = backup.import(file.backup, file.invalid)
+                        _backupMessage.value = BackupMessage.Imported(summary)
+                        summary.added
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                _backupMessage.value = BackupMessage.ImportFailed(BackupError.UNREADABLE)
+                emptyList()
+            } finally {
+                _backupRunning.value = false
+            }
+            backup.setBaselines(added)
+        }
+    }
+
+    /** The message of [backupMessage] was shown. */
+    fun onBackupMessageShown() {
+        _backupMessage.value = null
+    }
+
     /** The commune's name in the embedded referential; null if not found or unreadable. */
     private suspend fun nameOf(communeCode: String): String? = try {
         communes.byCode(communeCode)?.name
@@ -331,6 +440,7 @@ class SettingsViewModel(
                     container.notificationAccess,
                     container.communes,
                     container.follows,
+                    container.backup,
                 )
             }
         }

@@ -50,8 +50,24 @@ class HubEauAlertChecker internal constructor(
     /** A check and a baseline never interleave: both write what was seen. */
     private val running = Mutex()
 
-    override suspend fun check(): List<AlertEvent> = running.withLock {
-        followed().mapNotNull { follow -> bestEffort { check(follow) } }
+    override suspend fun check(): List<AlertEvent> = checkFollows().events
+
+    override suspend fun checkFollows(): AlertCheck = running.withLock {
+        val followed = bestEffort { follows.follows.first() }
+            ?: return@withLock AlertCheck(emptyList(), complete = false)
+        var complete = true
+        val events = followed.mapNotNull { follow ->
+            try {
+                check(follow)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Skipped until the next check.
+                complete = false
+                null
+            }
+        }
+        AlertCheck(events, complete)
     }
 
     override suspend fun setBaseline() {

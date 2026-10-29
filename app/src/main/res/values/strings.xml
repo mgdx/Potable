@@ -485,6 +485,12 @@
     <string name="settings_alert_unfavourable_description">Only new analyses whose published conclusion is unfavourable.</string>
     <!-- Replaces the line above while "New analyses" (alert_new_analyses) is on. -->
     <string name="settings_alert_unfavourable_included">Already included in new analyses: turn those off to be notified of unfavourable conclusions only.</string>
+    <!-- Under the alert switches, while an alert is on and a commune is followed. %1$s: date and time of the last check that reached Hub'Eau for every followed commune. -->
+    <string name="settings_alert_last_check">Last check: %1$s</string>
+    <!-- Replaces settings_alert_last_check until the first check. -->
+    <string name="settings_alert_last_check_none">Last check: not done yet</string>
+    <!-- Under settings_alert_last_check when the last attempt failed. %1$s: its date and time. -->
+    <string name="settings_alert_last_failure">The last attempt, on %1$s, could not reach Hub\'Eau for every commune. It will try again at the next check.</string>
     <!-- Followed by radio buttons: settings_alert_weekly, settings_alert_weeks. -->
     <string name="settings_alert_period">Check for new results:</string>
     <string name="settings_alert_weekly">Every week</string>
@@ -497,6 +503,34 @@
     <string name="settings_notifications_blocked">Notifications are turned off for Potable: your communes are not checked until you allow them again.</string>
     <!-- Button that opens the notification settings of the app. -->
     <string name="settings_notifications_open">Open notification settings</string>
+    <!-- Settings section: export and import of the followed communes to a file. -->
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_description">Save the communes you follow and your display settings to a file, to find them again on another phone. Alerts are not saved: turn them on again after importing.</string>
+    <!-- Button: opens the system file picker to save the file. -->
+    <string name="settings_backup_export">Export followed communes</string>
+    <!-- Button: opens the system file picker to choose a file exported by Potable. -->
+    <string name="settings_backup_import">Import</string>
+    <string name="settings_backup_exported">Followed communes exported.</string>
+    <string name="settings_backup_export_failed">The file could not be saved.</string>
+    <!-- Snackbar after an import, one line, followed by settings_backup_already and settings_backup_invalid when not zero. %d: number of communes newly followed. -->
+    <plurals name="settings_backup_imported">
+        <item quantity="one">%d commune imported.</item>
+        <item quantity="other">%d communes imported.</item>
+    </plurals>
+    <!-- %d: number of communes of the file that were already followed. -->
+    <plurals name="settings_backup_already">
+        <item quantity="one">%d already followed.</item>
+        <item quantity="other">%d already followed.</item>
+    </plurals>
+    <!-- %d: number of entries of the file left out because their code or name is not valid. -->
+    <plurals name="settings_backup_invalid">
+        <item quantity="one">%d invalid entry skipped.</item>
+        <item quantity="other">%d invalid entries skipped.</item>
+    </plurals>
+    <string name="settings_backup_unreadable">This file could not be read.</string>
+    <string name="settings_backup_not_backup">This file is not a Potable backup.</string>
+    <string name="settings_backup_unsupported">This backup comes from a newer version of Potable. Update the app, then try again.</string>
+    <string name="settings_backup_too_large">This file is too large to be a Potable backup.</string>
 
     <!-- ===== Notifications (SPEC §5 F7): facts only, no opinion on the water (SPEC §14) ===== -->
 
