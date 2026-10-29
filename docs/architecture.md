@@ -193,7 +193,8 @@ défaut est retiré du manifeste fusionné.
 
 ## L’interface
 
-Une seule activité, `MainActivity`, qui héberge `PotableNavHost`. Écrans :
+Une seule activité, `MainActivity`, qui héberge `PotableNavHost`, dont les
+destinations sont des routes typées (`ui/navigation/Destinations.kt`). Écrans :
 recherche, choix de l’unité de distribution, fiche « mon eau », détail d’un
 prélèvement, historique d’un paramètre, frise des conclusions, communes
 suivies, réglages, à propos. L’avertissement du premier lancement (SPEC §14)
@@ -232,5 +233,7 @@ Chacun est argumenté, avec ce qu’il écarte, dans
 | Requête d’alerte d’une ligne | Quelques kilo-octets par commune et par semaine |
 | Graphique en `Canvas` | Aucune bibliothèque de graphiques |
 | Tests Room et WorkManager sous Robolectric | `./gradlew check` couvre la base et la planification sans appareil |
+| Tests d'écran Compose sous Robolectric | Les écrans principaux testés sans émulateur |
+| Export JSON des suivis (`data/backup/`) | Changer de téléphone sans sauvegarde système |
 | Toolchain JDK 21 | Celle de l’image de build de F-Droid, qui refuse de télécharger un JDK |
 | Avertissements traités comme erreurs | Le zéro avertissement du SPEC §12 tenu par la build |

@@ -205,7 +205,11 @@ ARS, paramètres clés, carte « prélèvement », conformités, sans rien de
 propre à l'unité ; un bouton mène à la liste ci-dessus, sans nouvelle
 requête. Sur la fiche comme sur ce rapport, un code « D » ou une conclusion
 qui mentionne une dérogation ajoute sous les conformités une note
-factuelle sur ce qu'est une dérogation, sans verdict (§14).
+factuelle sur ce qu'est une dérogation, sans verdict (§14) ; un code « S »
+(« Sans objet ») ajoute de même une note qui dit qu'aucun paramètre de ce
+type n'a été mesuré. Dans la liste des paramètres, un paramètre mis en avant
+ou une substance surveillée porte sous son résultat la même phrase
+d'explication que sur la fiche.
 
 ### F5 — Historique et graphiques
 
@@ -216,7 +220,9 @@ factuelle sur ce qu'est une dérogation, sans verdict (§14).
 - Bibliothèque de graphiques libre et légère, ou tracé maison en Compose
   Canvas. Pas de dépendance lourde ni propriétaire.
 - Historique aussi des conclusions sanitaires : frise des prélèvements avec
-  leur verdict.
+  leur verdict ; toucher un prélèvement ouvre son rapport (F4).
+- Pour un métabolite classé par l'Anses, l'historique rappelle son
+  classement (§4.3), sans le confronter aux mesures.
 
 ### F6 — Communes suivies
 
@@ -261,6 +267,10 @@ factuelle sur ce qu'est une dérogation, sans verdict (§14).
 - Thème clair / sombre / système.
 - Purge du cache (en entier ou par commune ; la purge des unités ni suivies
   ni récentes est automatique, §7).
+- Date de la dernière vérification des alertes.
+- Export et import des communes suivies dans un fichier choisi par
+  l'utilisateur (sélecteur du système, sans permission ni réseau) ; l'import
+  fusionne et n'efface rien (`docs/decisions.md`, 2026-10-29).
 - Sources, licences, crédits Hub'Eau et ministère chargé de la santé,
   avertissement du §14, lien vers le dépôt.
 
@@ -331,6 +341,8 @@ Règles :
 - Chaque écran gère explicitement : chargement, vide, erreur réseau, données
   périmées, absence de données pour la commune.
 - Mode sombre complet.
+- Grands écrans : contenu de largeur bornée ; fiche et rapport en deux
+  colonnes sur une fenêtre large.
 - Accessibilité : contrastes AA, libellés de contenu sur tous les éléments
   interactifs, taille de police respectée, navigation au clavier possible.
 - Les couleurs ne portent jamais seules l'information : une conclusion
