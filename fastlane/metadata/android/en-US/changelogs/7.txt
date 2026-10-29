@@ -1,0 +1,5 @@
+• Alerts no longer miss a sample: two samples taken the same day, one published late or several between two checks are all judged.
+• Long press on a measure opens the full report of its sample.
+• Note explaining derogations.
+• ANSES relevance of pesticide metabolites.
+• The sheet names the regional health agency, with a link, and the distributor.

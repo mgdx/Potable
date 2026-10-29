@@ -1,6 +1,6 @@
 # Draft of metadata/io.github.mgdx.potable.yml for fdroiddata.
 # Review: docs/audits/fdroid-2026-10-25.md. Before the merge request:
-# - publish https://github.com/mgdx/Potable and push the v0.3.1 tag;
+# - publish https://github.com/mgdx/Potable and push the v0.4.0 tag;
 # - replace `commit: v0.x.y` with the full hashes of the tagged commits;
 # - run `fdroid rewritemeta io.github.mgdx.potable` and `fdroid lint`.
 # Name, Summary and Description are left out on purpose: they come from
@@ -53,6 +53,14 @@ Builds:
     gradle:
       - yes
     ndk: r28c
+
+  - versionName: 0.4.0
+    versionCode: 7
+    commit: v0.4.0
+    subdir: app
+    gradle:
+      - yes
+    ndk: r28c
     # Once a signed APK is published by the project (docs/release.md):
     # binary: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
@@ -64,5 +72,5 @@ AutoUpdateMode: Version
 # No UpdateCheckData: checkupdates reads the literal versionCode/versionName
 # of app/build.gradle.kts (subdir) at the tagged commit.
 UpdateCheckMode: Tags ^v[0-9.]+$
-CurrentVersion: 0.3.1
-CurrentVersionCode: 6
+CurrentVersion: 0.4.0
+CurrentVersionCode: 7

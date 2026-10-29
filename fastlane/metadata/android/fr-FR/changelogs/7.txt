@@ -1,0 +1,5 @@
+• Les alertes ne manquent plus de prélèvement : deux le même jour, un publié en retard ou plusieurs entre deux vérifications sont tous examinés.
+• Un appui long sur une mesure ouvre le rapport complet de son prélèvement.
+• Note expliquant les dérogations.
+• Pertinence des métabolites de pesticides selon l’ANSES.
+• La fiche indique l’ARS de la région, avec un lien, et le distributeur.
