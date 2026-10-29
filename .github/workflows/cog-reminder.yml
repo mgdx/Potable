@@ -1,0 +1,36 @@
+# The communes reference (data/src/main/assets/communes.tsv) follows INSEE's
+# Code officiel géographique, revised every 1st of January. Early in the year,
+# this job fails while the file's header still names the previous year's
+# events file (events=v_mvt_commune_<year>), as a reminder to regenerate it:
+# docs/release.md, tools/README.md.
+name: COG reminder
+
+on:
+  schedule:
+    - cron: "0 6 15 1,2 *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  communes-vintage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the COG vintage of communes.tsv
+        run: |
+          file=data/src/main/assets/communes.tsv
+          vintage=$(head -n 1 "$file" | sed -n 's/.* events=v_mvt_commune_\([0-9]\{4\}\) .*/\1/p')
+          year=$(date -u +%Y)
+          if [ -z "$vintage" ]; then
+            echo "::error file=$file,line=1::No events=v_mvt_commune_<year> in the header."
+            exit 1
+          fi
+          if [ "$vintage" -lt "$year" ]; then
+            echo "::error file=$file,line=1::communes.tsv is built on the $vintage COG; regenerate it for $year once INSEE has published v_mvt_commune_$year.csv (update MVT_VINTAGE and MVT_URL in tools/generate_communes.py, see tools/README.md)."
+            exit 1
+          fi
+          echo "communes.tsv: COG $vintage, up to date for $year."
