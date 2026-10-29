@@ -22,6 +22,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.time.Instant
 
 class DataStoreAppPreferencesTest {
     @get:Rule
@@ -257,5 +258,23 @@ class DataStoreAppPreferencesTest {
             preferences.recentUnits.first(),
         )
         assertTrue(preferences.rememberedUdis.first().isEmpty())
+    }
+
+    @Test
+    fun `the last alert check and failure survive a restart`() = runBlocking {
+        val file = storeFile()
+        val checked = Instant.parse("2026-10-29T08:00:00Z")
+        val failed = Instant.parse("2026-10-22T08:00:00Z")
+        preferences(file).run {
+            assertNull(lastAlertCheck.first())
+            assertNull(lastAlertFailure.first())
+            setLastAlertCheck(checked)
+            setLastAlertFailure(failed)
+        }
+        closeAll()
+
+        val preferences = preferences(file)
+        assertEquals(checked, preferences.lastAlertCheck.first())
+        assertEquals(failed, preferences.lastAlertFailure.first())
     }
 }

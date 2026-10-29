@@ -66,6 +66,16 @@ data class CachedCommuneItem(
     val label: String get() = name ?: communeCode
 }
 
+/**
+ * When the alerts last asked Hub'Eau for every followed unit ([checkedAt]),
+ * and last failed to ([failedAt]); null when it never happened.
+ */
+data class LastAlertCheck(val checkedAt: Instant?, val failedAt: Instant?) {
+    /** The last attempt failed: [failedAt] is after [checkedAt]. */
+    val lastFailed: Boolean
+        get() = failedAt != null && (checkedAt == null || failedAt.isAfter(checkedAt))
+}
+
 /** The two alerts the user can switch on. */
 enum class AlertKind { NEW_ANALYSIS, UNFAVOURABLE }
 
@@ -115,6 +125,22 @@ class SettingsViewModel(
         .map { it?.isEmpty() ?: false }
         .catch { emit(false) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
+    /**
+     * When the alerts last checked the followed units: null (nothing shown)
+     * unless an alert is on and at least one unit is followed.
+     */
+    val lastAlertCheck: StateFlow<LastAlertCheck?> = combine(
+        settings,
+        (follows?.follows ?: flowOf(emptyList())).map { it.isNotEmpty() }.catch { emit(false) },
+        preferences.lastAlertCheck,
+        preferences.lastAlertFailure,
+    ) { current, anyFollowed, checkedAt, failedAt ->
+        val anyOn = current?.alerts?.let { it.newAnalysis || it.unfavourable } ?: false
+        if (anyOn && anyFollowed) LastAlertCheck(checkedAt, failedAt) else null
+    }
+        .catch { emit(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     private val _purge = MutableStateFlow(PurgeState.IDLE)
     val purge: StateFlow<PurgeState> = _purge.asStateFlow()

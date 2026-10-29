@@ -13,6 +13,13 @@ import io.github.mgdx.potable.data.follow.Follow
  */
 data class AlertEvent(val follow: Follow, val sample: SampleSummary, val unfavourable: Boolean)
 
+/**
+ * What a [AlertChecker.checkFollows] found: [events], and whether Hub'Eau
+ * answered for every followed unit ([complete]); false when the follows
+ * could not be read or a unit's requests failed.
+ */
+data class AlertCheck(val events: List<AlertEvent>, val complete: Boolean)
+
 /** Run by the app's periodic worker. */
 interface AlertChecker {
     /**
@@ -27,6 +34,9 @@ interface AlertChecker {
      * cancellation.
      */
     suspend fun check(): List<AlertEvent>
+
+    /** [check], telling whether every followed unit was checked. */
+    suspend fun checkFollows(): AlertCheck = AlertCheck(check(), complete = true)
 
     /**
      * Records the current samples of the window of every followed unit as

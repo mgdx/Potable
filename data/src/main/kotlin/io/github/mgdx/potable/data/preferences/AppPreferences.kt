@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.time.Instant
 
 /** The user's settings, kept on the device only (SPEC §7, §10). */
 interface AppPreferences {
@@ -97,6 +99,22 @@ interface AppPreferences {
     val alertPeriodWeeks: Flow<Int> get() = flowOf(DEFAULT_ALERT_WEEKS)
 
     suspend fun setAlertPeriodWeeks(weeks: Int) {}
+
+    /**
+     * When the alert check last ended having asked Hub'Eau for every followed
+     * unit; null until it has once.
+     */
+    val lastAlertCheck: Flow<Instant?> get() = flowOf(null)
+
+    suspend fun setLastAlertCheck(at: Instant) {}
+
+    /**
+     * When the alert check last ended without having asked Hub'Eau for every
+     * followed unit (network, server); null if it never has.
+     */
+    val lastAlertFailure: Flow<Instant?> get() = flowOf(null)
+
+    suspend fun setLastAlertFailure(at: Instant) {}
 
     companion object {
         const val DEFAULT_YEARS = 3
@@ -299,6 +317,22 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         store.edit { it[ALERT_PERIOD_WEEKS] = weeks.orDefaultWeeks() }
     }
 
+    override val lastAlertCheck: Flow<Instant?> = instant(LAST_ALERT_CHECK)
+
+    override suspend fun setLastAlertCheck(at: Instant) {
+        store.edit { it[LAST_ALERT_CHECK] = at.toEpochMilli() }
+    }
+
+    override val lastAlertFailure: Flow<Instant?> = instant(LAST_ALERT_FAILURE)
+
+    override suspend fun setLastAlertFailure(at: Instant) {
+        store.edit { it[LAST_ALERT_FAILURE] = at.toEpochMilli() }
+    }
+
+    private fun instant(key: Preferences.Key<Long>): Flow<Instant?> = data
+        .map { prefs -> prefs[key]?.let(Instant::ofEpochMilli) }
+        .distinctUntilChanged()
+
     /** Alerts are off until the user switches them on (SPEC §5 F7). */
     private fun flag(key: Preferences.Key<Boolean>): Flow<Boolean> = data
         .map { it[key] ?: false }
@@ -328,6 +362,8 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         val ALERT_NEW_ANALYSIS = booleanPreferencesKey("alert_new_analysis")
         val ALERT_UNFAVOURABLE = booleanPreferencesKey("alert_unfavourable")
         val ALERT_PERIOD_WEEKS = intPreferencesKey("alert_period_weeks")
+        val LAST_ALERT_CHECK = longPreferencesKey("last_alert_check")
+        val LAST_ALERT_FAILURE = longPreferencesKey("last_alert_failure")
 
         /** One key per commune with several units: only its code and the chosen unit's. */
         fun udiKey(communeCode: String) = stringPreferencesKey("$UDI_PREFIX$communeCode")

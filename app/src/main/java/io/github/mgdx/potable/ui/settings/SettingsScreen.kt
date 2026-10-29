@@ -38,6 +38,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
     val purgedMessage = stringResource(R.string.settings_clear_cache_done)
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val noFollows by viewModel.noFollows.collectAsStateWithLifecycle()
+    val lastAlertCheck by viewModel.lastAlertCheck.collectAsStateWithLifecycle()
     val cachedCommunes by viewModel.cachedCommunes.collectAsStateWithLifecycle()
     val communeToPurge by viewModel.communeToPurge.collectAsStateWithLifecycle()
     val communePurged by viewModel.communePurged.collectAsStateWithLifecycle()
@@ -101,6 +102,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
                 weekChoices = viewModel.alertWeekChoices,
                 notice = notice,
                 noFollows = noFollows,
+                lastCheck = lastAlertCheck,
                 onAlert = viewModel::setAlert,
                 onPeriod = viewModel::setAlertPeriodWeeks,
                 onOpenNotificationSettings = { openNotificationSettings(context) },

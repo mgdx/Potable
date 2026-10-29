@@ -2,6 +2,7 @@ package io.github.mgdx.potable.alert
 
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
+import io.github.mgdx.potable.data.alert.AlertCheck
 import io.github.mgdx.potable.data.alert.AlertChecker
 import io.github.mgdx.potable.data.alert.AlertEvent
 import io.github.mgdx.potable.data.follow.Follow
@@ -35,11 +36,25 @@ class AlertPreferences(newAnalysis: Boolean = false, unfavourable: Boolean = fal
     override val alertNewAnalysis = MutableStateFlow(newAnalysis)
     override val alertUnfavourable = MutableStateFlow(unfavourable)
     override val alertPeriodWeeks = MutableStateFlow(AppPreferences.DEFAULT_ALERT_WEEKS)
+
+    override val lastAlertCheck = MutableStateFlow<Instant?>(null)
+    override val lastAlertFailure = MutableStateFlow<Instant?>(null)
+
+    override suspend fun setLastAlertCheck(at: Instant) {
+        lastAlertCheck.value = at
+    }
+
+    override suspend fun setLastAlertFailure(at: Instant) {
+        lastAlertFailure.value = at
+    }
 }
 
 /** Returns [events] at each check; counts the calls. */
 class FakeChecker(var events: List<AlertEvent> = emptyList()) : AlertChecker {
     var checks = 0
+
+    /** Whether [checkFollows] says every unit was checked. */
+    var complete = true
     var baselines = 0
 
     /** Thrown by [setBaseline] when set. */
@@ -49,6 +64,8 @@ class FakeChecker(var events: List<AlertEvent> = emptyList()) : AlertChecker {
         checks++
         return events
     }
+
+    override suspend fun checkFollows(): AlertCheck = AlertCheck(check(), complete)
 
     override suspend fun setBaseline() {
         baselines++

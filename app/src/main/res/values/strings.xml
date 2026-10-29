@@ -481,6 +481,12 @@
     <string name="settings_alert_unfavourable_description">Only new analyses whose published conclusion is unfavourable.</string>
     <!-- Replaces the line above while "New analyses" (alert_new_analyses) is on. -->
     <string name="settings_alert_unfavourable_included">Already included in new analyses: turn those off to be notified of unfavourable conclusions only.</string>
+    <!-- Under the alert switches, while an alert is on and a commune is followed. %1$s: date and time of the last check that reached Hub'Eau for every followed commune. -->
+    <string name="settings_alert_last_check">Last check: %1$s</string>
+    <!-- Replaces settings_alert_last_check until the first check. -->
+    <string name="settings_alert_last_check_none">Last check: not done yet</string>
+    <!-- Under settings_alert_last_check when the last attempt failed. %1$s: its date and time. -->
+    <string name="settings_alert_last_failure">The last attempt, on %1$s, could not reach Hub\'Eau for every commune. It will try again at the next check.</string>
     <!-- Followed by radio buttons: settings_alert_weekly, settings_alert_weeks. -->
     <string name="settings_alert_period">Check for new results:</string>
     <string name="settings_alert_weekly">Every week</string>

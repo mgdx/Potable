@@ -22,6 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.ui.sample.currentLocale
+import io.github.mgdx.potable.ui.sheet.withDigitsOf
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 /**
  * Asks for `POST_NOTIFICATIONS` when the ViewModel says so, that is only
@@ -52,7 +59,8 @@ internal fun NotificationPermissionRequest(viewModel: SettingsViewModel) {
  * is a subset of "new analyses": while those are on, it shows as on and
  * cannot be changed, and its description says why. While no commune is
  * followed ([noFollows]), a sentence says that the alerts only check the
- * followed ones, with a way to the search.
+ * followed ones, with a way to the search. While an alert is on and a
+ * commune is followed ([lastCheck] not null), when the check last ran.
  */
 @Composable
 internal fun AlertsSection(
@@ -60,6 +68,7 @@ internal fun AlertsSection(
     weekChoices: List<Int>,
     notice: NotificationNotice,
     noFollows: Boolean,
+    lastCheck: LastAlertCheck?,
     onAlert: (AlertKind, Boolean) -> Unit,
     onPeriod: (Int) -> Unit,
     onOpenNotificationSettings: () -> Unit,
@@ -95,6 +104,7 @@ internal fun AlertsSection(
         enabled = !alerts.newAnalysis,
         onChange = { onAlert(AlertKind.UNFAVOURABLE, it) },
     )
+    lastCheck?.let { LastCheckLines(it) }
     if (notice != NotificationNotice.NONE) {
         Description(
             stringResource(
@@ -126,6 +136,33 @@ internal fun AlertsSection(
         onSelect = onPeriod,
     )
 }
+
+/** When the alerts last checked, and last failed to if that came after. */
+@Composable
+private fun LastCheckLines(lastCheck: LastAlertCheck) {
+    val locale = currentLocale()
+    val zone = ZoneId.systemDefault()
+    Description(
+        lastCheck.checkedAt?.let {
+            stringResource(R.string.settings_alert_last_check, formatCheckTime(it, locale, zone))
+        } ?: stringResource(R.string.settings_alert_last_check_none),
+    )
+    val failedAt = lastCheck.failedAt
+    if (lastCheck.lastFailed && failedAt != null) {
+        Description(
+            stringResource(
+                R.string.settings_alert_last_failure,
+                formatCheckTime(failedAt, locale, zone),
+            ),
+        )
+    }
+}
+
+/** [at] as a medium date and a short time of [locale] in [zone], digits included. */
+internal fun formatCheckTime(at: Instant, locale: Locale, zone: ZoneId): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        .withDigitsOf(locale)
+        .format(at.atZone(zone))
 
 /** The application's notification settings, or its details screen if they cannot be opened. */
 internal fun openNotificationSettings(context: Context) {

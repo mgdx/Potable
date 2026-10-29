@@ -336,6 +336,9 @@
     <string name="settings_alert_unfavourable">Conclusions défavorables uniquement</string>
     <string name="settings_alert_unfavourable_description">Uniquement les nouvelles analyses dont la conclusion publiée est défavorable.</string>
     <string name="settings_alert_unfavourable_included">Déjà incluses dans « Nouvelles analyses » : désactivez cette option pour ne recevoir que les conclusions défavorables.</string>
+    <string name="settings_alert_last_check">Dernière vérification : %1$s</string>
+    <string name="settings_alert_last_check_none">Dernière vérification : pas encore effectuée</string>
+    <string name="settings_alert_last_failure">La dernière tentative, le %1$s, n’a pas pu interroger Hub\'Eau pour toutes les communes. Elle sera renouvelée à la prochaine vérification.</string>
     <string name="settings_alert_period">Vérifier les nouveaux résultats :</string>
     <string name="settings_alert_weekly">Chaque semaine</string>
     <plurals name="settings_alert_weeks">

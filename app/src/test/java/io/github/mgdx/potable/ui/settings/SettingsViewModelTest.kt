@@ -73,6 +73,9 @@ class SettingsViewModelTest {
         override suspend fun setAlertPeriodWeeks(weeks: Int) {
             alertPeriodWeeks.value = weeks
         }
+
+        override val lastAlertCheck = MutableStateFlow<Instant?>(null)
+        override val lastAlertFailure = MutableStateFlow<Instant?>(null)
     }
 
     /** Notifications allowed or not; [canRequest] is false below Android 13. */
@@ -413,6 +416,49 @@ class SettingsViewModelTest {
         backgroundScope.launch(main.dispatcher) { viewModel.noFollows.collect {} }
         advanceUntilIdle()
         assertFalse(viewModel.noFollows.value)
+    }
+
+    @Test
+    fun `the last check is shown only while an alert is on and a commune is followed`() =
+        runTest(main.dispatcher) {
+            val follows = FakeFollowRepository()
+            val viewModel = SettingsViewModel(preferences, FakeWater(), access, communes, follows)
+            backgroundScope.launch(main.dispatcher) { viewModel.lastAlertCheck.collect {} }
+            advanceUntilIdle()
+            assertNull(viewModel.lastAlertCheck.value)
+
+            preferences.alertUnfavourable.value = true
+            advanceUntilIdle()
+            // No commune followed: the alerts check nothing.
+            assertNull(viewModel.lastAlertCheck.value)
+
+            follows.follow("45234", "Orléans", "045000474", "ORLEANS")
+            advanceUntilIdle()
+            // Not yet checked.
+            assertEquals(LastAlertCheck(null, null), viewModel.lastAlertCheck.value)
+
+            val checked = Instant.parse("2026-10-22T08:00:00Z")
+            preferences.lastAlertCheck.value = checked
+            advanceUntilIdle()
+            assertEquals(LastAlertCheck(checked, null), viewModel.lastAlertCheck.value)
+            assertFalse(viewModel.lastAlertCheck.value!!.lastFailed)
+
+            val failed = Instant.parse("2026-10-29T08:00:00Z")
+            preferences.lastAlertFailure.value = failed
+            advanceUntilIdle()
+            assertTrue(viewModel.lastAlertCheck.value!!.lastFailed)
+
+            preferences.alertUnfavourable.value = false
+            advanceUntilIdle()
+            assertNull(viewModel.lastAlertCheck.value)
+        }
+
+    @Test
+    fun `a failure older than the last check is not the last attempt`() {
+        val failed = Instant.parse("2026-10-22T08:00:00Z")
+        assertFalse(LastAlertCheck(failed.plusSeconds(60), failed).lastFailed)
+        assertTrue(LastAlertCheck(null, failed).lastFailed)
+        assertFalse(LastAlertCheck(null, null).lastFailed)
     }
 
     private companion object {
