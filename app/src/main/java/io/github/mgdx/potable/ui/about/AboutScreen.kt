@@ -102,6 +102,12 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                     stringResource(R.string.url_hubeau_terms),
                     openLink,
                 )
+                Body(stringResource(R.string.about_source_anses))
+                Link(
+                    stringResource(R.string.about_source_anses_link),
+                    stringResource(R.string.url_anses_metabolites),
+                    openLink,
+                )
                 Body(stringResource(R.string.about_source_communes))
                 Link(
                     stringResource(R.string.about_source_communes_link),

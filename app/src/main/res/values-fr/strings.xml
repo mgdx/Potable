@@ -360,6 +360,8 @@
     <string name="about_libraries_title">Bibliothèques open source</string>
     <string name="about_source_hubeau">Résultats sur la qualité de l’eau : API « Qualité de l’eau potable » de Hub\'Eau, ministère de la Santé et agences régionales de santé (ARS).</string>
     <string name="about_source_hubeau_terms">Conditions d’utilisation de Hub\'Eau</string>
+    <string name="about_source_anses">Pertinence des métabolites de pesticides : tableau de l’ANSES, mise à jour de juillet 2025.</string>
+    <string name="about_source_anses_link">Tableau des métabolites de l’ANSES</string>
     <string name="about_source_communes">Communes : Découpage administratif communal — geo.api.gouv.fr, Licence Ouverte Etalab 2.0.</string>
     <string name="about_privacy">Aucun traceur, aucune mesure d’audience, aucun compte. Potable se connecte uniquement à Hub\'Eau. Si vous utilisez « Autour de moi », votre position reste sur votre téléphone : elle sert une seule fois à trouver votre commune, puis elle est effacée.</string>
     <string name="about_license">Potable est un logiciel libre, distribué sous la licence publique générale GNU (GNU GPL), version 3.</string>
