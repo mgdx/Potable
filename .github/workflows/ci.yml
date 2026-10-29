@@ -1,0 +1,74 @@
+# Everything that blocks a merge (CONTRIBUTING.md): the Gradle checks, the
+# Python guards of tools/, and an unsigned release build held to the size
+# target of SPEC §2. No secret is used: the release APK is left unsigned when
+# keystore.properties is absent (app/build.gradle.kts).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # SPEC §2: "APK cible < 6 Mo" (6 000 000 bytes).
+  MAX_APK_BYTES: 6000000
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      # JDK 21 runs both Gradle and the Kotlin toolchain (jvmToolchain(21));
+      # the build must never download a JDK, as on F-Droid.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # Caches Gradle and validates the wrapper jar's checksum.
+      - uses: gradle/actions/setup-gradle@v5
+
+      # compileSdk 37 and the NDK named by ndkVersion in app/build.gradle.kts
+      # (which strips the dependencies' native libraries): the runner image
+      # may not carry them yet.
+      - name: Install Android SDK components
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-37.0" "ndk;28.2.13676358" > /dev/null
+
+      - name: Python guards
+        run: |
+          python3 tools/check_translations
+          python3 tools/check_fastlane.py
+          python3 tools/check_communes.py
+          python3 -m unittest discover -s tools/tests
+
+      # Tests, lint, ktlintCheck, checkRtl, checkTranslations, zero warnings.
+      - name: Gradle check
+        run: >
+          ./gradlew check
+          -Porg.gradle.java.installations.auto-download=false
+
+      - name: Release build (unsigned)
+        run: >
+          ./gradlew :app:assembleRelease
+          -Porg.gradle.java.installations.auto-download=false
+
+      - name: Release APK size
+        run: |
+          apk=app/build/outputs/apk/release/app-release-unsigned.apk
+          size=$(stat -c %s "$apk")
+          echo "$apk: $size bytes (limit $MAX_APK_BYTES)"
+          if [ "$size" -ge "$MAX_APK_BYTES" ]; then
+            echo "::error file=app/build.gradle.kts::Release APK is $size bytes, over the $MAX_APK_BYTES-byte target of SPEC §2."
+            exit 1
+          fi

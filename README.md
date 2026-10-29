@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/mgdx/Potable/actions/workflows/ci.yml"><img alt="Intégration continue" src="https://img.shields.io/github/actions/workflow/status/mgdx/Potable/ci.yml?branch=master&style=flat-square&label=CI"></a>
   <a href="LICENSE"><img alt="Licence : GPLv3" src="https://img.shields.io/badge/licence-GPLv3-2350B5?style=flat-square"></a>
   <img alt="Android 8.0 et plus" src="https://img.shields.io/badge/Android-8.0%2B-2350B5?style=flat-square">
   <img alt="Aucun traqueur" src="https://img.shields.io/badge/traqueurs-aucun-2350B5?style=flat-square">
@@ -180,6 +181,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Les tests de la base Room et des notifications tournent sous Robolectric, qui
 télécharge son image Android depuis Maven Central à la première exécution.
+
+L’intégration continue lance `./gradlew check`, les contrôles Python de
+`tools/` et une build release non signée (APK sous 6 Mo) à chaque push sur
+`master` et sur chaque pull request.
 
 **Le référentiel des communes** (`data/src/main/assets/communes.tsv`) est
 versionné : il n’est pas nécessaire de le régénérer pour compiler. Pour le

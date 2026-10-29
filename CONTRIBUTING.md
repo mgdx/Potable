@@ -136,6 +136,12 @@ compilateur Kotlin sont des erreurs, et lint aussi. Ce n’est pas de la
 coquetterie : le projet est fait pour être audité par les relecteurs de
 F-Droid, et un avertissement qui traîne cache le suivant.
 
+L’intégration continue ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
+refait tout cela sur chaque pull request : `./gradlew check`, les contrôles
+Python de `tools/` (traductions, fiches fastlane, référentiel des communes) et
+leurs tests, puis une build release non signée dont l’APK doit rester sous
+6 Mo (SPEC §2). Une pull request n’est fusionnée que si elle est verte.
+
 ### Ce que la revue regardera
 
 - **La séparation des couches.** La logique métier va dans `:core`, qui

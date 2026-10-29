@@ -249,16 +249,31 @@ WorkManager).
    redescend jamais (c'est lui qu'Android compare), `versionName` suit le
    versionnage sémantique. Les deux sont écrits en littéraux : l'outil de mise
    à jour de F-Droid lit ces lignes.
-2. **Notes de version** : `fastlane/metadata/android/<langue>/changelogs/<versionCode>.txt`,
+2. **Première version de l'année : régénérer le référentiel des communes.**
+   L'INSEE révise le Code officiel géographique au 1er janvier (fusions de
+   communes). Si l'en-tête de `data/src/main/assets/communes.tsv`
+   (`events=v_mvt_commune_<année>`) nomme une année antérieure, mettre à jour
+   `MVT_VINTAGE` et `MVT_URL` dans `tools/generate_communes.py` dès que
+   l'INSEE a publié le nouveau millésime, puis :
+
+   ```bash
+   python3 tools/generate_communes.py
+   python3 tools/check_communes.py
+   ```
+
+   Procédure et sources : [`tools/README.md`](../tools/README.md). Le workflow
+   planifié `COG reminder` (`.github/workflows/cog-reminder.yml`) échoue le
+   15 janvier et le 15 février tant que ce n'est pas fait.
+3. **Notes de version** : `fastlane/metadata/android/<langue>/changelogs/<versionCode>.txt`,
    l'anglais (`en-US`) d'abord.
-3. **Construire et vérifier** : `./gradlew check`, puis
+4. **Construire et vérifier** : `./gradlew check`, puis
    `./gradlew clean :app:assembleRelease :app:lintRelease`, puis la signature
    (`apksigner`) et la reproductibilité (ci-dessus).
-4. **Tester l'APK release sur un appareil** : c'est le seul à passer par R8.
+5. **Tester l'APK release sur un appareil** : c'est le seul à passer par R8.
    Parcours minimal : recherche d'une commune, fiche, historique, suivi,
    activation d'une alerte (WorkManager), changement de thème, relance de
    l'application (Room, DataStore).
-5. **Étiqueter** le commit de la version `vX.Y.Z` et publier l'APK renommé
+6. **Étiqueter** le commit de la version `vX.Y.Z` et publier l'APK renommé
    `potable-<version>.apk` dans la release, avec l'empreinte du certificat dans
    le texte de la release.
 
