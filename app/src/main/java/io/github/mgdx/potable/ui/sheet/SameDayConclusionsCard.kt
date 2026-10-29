@@ -2,16 +2,14 @@ package io.github.mgdx.potable.ui.sheet
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -81,14 +79,10 @@ internal fun SameDayConclusionsCard(
                 )
                 ConclusionText(sample.conclusion)
                 if (sample.results.isNotEmpty()) {
-                    // No start padding: the label lines up with the conclusion.
-                    TextButton(
+                    // As the button of a single sample, under the sheet's cards.
+                    FilledTonalButton(
                         onClick = { onShowAllResults(sample) },
-                        contentPadding = PaddingValues(
-                            horizontal = 0.dp,
-                            vertical = ButtonDefaults.TextButtonContentPadding
-                                .calculateTopPadding(),
-                        ),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(R.string.sheet_show_all_results))
                     }
