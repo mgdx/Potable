@@ -350,6 +350,8 @@
     </plurals>
     <!-- Under a conclusion. %1$s: which compliance (sheet_limits_bacteriological…); %2$s: compliance_not_compliant. -->
     <string name="timeline_non_compliance">%1$s: %2$s</string>
+    <!-- Accessibility action of a sample of the timeline: opens the full report of that sample. -->
+    <string name="timeline_open_report">Open the report</string>
     <!-- %1$s: why the refresh failed, one of the error_… messages (a full sentence). -->
     <string name="timeline_refresh_failed">The history could not be updated. %1$s</string>
 

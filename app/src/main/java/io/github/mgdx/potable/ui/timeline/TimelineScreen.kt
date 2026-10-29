@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.ui.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -63,11 +65,17 @@ private const val FRENCH_LANGUAGE_TAG = "fr-FR"
  * "Sample history": every sample of the window with its conclusion as
  * published (SPEC §5 F5). A non-compliance is shown with an icon and the text
  * of the compliance concerned, never by colour alone (SPEC §9); no verdict
- * of the application's own is added (SPEC §14).
+ * of the application's own is added (SPEC §14). Touching a sample opens its
+ * full report ([onOpenSample], a `code_prelevement`).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: () -> Unit) {
+fun TimelineScreen(
+    viewModel: TimelineViewModel,
+    communeName: String,
+    onBack: () -> Unit,
+    onOpenSample: (String) -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
     val years by viewModel.years.collectAsStateWithLifecycle()
@@ -96,7 +104,7 @@ fun TimelineScreen(viewModel: TimelineViewModel, communeName: String, onBack: ()
                         EmptyState(
                             stringResource(R.string.timeline_empty, formatDay(current.since)),
                         )
-                    is TimelineUiState.Loaded -> TimelineList(current)
+                    is TimelineUiState.Loaded -> TimelineList(current, onOpenSample)
                 }
             }
             // The cache of any unit is refreshed on demand (SPEC §7).
@@ -143,7 +151,7 @@ private fun RefreshFailedBanner(error: LoadError) {
 }
 
 @Composable
-private fun TimelineList(loaded: TimelineUiState.Loaded) {
+private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item(key = "summary") {
             Column(
@@ -170,23 +178,33 @@ private fun TimelineList(loaded: TimelineUiState.Loaded) {
             HorizontalDivider()
         }
         itemsIndexed(loaded.entries, key = { _, entry -> entry.sample.code }) { index, entry ->
-            TimelineRow(entry, isLast = index == loaded.entries.lastIndex)
+            TimelineRow(
+                entry,
+                isLast = index == loaded.entries.lastIndex,
+                onClick = { onOpenSample(entry.sample.code) },
+            )
         }
     }
 }
 
 /**
  * One sample: a marker on the line of the timeline, its date, its
- * conclusion verbatim and its non-compliances. Read as a single element.
+ * conclusion verbatim and its non-compliances. Read as a single element;
+ * touching it calls [onClick].
  */
 @Composable
-private fun TimelineRow(entry: TimelineEntry, isLast: Boolean) {
+private fun TimelineRow(entry: TimelineEntry, isLast: Boolean, onClick: () -> Unit) {
     val locale = currentLocale()
     val date = remember(entry.sample.date, locale) { formatSampleDate(entry.sample.date, locale) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
+            .clickable(
+                role = Role.Button,
+                onClickLabel = stringResource(R.string.timeline_open_report),
+                onClick = onClick,
+            )
             .semantics(mergeDescendants = true) {}
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),

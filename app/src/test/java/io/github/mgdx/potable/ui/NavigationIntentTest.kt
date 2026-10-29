@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.composable
 import androidx.navigation.createGraph
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
+import androidx.savedstate.read
 import io.github.mgdx.potable.MainActivity
 import io.github.mgdx.potable.alert.FollowsTarget
 import io.github.mgdx.potable.alert.SheetTarget
@@ -17,6 +19,13 @@ import io.github.mgdx.potable.alert.alertTarget
 import io.github.mgdx.potable.alert.followsIntent
 import io.github.mgdx.potable.alert.sanitized
 import io.github.mgdx.potable.alert.sheetIntent
+import io.github.mgdx.potable.ui.navigation.ParameterHistoryRoute
+import io.github.mgdx.potable.ui.navigation.ReportResultsRoute
+import io.github.mgdx.potable.ui.navigation.ReportRoute
+import io.github.mgdx.potable.ui.navigation.SampleRoute
+import io.github.mgdx.potable.ui.navigation.SearchRoute
+import io.github.mgdx.potable.ui.navigation.SheetRoute
+import io.github.mgdx.potable.ui.navigation.TimelineRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -36,44 +45,25 @@ import org.robolectric.RuntimeEnvironment
 class NavigationIntentTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    private fun string(name: String) = navArgument(name) {
-        type = NavType.StringType
-        nullable = true
-        defaultValue = null
-    }
-
     /** The routes of the real graph that matter here, the search as start. */
     private fun navController() = NavHostController(context).apply {
         navigatorProvider.addNavigator(ComposeNavigator())
-        graph = createGraph(startDestination = Routes.SEARCH) {
-            composable(Routes.SEARCH) {}
-            composable(
-                Routes.SHEET,
-                arguments = listOf(
-                    navArgument(Routes.ARG_COMMUNE) { type = NavType.StringType },
-                    navArgument(Routes.ARG_UDI) { type = NavType.StringType },
-                    string(Routes.ARG_NAME),
-                    string(Routes.ARG_UDI_NAME),
-                    navArgument(Routes.ARG_CHANGE) {
-                        type = NavType.BoolType
-                        defaultValue = false
-                    },
-                ),
-            ) {}
-            composable(
-                Routes.SAMPLE,
-                arguments = listOf(navArgument(Routes.ARG_SAMPLE) { type = NavType.StringType }),
-            ) {}
-            composable(Routes.REPORT) {}
-            composable(Routes.REPORT_RESULTS) {}
+        graph = createGraph(startDestination = SearchRoute) {
+            composable<SearchRoute> {}
+            composable<SheetRoute> {}
+            composable<SampleRoute> {}
+            composable<TimelineRoute> {}
+            composable<ParameterHistoryRoute> {}
+            composable<ReportRoute> {}
+            composable<ReportResultsRoute> {}
         }
     }
 
     /** What another application can send: the sample screen alone, deep-linked. */
     private fun hostileIntent(controller: NavHostController): Intent {
         val graph = controller.graph
-        val ids = intArrayOf(graph.id, graph.findNode(Routes.SAMPLE)!!.id)
-        val args = arrayListOf(Bundle(), Bundle().apply { putString(Routes.ARG_SAMPLE, "X") })
+        val ids = intArrayOf(graph.id, graph.findNode<SampleRoute>()!!.id)
+        val args = arrayListOf(Bundle(), Bundle().apply { putString("sampleCode", "X") })
         return Intent(context, MainActivity::class.java)
             .setData(Uri.parse("android-app://androidx.navigation/sample/X"))
             .putExtra("android-support-nav:controller:deepLinkIds", ids)
@@ -86,7 +76,7 @@ class NavigationIntentTest {
         // The attack the sanitising stops: without it, Navigation obeys.
         val controller = navController()
         assertTrue(controller.handleDeepLink(hostileIntent(controller)))
-        assertEquals(Routes.SAMPLE, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<SampleRoute>())
         assertNull(controller.sheetEntryOrNull())
     }
 
@@ -96,7 +86,7 @@ class NavigationIntentTest {
         val clean = hostileIntent(controller).sanitized()
 
         assertFalse(controller.handleDeepLink(clean))
-        assertEquals(Routes.SEARCH, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<SearchRoute>())
         assertNull(clean.data)
         assertTrue(clean.extras?.isEmpty ?: true)
         assertEquals(MainActivity::class.java.name, clean.component?.className)
@@ -134,26 +124,26 @@ class NavigationIntentTest {
 
         controller.leaveOrphanSample()
 
-        assertEquals(Routes.SEARCH, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<SearchRoute>())
         assertNull(controller.previousBackStackEntry)
     }
 
     @Test
     fun `a sample screen without a sheet below goes back`() {
         val controller = navController()
-        controller.navigate(Routes.sample("X"))
+        controller.navigate(SampleRoute("X"))
         assertNull(controller.sheetEntryOrNull())
 
         controller.leaveOrphanSample()
 
-        assertEquals(Routes.SEARCH, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<SearchRoute>())
     }
 
     @Test
     fun `the sheet entry is found below a sample screen`() {
         val controller = navController()
-        controller.navigate(Routes.sheet("45234", "045000123", "Orléans", "ORLEANS"))
-        controller.navigate(Routes.sample("X"))
+        controller.navigate(SheetRoute("45234", "045000123", "Orléans", "ORLEANS"))
+        controller.navigate(SampleRoute("X"))
 
         assertNotNull(controller.sheetEntryOrNull())
     }
@@ -161,23 +151,56 @@ class NavigationIntentTest {
     @Test
     fun `the report entry is found below its results`() {
         val controller = navController()
-        controller.navigate(Routes.report("45234", "045000123", "P1"))
-        controller.navigate(Routes.reportResults("45234", "045000123", "P1"))
+        controller.navigate(ReportRoute("45234", "045000123", "P1"))
+        controller.navigate(ReportResultsRoute("45234", "045000123", "P1"))
 
-        assertEquals(Routes.REPORT_RESULTS, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<ReportResultsRoute>())
         val report = controller.reportEntryOrNull()
         assertNotNull(report)
-        assertEquals("P1", report!!.arguments?.getString(Routes.ARG_SAMPLE))
+        assertEquals("P1", report!!.toRoute<ReportRoute>().sampleCode)
     }
 
     @Test
     fun `report results without their report go back`() {
         val controller = navController()
-        controller.navigate(Routes.reportResults("45234", "045000123", "P1"))
+        controller.navigate(ReportResultsRoute("45234", "045000123", "P1"))
         assertNull(controller.reportEntryOrNull())
 
-        controller.leaveOrphanSample(Routes.REPORT_RESULTS)
+        controller.leaveOrphanSample(ReportResultsRoute::class)
 
-        assertEquals(Routes.SEARCH, controller.currentDestination?.route)
+        assertTrue(controller.currentDestination!!.hasRoute<SearchRoute>())
+    }
+
+    @Test
+    fun `a sample of the timeline opens its report, and back returns to the timeline`() {
+        val controller = navController()
+        controller.navigate(SheetRoute("45234", "045000123", "Orléans", "ORLEANS"))
+        controller.navigate(TimelineRoute("45234", "045000123", "Orléans"))
+        controller.navigate(ReportRoute("45234", "045000123", "P1"))
+
+        assertNotNull(controller.reportEntryOrNull())
+        assertTrue(controller.popBackStack())
+        assertTrue(controller.currentDestination!!.hasRoute<TimelineRoute>())
+    }
+
+    @Test
+    fun `the arguments of a route survive the saved state, special characters included`() {
+        // The ViewModels read their route back from their SavedStateHandle.
+        val controller = navController()
+        val history = ParameterHistoryRoute.of(
+            "2A004",
+            "02A000/1 & 2?",
+            linkedSetOf("1345", "1346"),
+            "Titre hydrotimétrique, TH",
+        )
+        controller.navigate(history)
+
+        val arguments = controller.currentBackStackEntry!!.arguments!!
+        val handle = SavedStateHandle(arguments.read { toMap() })
+        assertEquals(history, handle.toRoute<ParameterHistoryRoute>())
+
+        val sheet = SheetRoute("45234", "045000123", "Saint-Jean-de-Braye")
+        controller.navigate(sheet)
+        assertEquals(sheet, controller.sheetEntryOrNull()!!.toRoute<SheetRoute>())
     }
 }
