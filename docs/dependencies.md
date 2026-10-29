@@ -62,3 +62,17 @@ Services ni bibliothèque supplémentaire.
 | Dépendance | Version | Rôle prévu | Licence |
 |---|---|---|---|
 | `androidx.room:room-ktx` | 2.8.4 | Inutile depuis Room 2.7 (voir `:data`) ; à retirer du catalogue | Apache 2.0 |
+
+## Données embarquées
+
+| Données | Fichier | Source | Version | Licence | Attribution |
+|---|---|---|---|---|---|
+| Pertinence des métabolites de pesticides pour les EDCH (23 métabolites) | `core/src/main/resources/metabolites-pertinence.csv` | Anses, « Tableau relatif aux métabolites pertinents pour les EDCH » : [tableur](https://www.anses.fr/system/files/tableur-pertinence-metabolites-juillet-2025.xls), publié sur [anses.fr](https://www.anses.fr/fr/content/tableau-metabolites-pesticides-edch) | Dernière mise à jour : juillet 2025 (téléchargé le 2026-10-29, SHA-256 `4a0a164b…80e23031`) | Informations publiques librement et gratuitement réutilisables (code des relations entre le public et l'administration, art. L321-1 et suivants), selon les [mentions légales](https://www.anses.fr/fr/content/mentions-l%C3%A9gales) d'anses.fr : réutilisation permise à condition de citer l'Anses, de ne pas altérer les informations ni en dénaturer le sens, et d'indiquer la date de dernière mise à jour. Le classement est en outre une donnée réglementaire factuelle (instruction DGS, arrêté du 11 janvier 2007 modifié) | **Exigée** : « Anses », date « juillet 2025 ». Citées dans l'écran (chaîne `metabolite_relevance_explanation`) ; à ajouter aux sources de l'écran À propos |
+
+Les 23 lignes du tableau sont reprises en entier et sans modification
+(colonnes 1 à 5) ; Potable ajoute dans des colonnes séparées le code Hub'Eau
+apparié et la méthode d'appariement (`docs/hubeau-api.md`, « Pertinence des
+métabolites »), ce qui n'altère pas l'information publiée. Le
+CC BY-NC-ND des mentions légales vise les « autres contenus » du site
+(textes éditoriaux, images), pas les informations publiques. Aucun appel
+réseau vers anses.fr : le fichier est embarqué et mis à jour à la main.

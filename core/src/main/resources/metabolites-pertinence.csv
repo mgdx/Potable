@@ -1,0 +1,37 @@
+# Pertinence pour les eaux destinées à la consommation humaine (EDCH) des métabolites de pesticides évalués par l'Anses.
+# Source : Anses, « Tableau relatif aux métabolites pertinents pour les EDCH », dernière mise à jour : juillet 2025.
+# Fichier : https://www.anses.fr/system/files/tableur-pertinence-metabolites-juillet-2025.xls
+#   (SHA-256 4a0a164ba19154c8586a8ab21e69415bd9cad89b8d923d3f2944387f80e23031, téléchargé le 2026-10-29),
+#   publié sur https://www.anses.fr/fr/content/tableau-metabolites-pesticides-edch
+# Réutilisation : informations publiques librement réutilisables (code des relations entre le public et
+#   l'administration, art. L321-1 et suivants ; mentions légales d'anses.fr), à condition de citer l'Anses,
+#   de ne pas les altérer ni en dénaturer le sens, et d'indiquer la date de leur dernière mise à jour.
+# Colonnes 1 à 5 : les 23 lignes du tableau, reprises telles quelles (seuls les retours à la ligne et les
+#   espaces en fin de cellule sont normalisés). Colonnes 6 et 7, ajoutées par Potable : le code_parametre
+#   Hub'Eau (code SANDRE) apparié, vide si aucun, et la méthode d'appariement : « cas » (même numéro CAS
+#   dans code_parametre_cas de Hub'Eau) ou « identifiant » (même code de métabolite du fabricant, porté
+#   par un seul code_parametre). Voir docs/hubeau-api.md, « Pertinence des métabolites ».
+nom;cas;statut;annee_avis;reference;code_parametre;appariement
+1,2,4-triazole;288-88-0;Pertinent;2025;Avis 2023-SA-0041-c du 24 mars 2025;6808;cas
+2,6-dichlorobenzamide (métabolite du chlorthiamide, du dichlobénil et du fluopicolide);2008-58-4;Pertinent;2022;Avis 2021-SA-0020-b du 26 janvier 2022;2011;cas
+acétochlore ESA (métabolite de l'acétochlore);187022-11-3;Non pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6856;cas
+acétochlore OXA (métabolite de l'acétochlore);194992-44-4;Non pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6862;cas
+Acide aminométhylphosphonique (AMPA) (métabolite du glyphosate);1066-51-9;Non pertinent;2025;Avis 2023-SA-0041-d du 5 juin 2025;1907;cas
+alachlore ESA (métabolite de l'alachlore);142363-53-9;Non pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6800;cas
+alachlore OXA (métabolite de l'alachlore);171262-17-2;Pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6855;cas
+CGA 354742 (métabolite du diméthachlore);1231710-75-0;Non pertinent;2020;Avis 2018-SA-0134-b du 4 février 2020;6381;identifiant
+CGA 369873 (métabolite du diméthachlore);/;Non pertinent;2019;Avis 2019-SA-0228 du 15 mars 2019;7727;identifiant
+chlorothalonil R471811 (métabolite du chlorothalonil);/;Non pertinent;2024;Avis 2023-SA-0142-a du 29 avril 2024;8865;identifiant
+chlorothalonil R417888 (métabolite du chlorothalonil);1418095-02-9;Pertinent;2024;Avis 2023-SA-0041-a du 29 avril 2024;7717;cas
+déséthyl-terbuméton (métabolite du terbuméton);30125-64-5;Pertinent;2020;Avis 2018-SA-0134-b du 4 février 2020;2051;cas
+desphényl-chloridazone (DPC) (métabolite de la chloridazone);6339-19-1;Pertinent;2023;Avis 2022-SA-0162-a du 4 mai 2023;6378;cas
+diméthénamide ESA (métabolite du diméthénamide-P);205939-58-8;Non pertinent;2022;Avis 2021-SA-0020-b du 26 janvier 2022;6865;cas
+diméthénamide OXA (métabolite du diméthénamide-P);380412-59-9;Non pertinent;2022;Avis 2021-SA-0020-b du 26 janvier 2022;7735;cas
+flufenacet ESA (métabolite du flufenacet);201668-32-8;Pertinent;2020;Avis 2018-SA-0134-b du 4 février 2020;6864;cas
+métazachlore ESA (métabolite du métazachlore);172960-62-2;Non pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6895;cas
+métazachlore OXA (métabolite du métazachlore);1231244-60-2;Non pertinent;2019;Avis 2015-SA-0252 du 30 janvier 2019;6894;cas
+méthyl-desphényl-chloridazone (MDPC) (métabolite de la chloridazone);17254-80-7;Pertinent;2023;Avis 2022-SA-0162-b du 19 décembre 2023;6379;cas
+métolachlore ESA (métabolite du métolachlore);171118-09-5;Non pertinent;2022;Avis 2021-SA-0205 du 30 septembre 2022;6854;cas
+métolachlore OXA (métabolite du métolachlore);152019-73-3;Non pertinent;2021;Avis 2019-SA-0129 du 14 janvier 2021;6853;cas
+métolachlore NOA 413173 (métabolite du métolachlore);1418095-19-8;Non pertinent;2022;Avis 2021-SA-0070 du 30 septembre 2022;7729;cas
+N,N-diméthylsulfamide (métabolite du tolylfluanide);3984-14-3;Pertinent;2018;Avis 2017-SA-0063 du 31 juillet 2018;6384;cas

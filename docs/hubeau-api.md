@@ -184,6 +184,76 @@ laboratoire (`code_lieu_analyse` = `L`). Voisins volontairement exclus :
 quatre des six communes) et chacun des 20 PFAS seul (`5347`, `6561`…).
 Aucun candidat n'a été écarté faute d'être publié.
 
+## Pertinence des métabolites
+
+Appariement du 2026-10-29 entre le tableau de l'Anses (« Tableau relatif aux
+métabolites pertinents pour les EDCH », mise à jour de juillet 2025, 23
+métabolites ; source et licence dans `docs/dependencies.md`) et les
+`code_parametre` de Hub'Eau, pour `MetaboliteRelevance` (SPEC §5 F4).
+Le référentiel SANDRE (`api.sandre.eaufrance.fr`, `id.eaufrance.fr`) était en
+maintenance ce jour-là ; l'appariement repose donc sur Hub'Eau lui-même, qui
+publie le numéro CAS de chaque paramètre dans `code_parametre_cas` et accepte
+ce champ comme filtre.
+
+1. **Par le numéro CAS** (20 métabolites) :
+   `resultats_dis?code_parametre_cas=<CAS du tableau>&size=20000&sort=desc`,
+   puis la même requête bornée à `date_max_prelevement=2021-01-01` (lignes
+   anciennes). Chaque CAS ne donne qu'**un** `code_parametre`, sur toutes les
+   lignes lues.
+2. **Par l'identifiant du fabricant** (3 métabolites dont le tableau ou
+   Hub'Eau n'ont pas de CAS) : `resultats_dis?libelle_parametre=<identifiant>`
+   (le filtre cherche le texte dans le libellé), 20 000 lignes récentes et
+   20 000 antérieures à 2023 ; l'identifiant n'est porté que par un code.
+   - `CGA 354742` → `6381` (« CGA 354742 ») : CAS du tableau `1231710-75-0`,
+     absent de Hub'Eau ; quelques lignes anciennes portent `149490-60-8`.
+   - `CGA 369873` → `7727` (« CGA 369873 ») : pas de CAS dans le tableau ;
+     quelques lignes anciennes de Hub'Eau portent `1418095-08-5`.
+   - `R471811` → `8865` (« Chlorothalonil R471811 ») : pas de CAS ni d'un côté
+     ni de l'autre.
+
+Un métabolite qui ne s'apparierait ni par l'un ni par l'autre serait laissé
+sans code (colonne vide), pas approché par son libellé : aucun ne l'est au
+2026-10-29.
+
+Contrôle de cohérence, sans valeur de preuve : les 14 métabolites non
+pertinents n'ont plus de `limite_qualite_parametre` sur leurs lignes récentes
+(`<=0,1 µg/L` sur les anciennes, avant leur classement) ; les 9 pertinents
+gardent `<=0,1 µg/L`. Aucune ligne ne publie la valeur indicative de
+0,9 µg/L en `reference_qualite_parametre`.
+
+| Métabolite (tableau Anses) | Statut | `code_parametre` | `libelle_parametre` | Appariement |
+|---|---|---|---|---|
+| 1,2,4-triazole | Pertinent | `6808` | 1,2,4 Triazole | CAS 288-88-0 |
+| 2,6-dichlorobenzamide | Pertinent | `2011` | 2,6 Dichlorobenzamide | CAS 2008-58-4 |
+| acétochlore ESA | Non pertinent | `6856` | ESA acetochlore | CAS 187022-11-3 |
+| acétochlore OXA | Non pertinent | `6862` | OXA acetochlore | CAS 194992-44-4 |
+| AMPA | Non pertinent | `1907` | AMPA | CAS 1066-51-9 |
+| alachlore ESA | Non pertinent | `6800` | ESA alachlore | CAS 142363-53-9 |
+| alachlore OXA | Pertinent | `6855` | OXA alachlore | CAS 171262-17-2 |
+| CGA 354742 | Non pertinent | `6381` | CGA 354742 | identifiant |
+| CGA 369873 | Non pertinent | `7727` | CGA 369873 | identifiant |
+| chlorothalonil R471811 | Non pertinent | `8865` | Chlorothalonil R471811 | identifiant |
+| chlorothalonil R417888 | Pertinent | `7717` | Chlorothalonil R417888 | CAS 1418095-02-9 |
+| déséthyl-terbuméton | Pertinent | `2051` | Terbuméton-désethyl | CAS 30125-64-5 |
+| desphényl-chloridazone | Pertinent | `6378` | Chloridazone desphényl | CAS 6339-19-1 |
+| diméthénamide ESA | Non pertinent | `6865` | Diméthénamide ESA | CAS 205939-58-8 |
+| diméthénamide OXA | Non pertinent | `7735` | Diméthénamide OXA | CAS 380412-59-9 |
+| flufenacet ESA | Pertinent | `6864` | Flufenacet ESA | CAS 201668-32-8 |
+| métazachlore ESA | Non pertinent | `6895` | ESA metazachlore | CAS 172960-62-2 |
+| métazachlore OXA | Non pertinent | `6894` | OXA metazachlore | CAS 1231244-60-2 |
+| méthyl-desphényl-chloridazone | Pertinent | `6379` | Chloridazone méthyl desphényl | CAS 17254-80-7 |
+| métolachlore ESA | Non pertinent | `6854` | ESA metolachlore | CAS 171118-09-5 |
+| métolachlore OXA | Non pertinent | `6853` | OXA metolachlore | CAS 152019-73-3 |
+| métolachlore NOA 413173 | Non pertinent | `7729` | Metolachlor NOA 413173 | CAS 1418095-19-8 |
+| N,N-diméthylsulfamide | Pertinent | `6384` | N,N-Dimethylsulfamide | CAS 3984-14-3 |
+
+Exemple : Bussy-Lettrée (51099), prélèvement `05100146859` du 2026-08-31,
+publie 17 de ces métabolites, pertinents et non pertinents.
+
+Mise à jour : quand l'Anses publie un nouveau tableau, remplacer les colonnes
+1 à 5 de `core/src/main/resources/metabolites-pertinence.csv`, apparier les
+nouvelles lignes par la même méthode, et ajuster `MetaboliteRelevanceTest`.
+
 ## Familles de paramètres
 
 L'API ne publie **aucune** famille (bactériologie, pesticides…) :

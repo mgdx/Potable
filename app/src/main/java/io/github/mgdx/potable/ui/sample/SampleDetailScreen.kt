@@ -41,8 +41,10 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.core.MetaboliteRelevance
 import io.github.mgdx.potable.core.ParameterFamily
 import io.github.mgdx.potable.core.PesticideCount
+import io.github.mgdx.potable.core.Relevance
 import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
@@ -175,7 +177,10 @@ private fun ResultList(
                 item(key = "family-${group.family}") { FamilyHeader(group.family) }
                 val pesticides = state.pesticides
                 if (group.family == ParameterFamily.PESTICIDES && pesticides != null) {
-                    item(key = "pesticides-count") { PesticideCountHeader(pesticides) }
+                    val classified = group.results.any {
+                        MetaboliteRelevance.of(it.parameterCode) != null
+                    }
+                    item(key = "pesticides-count") { PesticideCountHeader(pesticides, classified) }
                 }
                 items(group.results) { result ->
                     ResultItem(result, onClick = { onOpenHistory(result) })
@@ -248,9 +253,11 @@ private fun FamilyHeader(family: ParameterFamily) {
 /**
  * How many pesticides the whole sample searched for and quantified, under
  * their heading, and what quantified means: facts, no verdict (SPEC §14).
+ * When the list shows a metabolite classified by ANSES ([classifiedShown]),
+ * what the classification means, once for all of them.
  */
 @Composable
-private fun PesticideCountHeader(count: PesticideCount) {
+private fun PesticideCountHeader(count: PesticideCount, classifiedShown: Boolean) {
     Column(
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -269,6 +276,13 @@ private fun PesticideCountHeader(count: PesticideCount) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (classifiedShown) {
+            Text(
+                text = stringResource(R.string.metabolite_relevance_explanation),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -332,7 +346,21 @@ private fun ResultText(result: AnalysisResult, modifier: Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // A fact of the ANSES table, read with the result (the row merges
+        // its texts), never set against the value (SPEC §14).
+        MetaboliteRelevance.of(result.parameterCode)?.let { relevance ->
+            Text(
+                text = stringResource(relevance.labelRes()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+}
+
+private fun Relevance.labelRes(): Int = when (this) {
+    Relevance.RELEVANT -> R.string.metabolite_relevant
+    Relevance.NOT_RELEVANT -> R.string.metabolite_not_relevant
 }
 
 private fun ParameterFamily.titleRes(): Int = when (this) {

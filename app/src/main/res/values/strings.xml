@@ -225,6 +225,11 @@
     </plurals>
     <!-- Under sheet_pesticides_count and sample_pesticides_count. -->
     <string name="pesticides_quantified_explanation">Quantified: measured above the quantification limit of the laboratory, whatever the quality limit.</string>
+    <!-- Under a result of the sample detail: the classification of a pesticide metabolite in the ANSES table (docs/hubeau-api.md). "ANSES": the French food, environmental and occupational health and safety agency, not translated. -->
+    <string name="metabolite_relevant">Relevant metabolite (ANSES)</string>
+    <string name="metabolite_not_relevant">Non-relevant metabolite (ANSES)</string>
+    <!-- Under sample_pesticides_count, when the list shows a metabolite classified by ANSES. What the classification means, never a judgement of the value. -->
+    <string name="metabolite_relevance_explanation">Metabolites are breakdown products of pesticides. ANSES classifies those it has assessed: a relevant one is subject to the quality limit of 0.1 µg/L, a non-relevant one to an indicative value of 0.9 µg/L. Source: ANSES table, July 2025 update.</string>
     <!-- Names of the watched substances, translated (docs/glossary.md), unlike the labels published by Hub'Eau. Explanations: what the substance is and where it comes from, no health advice (SPEC §14). -->
     <string name="watched_pfas">PFAS (sum of 20)</string>
     <string name="watched_pfas_explanation">PFAS are very persistent synthetic chemicals, used in many industrial and everyday products such as non-stick or water-repellent coatings.</string>

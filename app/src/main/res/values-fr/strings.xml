@@ -154,6 +154,9 @@
         <item quantity="other">%1$d pesticides recherchés dans ce prélèvement · quantifiés : %2$d</item>
     </plurals>
     <string name="pesticides_quantified_explanation">Quantifié : mesuré au-dessus de la limite de quantification du laboratoire, quelle que soit la limite de qualité.</string>
+    <string name="metabolite_relevant">Métabolite pertinent (ANSES)</string>
+    <string name="metabolite_not_relevant">Métabolite non pertinent (ANSES)</string>
+    <string name="metabolite_relevance_explanation">Les métabolites sont des produits de dégradation des pesticides. L’ANSES classe ceux qu’elle a évalués : un métabolite pertinent relève de la limite de qualité de 0,1 µg/L, un métabolite non pertinent d’une valeur indicative de 0,9 µg/L. Source : tableau de l’ANSES, mise à jour de juillet 2025.</string>
     <string name="watched_pfas">PFAS (somme de 20)</string>
     <string name="watched_pfas_explanation">Les PFAS sont des composés chimiques de synthèse très persistants, utilisés dans de nombreux produits industriels et courants, comme les revêtements antiadhésifs ou imperméabilisants.</string>
     <string name="watched_pesticides">Total des pesticides</string>
