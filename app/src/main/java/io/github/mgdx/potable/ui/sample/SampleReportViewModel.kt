@@ -19,16 +19,19 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 /**
  * The full report of one sample of a unit, whatever its age, opened from the
- * history of a parameter (SPEC §5 F4, F5): loaded from Hub'Eau by its
- * `code_prelevement`, then shown like the sheet's sample, with the same text
- * filter. [SampleDetailUiState.Unavailable] means that Hub'Eau publishes no
- * row of it. A failed load waits for Retry: there is no automatic retry.
+ * history of a parameter (SPEC §5 F4, F5): loaded by its `code_prelevement`
+ * (from the cache, or Hub'Eau), then shown like the sheet's sample; its
+ * results, with the text filter, are [SampleReportResultsViewModel]'s, which
+ * reads this one's [state] and loads nothing.
+ * [SampleDetailUiState.Unavailable] means that Hub'Eau publishes no row of
+ * it. A failed load waits for Retry: there is no automatic retry.
  */
 class SampleReportViewModel(
     private val samples: SampleRepository,
@@ -40,12 +43,8 @@ class SampleReportViewModel(
     /** What was loaded: null while loading. */
     private val loaded = MutableStateFlow<Loaded?>(null)
 
-    private val _query = MutableStateFlow("")
-
-    /** What the user typed, as typed. */
-    val query: StateFlow<String> = _query.asStateFlow()
-
-    val state: StateFlow<SampleDetailUiState> = combine(loaded, _query, ::toState)
+    /** The sample, its results by family, unfiltered. */
+    val state: StateFlow<SampleDetailUiState> = loaded.map(::toState)
         .stateIn(viewModelScope, SharingStarted.Eagerly, SampleDetailUiState.Loading)
 
     /** True when the loading state has lasted [slowThreshold]: Hub'Eau is slow. */
@@ -56,10 +55,6 @@ class SampleReportViewModel(
 
     init {
         load()
-    }
-
-    fun onQueryChange(value: String) {
-        _query.value = value
     }
 
     /** Called by the Retry button only. */
@@ -86,13 +81,13 @@ class SampleReportViewModel(
         }
     }
 
-    private fun toState(result: Loaded?, query: String): SampleDetailUiState = when (result) {
+    private fun toState(result: Loaded?): SampleDetailUiState = when (result) {
         null -> SampleDetailUiState.Loading
         is Loaded.Failed -> SampleDetailUiState.Error(result.error)
         Loaded.NotFound -> SampleDetailUiState.Unavailable
         is Loaded.Found -> SampleDetailUiState.Loaded(
             sample = result.sample,
-            groups = groupByFamily(filterResults(result.sample.results, query)),
+            groups = groupByFamily(result.sample.results),
         )
     }
 
@@ -115,5 +110,41 @@ class SampleReportViewModel(
                 SampleReportViewModel(container.samples, communeCode, udiCode, sampleCode)
             }
         }
+    }
+}
+
+/**
+ * Every result of the sample of a report, by family, with a text filter
+ * (SPEC §5 F4). Nothing is loaded: [report] is the state of the report's
+ * [SampleReportViewModel], scoped to the report's back stack entry, which
+ * stays below this screen; this screen follows it (a retry, a reload after a
+ * process death).
+ */
+class SampleReportResultsViewModel(report: StateFlow<SampleDetailUiState>) : ViewModel() {
+    private val _query = MutableStateFlow("")
+
+    /** What the user typed, as typed. */
+    val query: StateFlow<String> = _query.asStateFlow()
+
+    val state: StateFlow<SampleDetailUiState> = combine(report, _query, ::toState)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, toState(report.value, _query.value))
+
+    fun onQueryChange(value: String) {
+        _query.value = value
+    }
+
+    private fun toState(report: SampleDetailUiState, query: String): SampleDetailUiState =
+        when (report) {
+            is SampleDetailUiState.Loaded -> report.copy(
+                groups = groupByFamily(filterResults(report.sample.results, query)),
+            )
+            else -> report
+        }
+
+    companion object {
+        fun factory(report: StateFlow<SampleDetailUiState>): ViewModelProvider.Factory =
+            viewModelFactory {
+                initializer { SampleReportResultsViewModel(report) }
+            }
     }
 }

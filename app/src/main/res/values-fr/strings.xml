@@ -199,6 +199,7 @@
     <string name="sheet_sample_card_title">Prélèvement</string>
     <string name="sheet_compliance_title">Conformité</string>
     <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>
+    <string name="sheet_derogation_explanation">Une dérogation est une autorisation préfectorale, temporaire et encadrée, de distribuer une eau qui dépasse une limite de qualité. Elle s’accompagne d’un plan d’actions pour rétablir la qualité de l’eau. Elle ne vaut pas avis sanitaire : reportez-vous à la conclusion de l’ARS.</string>
     <string name="sheet_show_all_results">Voir tous les paramètres analysés</string>
     <string name="sheet_source_notice">Source : Hub\'Eau — ministère de la Santé, contrôle sanitaire des ARS. Données mises à jour chaque mois.</string>
 
@@ -208,6 +209,7 @@
     <string name="sample_loading">Chargement du prélèvement…</string>
     <string name="sample_unavailable">Ce prélèvement n’est plus affiché sur la fiche. Revenez en arrière pour voir le plus récent.</string>
     <string name="sample_report_not_found">Hub\'Eau ne publie plus ce prélèvement.</string>
+    <string name="sample_report_title">Rapport du prélèvement</string>
     <string name="sample_no_results">Aucun résultat d’analyse n’a été publié pour ce prélèvement.</string>
     <string name="sample_search_label">Rechercher un paramètre</string>
     <string name="sample_no_match">Aucun paramètre ne correspond à « %1$s ».</string>

@@ -64,6 +64,8 @@ class NavigationIntentTest {
                 Routes.SAMPLE,
                 arguments = listOf(navArgument(Routes.ARG_SAMPLE) { type = NavType.StringType }),
             ) {}
+            composable(Routes.REPORT) {}
+            composable(Routes.REPORT_RESULTS) {}
         }
     }
 
@@ -154,5 +156,28 @@ class NavigationIntentTest {
         controller.navigate(Routes.sample("X"))
 
         assertNotNull(controller.sheetEntryOrNull())
+    }
+
+    @Test
+    fun `the report entry is found below its results`() {
+        val controller = navController()
+        controller.navigate(Routes.report("45234", "045000123", "P1"))
+        controller.navigate(Routes.reportResults("45234", "045000123", "P1"))
+
+        assertEquals(Routes.REPORT_RESULTS, controller.currentDestination?.route)
+        val report = controller.reportEntryOrNull()
+        assertNotNull(report)
+        assertEquals("P1", report!!.arguments?.getString(Routes.ARG_SAMPLE))
+    }
+
+    @Test
+    fun `report results without their report go back`() {
+        val controller = navController()
+        controller.navigate(Routes.reportResults("45234", "045000123", "P1"))
+        assertNull(controller.reportEntryOrNull())
+
+        controller.leaveOrphanSample(Routes.REPORT_RESULTS)
+
+        assertEquals(Routes.SEARCH, controller.currentDestination?.route)
     }
 }
