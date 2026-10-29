@@ -296,6 +296,8 @@
     <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
     <!-- Under the compliance codes, when one is "D" or the conclusion mentions a derogation. Factual, no verdict (SPEC §14). -->
     <string name="sheet_derogation_explanation">A derogation is a temporary authorisation, granted by the prefect under strict conditions, to distribute water that exceeds a quality limit. It comes with an action plan to restore the quality of the water. It is not a health opinion: see the ARS conclusion.</string>
+    <!-- Under the compliance codes, when one is "S" (compliance_not_assessed). Hub'Eau: no parameter of the type considered was measured. Factual, no verdict (SPEC §14). -->
+    <string name="sheet_not_assessed_explanation">“Not assessed”: no parameter of this type (bacteriological or physico-chemical) was measured in this sample, so there is no compliance to establish.</string>
     <!-- Full-width button that opens the sample detail. -->
     <string name="sheet_show_all_results">See all analysed parameters</string>
     <!-- Permanent footer of the sheet. -->

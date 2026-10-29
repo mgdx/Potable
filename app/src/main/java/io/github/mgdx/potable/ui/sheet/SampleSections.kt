@@ -1,29 +1,19 @@
 package io.github.mgdx.potable.ui.sheet
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -36,14 +26,8 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
-import io.github.mgdx.potable.core.Derogation
-import io.github.mgdx.potable.core.FeaturedParameter
-import io.github.mgdx.potable.core.FeaturedParameters
-import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.Sample
-import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
-import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.currentLocale
 import java.time.Instant
 
@@ -62,109 +46,6 @@ private const val FRENCH_LANGUAGE_TAG = "fr-FR"
  * the conclusions kept gaps of about three spaces (docs/decisions.md).
  */
 private const val JUSTIFIED_MAX_FONT_SCALE = 1.15f
-
-/**
- * The featured parameters of the sample (SPEC §4.3), each with its translated
- * name, its value as published and what it is useful for. Absent when the
- * sample has none of them. No value is compared with anything. Each one
- * opens the history of that parameter.
- */
-@Composable
-internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>, String) -> Unit) {
-    val present = remember(sample) { FeaturedParameters.present(sample.results) }
-    if (present.isEmpty()) return
-    SectionCard(title = stringResource(R.string.sheet_key_parameters_title)) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            for ((parameter, result) in present) {
-                val name = stringResource(parameter.nameRes())
-                val actionLabel = stringResource(R.string.sheet_parameter_history_action, name)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(role = Role.Button, onClickLabel = actionLabel) {
-                            onParameterHistory(parameter.codes, name)
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        Text(text = name, style = MaterialTheme.typography.titleSmall)
-                        // Not selectable: the whole row is the click target.
-                        ResultValue(
-                            result,
-                            style = MaterialTheme.typography.titleMedium,
-                            selectable = false,
-                        )
-                        Text(
-                            text = stringResource(parameter.explanationRes()),
-                            style = MaterialTheme.typography.bodySmall.justified(),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun FeaturedParameter.nameRes(): Int = when (this) {
-    FeaturedParameter.NITRATES -> R.string.featured_nitrates
-    FeaturedParameter.HARDNESS -> R.string.featured_hardness
-    FeaturedParameter.PH -> R.string.featured_ph
-    FeaturedParameter.FREE_CHLORINE -> R.string.featured_free_chlorine
-}
-
-private fun FeaturedParameter.explanationRes(): Int = when (this) {
-    FeaturedParameter.NITRATES -> R.string.featured_nitrates_explanation
-    FeaturedParameter.HARDNESS -> R.string.featured_hardness_explanation
-    FeaturedParameter.PH -> R.string.featured_ph_explanation
-    FeaturedParameter.FREE_CHLORINE -> R.string.featured_free_chlorine_explanation
-}
-
-/** The date, distributor, authority and upstream facility of [sample], as published. */
-@Composable
-internal fun SampleInfoCard(sample: Sample, age: RelativeAge) {
-    SectionCard(title = stringResource(R.string.sheet_sample_card_title)) {
-        LabelValueRow(stringResource(R.string.sheet_sampled_on_label)) {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = formatDate(sample.date),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.End,
-                )
-                Text(
-                    text = relativeAgeText(age),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End,
-                )
-            }
-        }
-        sample.distributor?.let {
-            LabelValueRow(stringResource(R.string.sheet_distributor_label)) {
-                ApiValueText(it)
-            }
-        }
-        sample.owner?.let {
-            LabelValueRow(stringResource(R.string.sheet_owner_label)) {
-                ApiValueText(it)
-            }
-        }
-        sample.upstreamFacility?.takeIf { it.isNotBlank() }?.let {
-            LabelValueRow(stringResource(R.string.sheet_upstream_facility_label)) {
-                ApiValueText(it)
-            }
-        }
-    }
-}
 
 /**
  * Running text justified, words hyphenated in the language of the text.
@@ -255,113 +136,6 @@ internal fun ConclusionText(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-}
-
-/**
- * The four compliance codes of [sample]. When one is "D" or the conclusion
- * mentions a derogation ([Derogation]), a short factual note says what a
- * derogation is, under the codes: no colour, no icon, no verdict (SPEC §14).
- */
-@Composable
-internal fun ComplianceSection(sample: Sample) {
-    SectionCard(title = stringResource(R.string.sheet_compliance_title)) {
-        Text(
-            text = stringResource(R.string.sheet_compliance_explanation),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        ComplianceRow(R.string.sheet_limits_bacteriological, sample.bacteriologicalLimits)
-        ComplianceRow(R.string.sheet_limits_physicochemical, sample.physicochemicalLimits)
-        ComplianceRow(R.string.sheet_references_bacteriological, sample.bacteriologicalReferences)
-        ComplianceRow(R.string.sheet_references_physicochemical, sample.physicochemicalReferences)
-        val derogation = remember(sample) { Derogation.concerns(sample) }
-        if (derogation) {
-            Text(
-                text = stringResource(R.string.sheet_derogation_explanation),
-                style = MaterialTheme.typography.bodySmall.justified(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-/**
- * One compliance code, restituted as such. A non-compliance carries text and
- * a warning icon, never colour alone (SPEC §9).
- */
-@Composable
-private fun ComplianceRow(labelRes: Int, compliance: Compliance) {
-    val nonCompliant = compliance == Compliance.NON_COMPLIANT
-    val valueColor = if (nonCompliant) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-    LabelValueRow(stringResource(labelRes)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (nonCompliant) {
-                Icon(
-                    imageVector = Icons.Outlined.Warning,
-                    contentDescription = null,
-                    tint = valueColor,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Text(
-                text = stringResource(compliance.labelRes()),
-                style = MaterialTheme.typography.bodyLarge,
-                color = valueColor,
-                textAlign = TextAlign.End,
-            )
-        }
-    }
-}
-
-/**
- * A label at the start and its value at the end of the same line; a long
- * value wraps under itself, aligned to the end. The value fills its half of
- * the line, so that a short one sits at the end too, not just after the label.
- */
-@Composable
-private fun LabelValueRow(label: String, value: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.TopEnd,
-        ) {
-            value()
-        }
-    }
-}
-
-/** A name published by Hub'Eau, laid out in its own direction ([asApiText]). */
-@Composable
-private fun ApiValueText(value: String) {
-    Text(
-        text = value,
-        style = MaterialTheme.typography.bodyLarge.asApiText(),
-        textAlign = TextAlign.End,
-    )
-}
-
-private fun Compliance.labelRes(): Int = when (this) {
-    Compliance.COMPLIANT -> R.string.compliance_compliant
-    Compliance.COMPLIANT_UNDER_DEROGATION -> R.string.compliance_compliant_under_derogation
-    Compliance.NON_COMPLIANT -> R.string.compliance_not_compliant
-    Compliance.NOT_ASSESSED -> R.string.compliance_not_assessed
-    Compliance.UNKNOWN -> R.string.compliance_unknown
 }
 
 /** The date as published by Hub'Eau, read in UTC ([publishedDate]). */

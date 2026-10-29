@@ -208,6 +208,7 @@
     <string name="sheet_contacts_service">Pour une question sur le service de l’eau (facture, coupure, travaux), le distributeur :</string>
     <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>
     <string name="sheet_derogation_explanation">Une dérogation est une autorisation préfectorale, temporaire et encadrée, de distribuer une eau qui dépasse une limite de qualité. Elle s’accompagne d’un plan d’actions pour rétablir la qualité de l’eau. Elle ne vaut pas avis sanitaire : reportez-vous à la conclusion de l’ARS.</string>
+    <string name="sheet_not_assessed_explanation">« Sans objet » : aucun paramètre de ce type (bactériologique ou physico-chimique) n’a été mesuré dans ce prélèvement ; il n’y a donc pas de conformité à établir.</string>
     <string name="sheet_show_all_results">Voir tous les paramètres analysés</string>
     <string name="sheet_source_notice">Source : Hub\'Eau — ministère de la Santé, contrôle sanitaire des ARS. Données mises à jour chaque mois.</string>
 

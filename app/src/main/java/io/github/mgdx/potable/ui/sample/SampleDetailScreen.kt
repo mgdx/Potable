@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -52,7 +53,9 @@ import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.parameterExplanationRes
 import io.github.mgdx.potable.ui.sheet.formatSampleDate
+import io.github.mgdx.potable.ui.sheet.justified
 
 /** Language of the Hub'Eau labels (SPEC §11.2). */
 private const val FRENCH_LANGUAGE_TAG = "fr-FR"
@@ -182,7 +185,11 @@ private fun ResultList(
                     item(key = "pesticides-count") { PesticideCountHeader(pesticides, classified) }
                 }
                 items(group.results) { result ->
-                    ResultItem(result, onClick = { onOpenHistory(result) })
+                    ResultItem(
+                        result = result,
+                        communeCode = state.sample.communeCode,
+                        onClick = { onOpenHistory(result) },
+                    )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
@@ -287,10 +294,12 @@ private fun PesticideCountHeader(count: PesticideCount, classifiedShown: Boolean
 
 /**
  * One result: the API label, the value block, and the limit and reference as
- * published. Tapping it opens the history of the parameter ([onClick]).
+ * published, and, for a parameter of the sheet's editorial tables, the same
+ * explanation as on the sheet ([parameterExplanationRes], in the commune of
+ * [communeCode]). Tapping it opens the history of the parameter ([onClick]).
  */
 @Composable
-private fun ResultItem(result: AnalysisResult, onClick: () -> Unit) {
+private fun ResultItem(result: AnalysisResult, communeCode: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -303,7 +312,7 @@ private fun ResultItem(result: AnalysisResult, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ResultText(result, Modifier.weight(1f))
+        ResultText(result, communeCode, Modifier.weight(1f))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
@@ -313,7 +322,7 @@ private fun ResultItem(result: AnalysisResult, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ResultText(result: AnalysisResult, modifier: Modifier) {
+private fun ResultText(result: AnalysisResult, communeCode: String, modifier: Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         // Tagged as French so that screen readers pronounce it as such.
         Text(
@@ -351,6 +360,17 @@ private fun ResultText(result: AnalysisResult, modifier: Modifier) {
             Text(
                 text = stringResource(relevance.labelRes()),
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // As on the sheet; no text for a parameter without an editorial one.
+        val explanation = remember(result.parameterCode, communeCode) {
+            parameterExplanationRes(result.parameterCode, communeCode)
+        }
+        explanation?.let {
+            Text(
+                text = stringResource(it),
+                style = MaterialTheme.typography.bodySmall.justified(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
