@@ -25,6 +25,7 @@ import io.github.mgdx.potable.ui.common.SectionCard
  * The four compliance codes of [sample]. When one is "D" or the conclusion
  * mentions a derogation ([Derogation]), a short factual note says what a
  * derogation is, under the codes: no colour, no icon, no verdict (SPEC §14).
+ * When one is "S", another says what "not assessed" means; both may show.
  */
 @Composable
 internal fun ComplianceSection(sample: Sample) {
@@ -46,8 +47,26 @@ internal fun ComplianceSection(sample: Sample) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        if (sample.hasNotAssessedCompliance()) {
+            Text(
+                text = stringResource(R.string.sheet_not_assessed_explanation),
+                style = MaterialTheme.typography.bodySmall.justified(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
+
+/**
+ * Whether one of the four compliance codes of this sample is "S"
+ * ([Compliance.NOT_ASSESSED]): no parameter of that type was measured.
+ */
+internal fun Sample.hasNotAssessedCompliance(): Boolean = listOf(
+    bacteriologicalLimits,
+    physicochemicalLimits,
+    bacteriologicalReferences,
+    physicochemicalReferences,
+).any { it == Compliance.NOT_ASSESSED }
 
 /**
  * One compliance code, restituted as such. A non-compliance carries text and
