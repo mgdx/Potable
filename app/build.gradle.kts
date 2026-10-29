@@ -18,8 +18,8 @@ android {
         applicationId = "io.github.mgdx.potable"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "0.3.0"
+        versionCode = 6
+        versionName = "0.3.1"
     }
 
     // The NDK that strips the native libraries the dependencies ship

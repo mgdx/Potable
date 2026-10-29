@@ -1,0 +1,4 @@
+• Substances surveillées : celles qui n’ont pas été analysées depuis le début de la période sont désormais nommées, car l’absence d’analyse ne dit rien de leur présence.
+• Chlordécone ajouté outre-mer.
+• Nombre de pesticides recherchés et quantifiés, sur la fiche et dans le détail d’un prélèvement.
+• Les alertes partent du suivi d’une unité, et « Vider le cache » ne les remet plus à zéro ; les Réglages signalent quand aucune commune n’est suivie.

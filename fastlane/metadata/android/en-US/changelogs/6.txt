@@ -1,0 +1,4 @@
+• Watched substances: those not analysed since the start of the period are now named, since no analysis says nothing of their presence.
+• Chlordecone added overseas.
+• Number of pesticides searched for and quantified, on the sheet and in a sample's details.
+• Alerts start as soon as a unit is followed, and Clear cache no longer resets them; Settings says when no commune is followed.
