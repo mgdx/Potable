@@ -145,6 +145,12 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
         modifier = Modifier.padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // Under the title, whatever the measures: the ANSES classification of
+        // a metabolite is read alongside them, never against them (SPEC §14).
+        MetaboliteRelevanceNote(
+            parameterCode = series.parameterCode,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
         when {
             series.points.size == 1 -> {
                 Paragraph(stringResource(R.string.history_single))
