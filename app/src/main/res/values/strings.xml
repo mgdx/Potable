@@ -289,6 +289,8 @@
     <!-- Followed by the distributor name as published by Hub'Eau. -->
     <string name="sheet_contacts_service">For a question about the water service (bill, outage, works), the distributor:</string>
     <string name="sheet_compliance_explanation">Quality limits are mandatory health thresholds. Quality references are indicators used to monitor how the water is treated.</string>
+    <!-- Under the compliance codes, when one is "D" or the conclusion mentions a derogation. Factual, no verdict (SPEC §14). -->
+    <string name="sheet_derogation_explanation">A derogation is a temporary authorisation, granted by the prefect under strict conditions, to distribute water that exceeds a quality limit. It comes with an action plan to restore the quality of the water. It is not a health opinion: see the ARS conclusion.</string>
     <!-- Full-width button that opens the sample detail. -->
     <string name="sheet_show_all_results">See all analysed parameters</string>
     <!-- Permanent footer of the sheet. -->
@@ -302,6 +304,8 @@
     <string name="sample_unavailable">This sample is no longer shown on the sheet. Go back to see the latest one.</string>
     <!-- Report opened from the history: Hub'Eau has no row of this sample any more. -->
     <string name="sample_report_not_found">Hub\'Eau no longer publishes this sample.</string>
+    <!-- Top bar title of the full report of one sample, opened from the history of a parameter, one line. -->
+    <string name="sample_report_title">Sample report</string>
     <string name="sample_no_results">No analysis result was published for this sample.</string>
     <!-- Label of the search field. -->
     <string name="sample_search_label">Search a parameter</string>

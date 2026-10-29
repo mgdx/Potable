@@ -69,19 +69,42 @@ class SampleReportViewModelTest {
     }
 
     @Test
-    fun `typing filters the results`() = runTest(main.dispatcher) {
-        samples.answers += Result.success(report)
+    fun `the results screen filters the report's sample without loading it again`() =
+        runTest(main.dispatcher) {
+            samples.answers += Result.success(report)
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            val results = SampleReportResultsViewModel(viewModel.state)
+            assertEquals(viewModel.state.value, results.state.value)
+
+            results.onQueryChange("nitrates")
+            advanceUntilIdle()
+            assertEquals("nitrates", results.query.value)
+            assertEquals(
+                SampleDetailUiState.Loaded(
+                    report,
+                    listOf(FamilyGroup(ParameterFamily.PHYSICOCHEMISTRY, listOf(nitrates))),
+                ),
+                results.state.value,
+            )
+            // One request in all: the report's.
+            assertEquals(1, samples.calls.size)
+        }
+
+    @Test
+    fun `the results screen follows the report's retry`() = runTest(main.dispatcher) {
+        samples.answers += Result.failure(DataError.Network(IOException("offline")))
         val viewModel = viewModel()
-        viewModel.onQueryChange("nitrates")
         advanceUntilIdle()
-        assertEquals("nitrates", viewModel.query.value)
-        assertEquals(
-            SampleDetailUiState.Loaded(
-                report,
-                listOf(FamilyGroup(ParameterFamily.PHYSICOCHEMISTRY, listOf(nitrates))),
-            ),
-            viewModel.state.value,
-        )
+        val results = SampleReportResultsViewModel(viewModel.state)
+        advanceUntilIdle()
+        assertEquals(SampleDetailUiState.Error(LoadError.NETWORK), results.state.value)
+
+        samples.answers += Result.success(report)
+        viewModel.retry()
+        advanceUntilIdle()
+        assertTrue(results.state.value is SampleDetailUiState.Loaded)
+        assertEquals(2, samples.calls.size)
     }
 
     @Test

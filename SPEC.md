@@ -186,6 +186,14 @@ physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
 Sous le titre des pesticides, le nombre de pesticides et de métabolites
 recherchés et quantifiés dans tout le prélèvement, sommes exclues.
 
+Ouvert depuis l'historique d'un paramètre (F5, appui long sur une mesure),
+un prélèvement, même ancien, s'affiche d'abord comme la fiche : conclusion
+ARS, paramètres clés, carte « prélèvement », conformités, sans rien de
+propre à l'unité ; un bouton mène à la liste ci-dessus, sans nouvelle
+requête. Sur la fiche comme sur ce rapport, un code « D » ou une conclusion
+qui mentionne une dérogation ajoute sous les conformités une note
+factuelle sur ce qu'est une dérogation, sans verdict (§14).
+
 ### F5 — Historique et graphiques
 
 - Sélection d'un paramètre → série temporelle sur la profondeur disponible.

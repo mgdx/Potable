@@ -475,6 +475,45 @@ seul signale 661 prélèvements sans code `N` ; les 61 conclusions distinctes re
 une non-conformité ou une restriction publiée. Les cas ci-dessus sont les
 tests de `UnfavourableTest`.
 
+## Dérogations (mesures du 2026-10-29)
+
+Requêtes : `resultats_dis?conformite_limites_pc_prelevement=D` (le filtre
+existe et marche) pour les départements 02, 10, 28, 45, 51, 59, 60, 62, 77,
+80 depuis 2024 ; puis, pour compter, une ligne par prélèvement
+(`code_parametre=1340`, nitrates) dans 02, 10, 28, 51, 59, 62, 77, 89 depuis
+2025 : **29 674 prélèvements**, dont **593** avec au moins un code `D`.
+
+Constats :
+
+- **Le code `D` ne s'accompagne presque jamais du mot.** Aucun des 593
+  prélèvements à code `D` du second corpus n'a de conclusion qui dise
+  « dérogation ». Dans l'Aube et la Marne, la conclusion parle de pesticides
+  au-dessus de 0,1 µg/L et d'un « contrôle renforcé » :
+  `05100146939`, Haussimont (51285), 2026-08-31, `C,D,C,C` : « L'eau
+  distribuée présente des concentrations en pesticides supérieures aux
+  exigences réglementaires fixées à 0,1 µg/l, mais inférieures aux valeurs
+  définies pour en limiter les usages sanitaires. Un contrôle renforcé est en
+  place … » ; Avreuil (10024) : « Eau non conforme aux limites de qualité
+  réglementaire fixées à 0,1 µg/L … » sous un code `D`.
+- **La Seine-et-Marne l'écrit en toutes lettres**, avec l'arrêté :
+  `07700262150`, Charny (77095), 2026-06-15, `D` : « Eau d'alimentation
+  conforme aux valeurs dérogatoires définies dans l'arrêté préfectoral n°26
+  ARS 12 SE du 17 mars 2026 autorisant la PRPDE à déroger temporairement aux
+  limites de qualité … La PRPDE s'est engagée à mettre en place un plan
+  d'actions sur la durée de la dérogation … ». Même texte à Charmentray
+  (77094).
+- **Le mot sans le code** : `07700261861`, Chamigny (77), 2026-06-25, et
+  `07700261227`, Guignes (77), 2026-05-26, ont un code `N` et une conclusion
+  « non conforme aux limites de qualité mais conforme aux valeurs
+  dérogatoires … ». Les deux seuls cas du second corpus.
+- Formes rencontrées : « dérogation », « dérogatoire(s) », « déroger ». Pas
+  d'espace parasite observé dans ces mots, mais il en existe ailleurs
+  (« l a situation », « évoluti on ») : `Derogation.mentionedIn` en tolère
+  une entre deux lettres.
+
+D'où la règle de `Derogation.concerns` : un code `D` **ou** le mot dans la
+conclusion.
+
 ## Blocages (mesures du 2026-10-28)
 
 Mesures de la recette du 2026-10-28 (01:17-02:05), depuis un PC au `curl` et

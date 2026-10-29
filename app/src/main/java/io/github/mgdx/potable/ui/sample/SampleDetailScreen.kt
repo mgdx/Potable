@@ -81,27 +81,26 @@ fun SampleDetailScreen(
 }
 
 /**
- * The full report of a sample loaded by its code (SPEC §5 F4), opened from
- * the history of a parameter: the same screen as [SampleDetailScreen].
+ * Every result of the sample of a report ([SampleReportScreen]): the same
+ * screen as [SampleDetailScreen], fed by the report's loaded sample.
  */
 @Composable
-fun SampleReportScreen(
-    viewModel: SampleReportViewModel,
+fun SampleReportResultsScreen(
+    viewModel: SampleReportResultsViewModel,
+    onRetry: () -> Unit,
     onBack: () -> Unit,
     onOpenHistory: (AnalysisResult) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
-    val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
     SampleDetailContent(
         state = state,
         query = query,
         onQueryChange = viewModel::onQueryChange,
-        onRetry = viewModel::retry,
+        onRetry = onRetry,
         onBack = onBack,
         onOpenHistory = onOpenHistory,
         unavailableText = stringResource(R.string.sample_report_not_found),
-        slow = isSlow,
     )
 }
 
