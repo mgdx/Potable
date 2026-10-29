@@ -10,13 +10,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.SectionCard
-import io.github.mgdx.potable.ui.common.asApiText
 
 /** The date, distributor, authority and upstream facility of [sample], as published. */
 @Composable
@@ -81,12 +83,31 @@ internal fun LabelValueRow(label: String, value: @Composable () -> Unit) {
     }
 }
 
-/** A name published by Hub'Eau, laid out in its own direction ([asApiText]). */
+/**
+ * A name published by Hub'Eau (French, SPEC §11.2): one left-to-right
+ * paragraph in every layout, held against the end of its row ([ltrValueAlign]),
+ * however many lines it wraps to.
+ */
 @Composable
 private fun ApiValueText(value: String) {
     Text(
         text = value,
-        style = MaterialTheme.typography.bodyLarge.asApiText(),
-        textAlign = TextAlign.End,
+        style = MaterialTheme.typography.bodyLarge.copy(
+            textDirection = TextDirection.Ltr,
+            textAlign = ltrValueAlign(LocalLayoutDirection.current),
+        ),
     )
 }
+
+/**
+ * The alignment that holds a left-to-right paragraph against the end of the
+ * layout. [TextAlign.Start] and [TextAlign.End] are resolved against the
+ * direction of the paragraph, not that of the layout: the end of a
+ * left-to-right paragraph is always its right. In a left-to-right layout,
+ * the end of the row is the right, [TextAlign.End]; in a right-to-left one,
+ * it is the left, the paragraph's start. A single line also sits there thanks
+ * to the box of [LabelValueRow]; this keeps every line of a wrapped value
+ * there too.
+ */
+internal fun ltrValueAlign(layoutDirection: LayoutDirection): TextAlign =
+    if (layoutDirection == LayoutDirection.Rtl) TextAlign.Start else TextAlign.End
