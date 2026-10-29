@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -54,6 +55,7 @@ internal fun HealthAgencyCard(communeCode: String, distributor: String?) {
                 val description =
                     stringResource(R.string.sheet_contacts_website_description, it.name)
                 // Opens in the user's browser through ACTION_VIEW; the app itself loads nothing.
+                // No horizontal padding: the label lines up with the text of the card.
                 TextButton(
                     onClick = {
                         try {
@@ -65,7 +67,11 @@ internal fun HealthAgencyCard(communeCode: String, distributor: String?) {
                         }
                     },
                     modifier = Modifier.semantics { contentDescription = description },
-                    contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
+                    contentPadding = PaddingValues(
+                        horizontal = 0.dp,
+                        vertical = ButtonDefaults.TextButtonWithIconContentPadding
+                            .calculateTopPadding(),
+                    ),
                 ) {
                     Text(stringResource(R.string.sheet_contacts_website))
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
