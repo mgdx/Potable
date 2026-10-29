@@ -431,6 +431,8 @@
     <!-- Snackbar once done. %1$s: name of the commune. -->
     <string name="settings_clear_commune_done">Cached data of %1$s cleared.</string>
     <string name="settings_alerts_description">Potable checks your communes in the background and notifies you of new results. Hub\'Eau data change only once a month, so checking more often would not find more.</string>
+    <!-- Under settings_alerts_description while no commune is followed, above a button action_search_commune. "Follow", "My communes" and "Recent" are sheet_follow, follows_title and search_recent_title: keep the same words. -->
+    <string name="settings_alerts_no_follows">Alerts only cover the communes you follow, and you don’t follow any yet. A commune in the Recent list is not followed: open its sheet and tap Follow to find it in My communes.</string>
     <!-- Switch title, and name of the notification channel in the system settings. Quoted in settings_alert_unfavourable_included. -->
     <string name="alert_new_analyses">New analyses</string>
     <string name="settings_alert_new_description">Every new analysis of your communes, whatever its conclusion.</string>

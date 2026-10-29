@@ -2,6 +2,7 @@ package io.github.mgdx.potable.ui.sheet
 
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
+import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.FakeHistoryRepository
 import io.github.mgdx.potable.ui.FakeWaterRepository
@@ -223,4 +224,34 @@ class FollowFromSheetViewModelTest {
         assertEquals(Freshness(fetchedAt, refreshFailed = false), viewModel.freshness.value)
         assertTrue(water.sampleCalls.isEmpty())
     }
+
+    @Test
+    fun `following records the alert baseline of the unit, once followed`() =
+        runTest(main.dispatcher) {
+            water.refreshedCache = CachedSample(sample(), Instant.parse("2026-10-25T09:59:00Z"))
+            val baselines = mutableListOf<Pair<Follow, Boolean>>()
+            val viewModel =
+                SheetViewModel(
+                    water,
+                    follows,
+                    FakeHistoryRepository(),
+                    "45234",
+                    "045000123",
+                    "Orléans",
+                    "ORLEANS",
+                    clock,
+                    baseline = { follow -> baselines += follow to (follow in follows.current) },
+                )
+            advanceUntilIdle()
+
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+            // Given the stored follow, after it is stored.
+            assertEquals(listOf(follows.current.single() to true), baselines)
+
+            // Unfollowing records nothing.
+            viewModel.toggleFollow()
+            advanceUntilIdle()
+            assertEquals(1, baselines.size)
+        }
 }

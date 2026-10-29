@@ -303,6 +303,7 @@ fun PotableNavHost(
             SettingsScreen(
                 viewModel = viewModel(factory = SettingsViewModel.factory(container)),
                 onBack = { navController.navigateUp() },
+                onSearch = { navController.openSearch() },
             )
         }
         composable(Routes.FOLLOWS) {

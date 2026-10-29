@@ -35,7 +35,10 @@ adb shell dumpsys jobscheduler | grep -A3 "$PKG"     # aucune tâche alert-check
 adb shell dumpsys package $PKG | grep POST_NOTIFICATIONS   # granted=false
 ```
 Aucune demande de permission au lancement ; Réglages → Alerts : les deux
-interrupteurs sont désactivés.
+interrupteurs sont désactivés, et une phrase dit que les alertes ne
+concernent que les communes suivies et qu'aucune ne l'est, avec « Search for
+a commune » (retour à la recherche). Elle disparaît dès qu'une commune est
+suivie (une commune de « Recent » ne compte pas).
 
 **Permission à l'activation (Android 13+).** Réglages → Alerts →
 « New analyses » : la demande système apparaît à ce moment. Refuser :
@@ -66,6 +69,21 @@ adb logcat -s PotableDebug WM-WorkerWrapper
 Une notification par commune suivie : titre « commune », texte « New
 analysis published: sample taken on <date> ». La toucher ouvre la fiche de
 l'unité (appli fermée comme ouverte) ; le retour revient à l'écran de départ.
+
+**Ligne de base au suivi.** « New analyses » activé, suivre une commune
+depuis sa fiche, puis aussitôt `run` : aucune notification. La date
+« dernier prélèvement vu » est posée dès le suivi, depuis le dernier
+prélèvement en cache de la fiche (sinon une requête légère), et non à la
+première vérification périodique : un prélèvement publié entre le suivi et
+cette vérification sera annoncé. Couvert par `HubEauAlertCheckerTest`.
+
+**« Clear cache » garde la ligne de base.** Une commune suivie, « New
+analyses » activé, ligne de base posée ; `age`, puis Réglages → « Clear
+cache » (confirmer), puis `run` : la notification arrive quand même. La
+date « dernier prélèvement vu » des unités suivies survit à la purge
+(seule la date de dernière requête est effacée) ; sans elle, la vérification
+reprendrait une ligne de base et n'annoncerait rien.
+Couvert par `CachingWaterRepositoryTest`.
 
 **« Unfavourable only ».** Désactiver « New analyses », activer
 « Unfavourable conclusions only », refaire `age` puis `run` : aucune

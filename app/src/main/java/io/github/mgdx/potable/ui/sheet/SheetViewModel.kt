@@ -16,6 +16,7 @@ import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.WaterRepository
+import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.data.preferences.RecentUnit
@@ -100,7 +101,8 @@ data class Freshness(val fetchedAt: Instant, val refreshFailed: Boolean)
  * The cache is the display source for every unit, followed or not (SPEC §7
  * as amended, `docs/decisions.md`): it is refreshed when the sheet opens
  * (the repository decides whether the network is needed) and on
- * pull-to-refresh. Following only changes the follow button.
+ * pull-to-refresh. Following only changes the follow button, and records
+ * the alert baseline of the unit ([baseline]).
  *
  * Once a sample is shown, the timeline of the last 12 months is read in the
  * background ([recentUnfavourable]), from the history cache when it is fresh;
@@ -119,6 +121,11 @@ class SheetViewModel(
     slowThreshold: Duration = SLOW_LOAD_THRESHOLD,
     /** Where the unit is recorded as opened, for the search's "recent" list. */
     private val recents: AppPreferences? = null,
+    /**
+     * Records the alert baseline of the unit once followed
+     * ([io.github.mgdx.potable.data.alert.AlertChecker.setBaseline]).
+     */
+    private val baseline: suspend (Follow) -> Unit = {},
 ) : ViewModel() {
     private val _state = MutableStateFlow<SheetUiState>(SheetUiState.Loading)
     val state: StateFlow<SheetUiState> = _state.asStateFlow()
@@ -257,7 +264,11 @@ class SheetViewModel(
                     // ones: the data shown do not change.
                     follows.unfollow(follow.id)
                 } else {
-                    follows.follow(communeCode, communeName, udiCode, udiName)
+                    val follow = follows.follow(communeCode, communeName, udiCode, udiName)
+                    // Once followed (a baseline is only kept for a followed
+                    // unit): a sample published before the first check of
+                    // the alerts is then announced. Best effort, never throws.
+                    baseline(follow)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -463,6 +474,7 @@ class SheetViewModel(
                     udiName,
                     Clock.systemUTC(),
                     recents = container.preferences,
+                    baseline = { container.alertChecker.setBaseline(it) },
                 )
             }
         }

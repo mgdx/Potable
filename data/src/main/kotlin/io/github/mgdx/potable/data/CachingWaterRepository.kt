@@ -222,7 +222,11 @@ class CachingWaterRepository(
             database.markAllPurged()
             cache.deleteAllResults()
             cache.deleteAllSamples()
-            cache.deleteAllSync()
+            // A followed unit keeps the date its alerts have seen, as in
+            // purgeCommune: without it, its next check would take the latest
+            // sample as a new baseline and never announce it.
+            cache.clearAllLastSuccess()
+            cache.deleteSyncWithoutFollowedLastSeen()
             // The history cache too.
             val history = database.history()
             history.deleteAllPoints()

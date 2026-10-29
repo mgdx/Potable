@@ -9,6 +9,7 @@ import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
+import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.data.preferences.ThemeMode
 import kotlinx.coroutines.CancellationException
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -80,13 +82,15 @@ enum class NotificationNotice {
 
 /**
  * Settings (SPEC §5 F8): theme, default history window, cache retention and
- * purge (whole, or one commune), alerts.
+ * purge (whole, or one commune), alerts. [follows] is only read to say that
+ * the alerts check nothing while no commune is followed.
  */
 class SettingsViewModel(
     private val preferences: AppPreferences,
     private val water: WaterRepository,
     private val notifications: NotificationAccess,
     private val communes: CommuneRepository,
+    follows: FollowRepository? = null,
 ) : ViewModel() {
     /** Null until the preferences are read, so that no wrong choice shows first. */
     val settings: StateFlow<Settings?> = combine(
@@ -101,6 +105,16 @@ class SettingsViewModel(
         ),
         ::Settings,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    /**
+     * True when no unit is followed: the alerts then check nothing, which the
+     * screen says (a commune in the recent list is not followed). False until
+     * the follows are read, and when they cannot be.
+     */
+    val noFollows: StateFlow<Boolean> = (follows?.follows ?: flowOf(null))
+        .map { it?.isEmpty() ?: false }
+        .catch { emit(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
 
     private val _purge = MutableStateFlow(PurgeState.IDLE)
     val purge: StateFlow<PurgeState> = _purge.asStateFlow()
@@ -316,6 +330,7 @@ class SettingsViewModel(
                     container.water,
                     container.notificationAccess,
                     container.communes,
+                    container.follows,
                 )
             }
         }

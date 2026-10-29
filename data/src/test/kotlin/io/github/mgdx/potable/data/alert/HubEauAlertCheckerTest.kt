@@ -293,6 +293,75 @@ class HubEauAlertCheckerTest {
     }
 
     @Test
+    fun `a unit just followed gets its baseline from the cache, without request`() = runTest {
+        // The sheet that was followed cached its latest sample.
+        network.samples[ORLEANS] = sample("P1", "2026-08-26T12:50:00Z")
+        water.refreshCache("45234", ORLEANS, force = false)
+        val orleans = followOrleans()
+
+        checker.setBaseline(orleans)
+
+        assertEquals(Instant.parse("2026-08-26T12:50:00Z"), lastSeen(ORLEANS))
+        assertEquals(emptyList<String>(), requested)
+        // Published before the first periodic check: announced, not taken as the baseline.
+        latest[ORLEANS] = summary("P2", "2026-09-15T09:00:00Z")
+        assertEquals("P2", checker.check().single().sample.code)
+    }
+
+    @Test
+    fun `a unit just followed without cache gets its baseline from Hub'Eau`() = runTest {
+        val orleans = followOrleans()
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+
+        checker.setBaseline(orleans)
+
+        assertEquals(Instant.parse("2026-08-26T12:50:00Z"), lastSeen(ORLEANS))
+        assertEquals(listOf(ORLEANS), requested)
+        latest[ORLEANS] = summary("P2", "2026-09-15T09:00:00Z")
+        assertEquals("P2", checker.check().single().sample.code)
+    }
+
+    @Test
+    fun `the baseline of a unit just followed keeps a date already seen`() = runTest {
+        val orleans = followOrleans()
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+        checker.check()
+        // Not yet announced: following again must not swallow it.
+        latest[ORLEANS] = summary("P2", "2026-09-15T09:00:00Z")
+
+        checker.setBaseline(orleans)
+
+        assertEquals(Instant.parse("2026-08-26T12:50:00Z"), lastSeen(ORLEANS))
+        assertEquals("P2", checker.check().single().sample.code)
+    }
+
+    @Test
+    fun `the baseline of a unit just followed ignores a failure`() = runTest {
+        val orleans = followOrleans()
+        failures[ORLEANS] = DataError.Http(500)
+
+        checker.setBaseline(orleans)
+
+        assertNull(lastSeen(ORLEANS))
+        // The first check falls back to recording it.
+        failures.clear()
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+        assertEquals(emptyList<AlertEvent>(), checker.check())
+        assertEquals(Instant.parse("2026-08-26T12:50:00Z"), lastSeen(ORLEANS))
+    }
+
+    @Test
+    fun `no baseline is kept for a unit unfollowed meanwhile`() = runTest {
+        val orleans = followOrleans()
+        follows.unfollow(orleans.id)
+        latest[ORLEANS] = summary("P1", "2026-08-26T12:50:00Z")
+
+        checker.setBaseline(orleans)
+
+        assertNull(lastSeen(ORLEANS))
+    }
+
+    @Test
     fun `the application's checker needs the caching repository`() {
         val client = HubEauClient(OkHttpClient())
         assertTrue(AlertChecker(client, follows, water) is HubEauAlertChecker)

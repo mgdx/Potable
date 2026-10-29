@@ -69,13 +69,14 @@ import java.time.ZoneId
 
 /** Settings (SPEC §5 F8). Every change is stored at once: there is no "save". */
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
+fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: () -> Unit) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val purge by viewModel.purge.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val purgedMessage = stringResource(R.string.settings_clear_cache_done)
     val notice by viewModel.notice.collectAsStateWithLifecycle()
+    val noFollows by viewModel.noFollows.collectAsStateWithLifecycle()
     val cachedCommunes by viewModel.cachedCommunes.collectAsStateWithLifecycle()
     val communeToPurge by viewModel.communeToPurge.collectAsStateWithLifecycle()
     val communePurged by viewModel.communePurged.collectAsStateWithLifecycle()
@@ -161,9 +162,11 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 alerts = current.alerts,
                 weekChoices = viewModel.alertWeekChoices,
                 notice = notice,
+                noFollows = noFollows,
                 onAlert = viewModel::setAlert,
                 onPeriod = viewModel::setAlertPeriodWeeks,
                 onOpenNotificationSettings = { openNotificationSettings(context) },
+                onSearch = onSearch,
             )
         }
     }
@@ -340,18 +343,31 @@ private fun NotificationPermissionRequest(viewModel: SettingsViewModel) {
 /**
  * Alerts (SPEC §5 F7): the two kinds, then how often. "Unfavourable only"
  * is a subset of "new analyses": while those are on, it shows as on and
- * cannot be changed, and its description says why.
+ * cannot be changed, and its description says why. While no commune is
+ * followed ([noFollows]), a sentence says that the alerts only check the
+ * followed ones, with a way to the search.
  */
 @Composable
 private fun AlertsSection(
     alerts: AlertSettings,
     weekChoices: List<Int>,
     notice: NotificationNotice,
+    noFollows: Boolean,
     onAlert: (AlertKind, Boolean) -> Unit,
     onPeriod: (Int) -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onSearch: () -> Unit,
 ) = SettingsCard(stringResource(R.string.settings_alerts_title)) {
     Description(stringResource(R.string.settings_alerts_description))
+    if (noFollows) {
+        Description(stringResource(R.string.settings_alerts_no_follows))
+        OutlinedButton(
+            onClick = onSearch,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Text(stringResource(R.string.action_search_commune))
+        }
+    }
     SwitchRow(
         title = stringResource(R.string.alert_new_analyses),
         description = stringResource(R.string.settings_alert_new_description),
