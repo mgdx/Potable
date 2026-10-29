@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.ui.sample
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +25,11 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.ReadableMaxWidth
+import io.github.mgdx.potable.ui.common.TwoPaneMaxWidth
+import io.github.mgdx.potable.ui.common.TwoPanes
+import io.github.mgdx.potable.ui.common.isExpandedWidth
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.sheet.ComplianceSection
 import io.github.mgdx.potable.ui.sheet.ConclusionCard
 import io.github.mgdx.potable.ui.sheet.KeyParametersCard
@@ -85,17 +91,7 @@ private fun ReportContent(
     modifier: Modifier,
 ) {
     val age = remember(sample.date) { RelativeAge.of(sample.date, Clock.systemUTC()) }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        ConclusionCard(sample, age, R.string.sample_report_conclusion_title)
-        KeyParametersCard(sample, onParameterHistory)
-        SampleInfoCard(sample, age)
-        ComplianceSection(sample)
+    val showAllResults = @Composable {
         if (sample.results.isNotEmpty()) {
             FilledTonalButton(onClick = onShowAllResults, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.sheet_show_all_results))
@@ -106,6 +102,38 @@ private fun ReportContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+    // One scroll state for both layouts, kept when the window is resized.
+    val scrollState = rememberScrollState()
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val twoPane = isExpandedWidth(maxWidth)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .readableWidth(if (twoPane) TwoPaneMaxWidth else ReadableMaxWidth)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (twoPane) {
+                // The conclusion and what it is about, then the measures.
+                TwoPanes(
+                    start = {
+                        ConclusionCard(sample, age, R.string.sample_report_conclusion_title)
+                        SampleInfoCard(sample, age)
+                        ComplianceSection(sample)
+                        showAllResults()
+                    },
+                    end = { KeyParametersCard(sample, onParameterHistory) },
+                )
+            } else {
+                ConclusionCard(sample, age, R.string.sample_report_conclusion_title)
+                KeyParametersCard(sample, onParameterHistory)
+                SampleInfoCard(sample, age)
+                ComplianceSection(sample)
+                showAllResults()
+            }
         }
     }
 }

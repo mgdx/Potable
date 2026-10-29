@@ -50,6 +50,7 @@ import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PeriodSelector
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.publishedDate
 import java.util.Locale
@@ -104,7 +105,8 @@ fun ParameterHistoryScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .readableWidth(),
             ) {
                 PeriodSelector(years, viewModel::selectYears)
                 Text(

@@ -126,6 +126,7 @@ internal fun CenteredColumn(modifier: Modifier, content: @Composable () -> Unit)
             modifier = Modifier
                 .fillMaxWidth()
                 .then(scroll)
+                .readableWidth()
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,

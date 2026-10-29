@@ -40,6 +40,7 @@ import io.github.mgdx.potable.BuildConfig
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.SectionCard
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.disclaimer.DisclaimerPoints
 import kotlinx.coroutines.launch
 
@@ -70,6 +71,7 @@ fun AboutScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
+                .readableWidth()
                 .navigationBarsPadding()
                 .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

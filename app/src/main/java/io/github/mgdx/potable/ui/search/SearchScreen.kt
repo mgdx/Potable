@@ -60,6 +60,7 @@ import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.postalCodesText
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.common.topBarHeight
 import io.github.mgdx.potable.ui.settings.OverflowMenu
 
@@ -175,7 +176,8 @@ private fun SearchContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .imePadding(),
+                .imePadding()
+                .readableWidth(),
         ) {
             PillSearchField(
                 value = query,

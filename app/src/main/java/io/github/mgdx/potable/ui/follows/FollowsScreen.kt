@@ -39,6 +39,7 @@ import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.postalCodesText
+import io.github.mgdx.potable.ui.common.readableWidth
 
 @Composable
 fun FollowsScreen(
@@ -62,7 +63,7 @@ fun FollowsScreen(
             is FollowsUiState.Loaded -> if (current.follows.isEmpty()) {
                 EmptyFollows(onSearch, modifier)
             } else {
-                Column(modifier = modifier.fillMaxSize()) {
+                Column(modifier = modifier.fillMaxSize().readableWidth()) {
                     FollowFilterField(query = current.query, onQueryChange = viewModel::setQuery)
                     FollowList(
                         follows = current.shown,

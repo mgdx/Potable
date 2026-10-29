@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.ui.sheet
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
@@ -47,6 +49,11 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.ReadableMaxWidth
+import io.github.mgdx.potable.ui.common.TwoPaneMaxWidth
+import io.github.mgdx.potable.ui.common.TwoPanes
+import io.github.mgdx.potable.ui.common.isExpandedWidth
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.settings.OverflowMenu
 import java.time.ZoneId
@@ -84,72 +91,82 @@ fun SheetScreen(
     val largeFont = LocalDensity.current.fontScale > PINNED_NOTICE_MAX_FONT_SCALE
     // Loading, error and empty states have room to spare: the notice stays pinned.
     val pinnedNotice = !largeFont || state !is SheetUiState.Loaded
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            BackTopBar(
-                title = communeName,
-                subtitle = udiName,
-                titleIsData = true,
-                subtitleIsData = true,
-                onSubtitleClick = onChangeUdi,
-                onBack = onBack,
-                actions = {
-                    isFollowed?.let { FollowButton(it, viewModel::toggleFollow) }
-                    if (onMyCommunes != null) {
-                        IconButton(onClick = onMyCommunes) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.List,
-                                contentDescription = stringResource(R.string.follows_title),
-                            )
+    // Depending on the width of the window: one reading column, or two columns side by side.
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val twoPane = isExpandedWidth(maxWidth)
+        val contentMaxWidth = if (twoPane) TwoPaneMaxWidth else ReadableMaxWidth
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                BackTopBar(
+                    title = communeName,
+                    subtitle = udiName,
+                    titleIsData = true,
+                    subtitleIsData = true,
+                    onSubtitleClick = onChangeUdi,
+                    onBack = onBack,
+                    actions = {
+                        isFollowed?.let { FollowButton(it, viewModel::toggleFollow) }
+                        if (onMyCommunes != null) {
+                            IconButton(onClick = onMyCommunes) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.List,
+                                    contentDescription = stringResource(R.string.follows_title),
+                                )
+                            }
+                        } else {
+                            OverflowMenu(onSettings = onSettings, onAbout = onAbout)
                         }
-                    } else {
-                        OverflowMenu(onSettings = onSettings, onAbout = onAbout)
-                    }
-                    onSearch?.let { search ->
-                        IconButton(onClick = search) {
-                            Icon(
-                                imageVector = Icons.Filled.Search,
-                                contentDescription = stringResource(R.string.action_search_commune),
-                            )
+                        onSearch?.let { search ->
+                            IconButton(onClick = search) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = stringResource(
+                                        R.string.action_search_commune,
+                                    ),
+                                )
+                            }
                         }
+                    },
+                )
+            },
+            bottomBar = { if (pinnedNotice) SourceNotice(pinned = true, contentMaxWidth) },
+        ) { innerPadding ->
+            Column(modifier = Modifier.padding(innerPadding)) {
+                freshness?.let { FreshnessBanner(it, contentMaxWidth) }
+                val content = @Composable {
+                    when (val current = state) {
+                        SheetUiState.Loading ->
+                            LoadingState(stringResource(R.string.sheet_loading), slow = isSlow)
+                        is SheetUiState.Error -> ErrorState(current.error, viewModel::retry)
+                        SheetUiState.NoSample -> EmptyState(
+                            stringResource(R.string.sheet_no_sample),
+                        )
+                        is SheetUiState.Loaded -> SampleContent(
+                            samples = current.samples,
+                            age = current.age,
+                            recentUnfavourable = recentUnfavourable,
+                            watched = watched,
+                            onRetryWatched = viewModel::retryWatched,
+                            onShowAllResults = onShowAllResults,
+                            onShowHistory = onShowHistory,
+                            onParameterHistory = onParameterHistory,
+                            showSourceNotice = !pinnedNotice,
+                            twoPane = twoPane,
+                            modifier = Modifier,
+                        )
                     }
-                },
-            )
-        },
-        bottomBar = { if (pinnedNotice) SourceNotice(pinned = true) },
-    ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            freshness?.let { FreshnessBanner(it) }
-            val content = @Composable {
-                when (val current = state) {
-                    SheetUiState.Loading ->
-                        LoadingState(stringResource(R.string.sheet_loading), slow = isSlow)
-                    is SheetUiState.Error -> ErrorState(current.error, viewModel::retry)
-                    SheetUiState.NoSample -> EmptyState(stringResource(R.string.sheet_no_sample))
-                    is SheetUiState.Loaded -> SampleContent(
-                        samples = current.samples,
-                        age = current.age,
-                        recentUnfavourable = recentUnfavourable,
-                        watched = watched,
-                        onRetryWatched = viewModel::retryWatched,
-                        onShowAllResults = onShowAllResults,
-                        onShowHistory = onShowHistory,
-                        onParameterHistory = onParameterHistory,
-                        showSourceNotice = !pinnedNotice,
-                        modifier = Modifier,
-                    )
                 }
-            }
-            // The cache of any unit is refreshed on demand (SPEC §7).
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = viewModel::pullToRefresh,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                content()
+                // The cache of any unit is refreshed on demand (SPEC §7).
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = viewModel::pullToRefresh,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    content()
+                }
             }
         }
     }
@@ -186,7 +203,7 @@ private fun FollowButton(followed: Boolean, onToggle: () -> Unit) {
  * when they could not be refreshed (SPEC §7, §9).
  */
 @Composable
-private fun FreshnessBanner(freshness: Freshness) {
+private fun FreshnessBanner(freshness: Freshness, maxWidth: Dp) {
     val locale = currentLocale()
     val date = remember(freshness.fetchedAt, locale) {
         formatFetchedDate(freshness.fetchedAt, locale, ZoneId.systemDefault())
@@ -205,7 +222,7 @@ private fun FreshnessBanner(freshness: Freshness) {
         },
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier
-            .fillMaxWidth()
+            .readableWidth(maxWidth)
             .padding(start = 16.dp, end = 16.dp, top = 8.dp),
     ) {
         Row(
@@ -247,16 +264,11 @@ private fun SampleContent(
     onShowHistory: () -> Unit,
     onParameterHistory: (Set<String>, String) -> Unit,
     showSourceNotice: Boolean,
+    twoPane: Boolean,
     modifier: Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        val sample = samples.first()
+    val sample = samples.first()
+    val conclusion = @Composable {
         if (samples.size == 1) {
             ConclusionCard(sample, age)
         } else {
@@ -267,8 +279,12 @@ private fun SampleContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+    val measures = @Composable {
         KeyParametersCard(sample, onParameterHistory)
         watched?.let { WatchedSubstancesCard(it, onRetryWatched, onParameterHistory) }
+    }
+    val sampleDetails = @Composable {
         SampleInfoCard(sample, age)
         ComplianceSection(sample)
         // With several samples, each has its own button in the conclusions.
@@ -280,6 +296,8 @@ private fun SampleContent(
                 Text(stringResource(R.string.sheet_show_all_results))
             }
         }
+    }
+    val unit = @Composable {
         // Just above the history it opens.
         recentUnfavourable?.let { RecentUnfavourableCard(it) }
         FilledTonalButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
@@ -293,6 +311,35 @@ private fun SampleContent(
         }
         // Below the last 12 months and the history they open.
         HealthAgencyCard(sample.communeCode, sample.distributor)
+    }
+    // One scroll state for both layouts, kept when the window is resized.
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .readableWidth(if (twoPane) TwoPaneMaxWidth else ReadableMaxWidth)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (twoPane) {
+            // The sample's conclusion and details, then the measures and the unit.
+            TwoPanes(
+                start = {
+                    conclusion()
+                    sampleDetails()
+                },
+                end = {
+                    measures()
+                    unit()
+                },
+            )
+        } else {
+            conclusion()
+            measures()
+            sampleDetails()
+            unit()
+        }
         if (showSourceNotice) SourceNotice(pinned = false)
     }
 }
@@ -303,7 +350,7 @@ private fun SampleContent(
  * closes the scrolling content, a card among the others.
  */
 @Composable
-private fun SourceNotice(pinned: Boolean) {
+private fun SourceNotice(pinned: Boolean, maxWidth: Dp = ReadableMaxWidth) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shape = if (pinned) RectangleShape else MaterialTheme.shapes.medium,
@@ -316,6 +363,7 @@ private fun SourceNotice(pinned: Boolean) {
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (pinned) Modifier.navigationBarsPadding() else Modifier)
+                .readableWidth(maxWidth)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }

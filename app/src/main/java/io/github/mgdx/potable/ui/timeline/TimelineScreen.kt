@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,8 +51,10 @@ import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PeriodSelector
+import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.messageRes
+import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.formatSampleDate
 import io.github.mgdx.potable.ui.sheet.localizedDateFormatter
@@ -93,7 +96,7 @@ fun TimelineScreen(
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            years?.let { PeriodSelector(it, viewModel::selectYears) }
+            years?.let { PeriodSelector(it, viewModel::selectYears, Modifier.readableWidth()) }
             refreshFailed?.let { RefreshFailedBanner(it) }
             val content = @Composable {
                 when (val current = state) {
@@ -130,7 +133,9 @@ private fun RefreshFailedBanner(error: LoadError) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier
+                .readableWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -152,37 +157,42 @@ private fun RefreshFailedBanner(error: LoadError) {
 
 @Composable
 private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) -> Unit) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item(key = "summary") {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                val count = loaded.entries.size
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.timeline_summary,
-                        count,
-                        count,
-                        formatDay(loaded.since),
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
-                Text(
-                    text = stringResource(R.string.sheet_official_wording),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    ReadableInsetBox(modifier = Modifier.fillMaxSize()) { inset ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = inset),
+        ) {
+            item(key = "summary") {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    val count = loaded.entries.size
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.timeline_summary,
+                            count,
+                            count,
+                            formatDay(loaded.since),
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Text(
+                        text = stringResource(R.string.sheet_official_wording),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalDivider()
+            }
+            itemsIndexed(loaded.entries, key = { _, entry -> entry.sample.code }) { index, entry ->
+                TimelineRow(
+                    entry,
+                    isLast = index == loaded.entries.lastIndex,
+                    onClick = { onOpenSample(entry.sample.code) },
                 )
             }
-            HorizontalDivider()
-        }
-        itemsIndexed(loaded.entries, key = { _, entry -> entry.sample.code }) { index, entry ->
-            TimelineRow(
-                entry,
-                isLast = index == loaded.entries.lastIndex,
-                onClick = { onOpenSample(entry.sample.code) },
-            )
         }
     }
 }
