@@ -106,8 +106,11 @@ relève des
 [conditions générales d’utilisation de Hub’Eau](https://hubeau.eaufrance.fr/page/conditions-generales).
 
 Les liens de l’écran « À propos » (conditions de Hub’Eau, geo.api.gouv.fr,
-texte de la licence, code source, page de dons Liberapay) s’ouvrent dans votre navigateur, à votre
-demande ; l’application elle-même ne les charge pas.
+texte de la licence, code source, page de dons Liberapay) et le lien « Site web »
+de l’agence régionale de santé, sur la fiche d’une commune (un site
+`ars.sante.fr`, ou celui de la préfecture à Saint-Pierre-et-Miquelon),
+s’ouvrent dans votre navigateur, à votre demande ; l’application elle-même ne
+les charge pas et ne contacte aucun de ces domaines.
 
 ## Notifications
 

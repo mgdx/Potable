@@ -49,7 +49,7 @@
     <string name="disclaimer_point_source">Les résultats sont issus du contrôle sanitaire officiel mené par les agences régionales de santé (ARS) et publiés par le ministère de la Santé via Hub\'Eau.</string>
     <string name="disclaimer_point_freshness">Les données sont mises à jour une fois par mois : un résultat affiché ici peut dater de plusieurs semaines.</string>
     <string name="disclaimer_point_scope">Les analyses portent sur l’unité de distribution, pas sur votre propre robinet : l’état des canalisations privées de votre immeuble n’est pas pris en compte.</string>
-    <string name="disclaimer_point_no_advice">Potable ne donne aucun avis sanitaire. En cas de doute, contactez votre agence régionale de santé (ARS) ou votre distributeur d’eau.</string>
+    <string name="disclaimer_point_no_advice">Potable ne donne aucun avis sanitaire. En cas de doute, contactez votre agence régionale de santé (ARS), indiquée sur la fiche de chaque commune, ou votre distributeur d’eau.</string>
     <string name="disclaimer_point_no_score">Potable n’ajoute ni score, ni note, ni classement qui lui soit propre : l’application affiche les conclusions officielles telles qu’elles sont publiées.</string>
     <string name="disclaimer_next">Suivant</string>
     <string name="disclaimer_accept">J’ai compris</string>
@@ -198,6 +198,11 @@
     <string name="sheet_upstream_facility_label">Installation en amont</string>
     <string name="sheet_sample_card_title">Prélèvement</string>
     <string name="sheet_compliance_title">Conformité</string>
+    <string name="sheet_contacts_title">Vos questions sur cette eau</string>
+    <string name="sheet_contacts_health">Pour une question de santé, l’agence régionale de santé :</string>
+    <string name="sheet_contacts_website">Site web</string>
+    <string name="sheet_contacts_website_description">Site web de %1$s, s’ouvre dans le navigateur</string>
+    <string name="sheet_contacts_service">Pour une question sur le service de l’eau (facture, coupure, travaux), le distributeur :</string>
     <string name="sheet_compliance_explanation">Les limites de qualité sont des seuils sanitaires impératifs. Les références de qualité sont des indicateurs qui servent à surveiller le traitement de l’eau.</string>
     <string name="sheet_show_all_results">Voir tous les paramètres analysés</string>
     <string name="sheet_source_notice">Source : Hub\'Eau — ministère de la Santé, contrôle sanitaire des ARS. Données mises à jour chaque mois.</string>
