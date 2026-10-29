@@ -32,7 +32,9 @@ import io.github.mgdx.potable.core.WatchedMeasure
 import io.github.mgdx.potable.core.WatchedSubstance
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.messageRes
+import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.history.pointValueText
 import io.github.mgdx.potable.ui.sample.currentLocale
 import java.time.Clock
@@ -237,28 +239,6 @@ private fun RetryButton(onRetry: () -> Unit) {
     ) {
         Text(stringResource(R.string.action_retry))
     }
-}
-
-private fun WatchedSubstance.nameRes(): Int = when (this) {
-    WatchedSubstance.PFAS -> R.string.watched_pfas
-    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides
-    WatchedSubstance.TFA -> R.string.watched_tfa
-    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride
-    WatchedSubstance.LEAD -> R.string.watched_lead
-    WatchedSubstance.ARSENIC -> R.string.watched_arsenic
-    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate
-    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone
-}
-
-private fun WatchedSubstance.explanationRes(): Int = when (this) {
-    WatchedSubstance.PFAS -> R.string.watched_pfas_explanation
-    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides_explanation
-    WatchedSubstance.TFA -> R.string.watched_tfa_explanation
-    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride_explanation
-    WatchedSubstance.LEAD -> R.string.watched_lead_explanation
-    WatchedSubstance.ARSENIC -> R.string.watched_arsenic_explanation
-    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate_explanation
-    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone_explanation
 }
 
 /** A day of the history window in the long date format of the language. */

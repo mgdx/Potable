@@ -18,10 +18,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
-import io.github.mgdx.potable.core.FeaturedParameter
 import io.github.mgdx.potable.core.FeaturedParameters
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.SectionCard
+import io.github.mgdx.potable.ui.common.explanationRes
+import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.sample.ResultValue
 
 /**
@@ -74,18 +75,4 @@ internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>,
             }
         }
     }
-}
-
-private fun FeaturedParameter.nameRes(): Int = when (this) {
-    FeaturedParameter.NITRATES -> R.string.featured_nitrates
-    FeaturedParameter.HARDNESS -> R.string.featured_hardness
-    FeaturedParameter.PH -> R.string.featured_ph
-    FeaturedParameter.FREE_CHLORINE -> R.string.featured_free_chlorine
-}
-
-private fun FeaturedParameter.explanationRes(): Int = when (this) {
-    FeaturedParameter.NITRATES -> R.string.featured_nitrates_explanation
-    FeaturedParameter.HARDNESS -> R.string.featured_hardness_explanation
-    FeaturedParameter.PH -> R.string.featured_ph_explanation
-    FeaturedParameter.FREE_CHLORINE -> R.string.featured_free_chlorine_explanation
 }
