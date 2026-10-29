@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.readableWidth
 import kotlinx.coroutines.launch
 
 /** Settings (SPEC §5 F8). Every change is stored at once: there is no "save". */
@@ -83,6 +84,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
+                .readableWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

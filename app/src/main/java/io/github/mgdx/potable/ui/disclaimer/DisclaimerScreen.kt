@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.ui.common.readableWidth
 import kotlinx.coroutines.launch
 
 /**
@@ -75,6 +76,7 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
+                        .readableWidth()
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -109,6 +111,7 @@ private fun DisclaimerScreen(onAccept: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .readableWidth()
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {

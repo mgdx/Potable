@@ -2,6 +2,7 @@ package io.github.mgdx.potable.ui.udi
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -41,6 +42,7 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 
@@ -106,48 +108,55 @@ private fun UdiChoiceList(
     val shown = remember(udis, query, filterable) {
         if (filterable) filterUdis(udis, query) else udis
     }
-    LazyColumn(modifier = modifier.fillMaxSize().imePadding()) {
-        item(key = "header") {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = stringResource(R.string.udi_choice_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
-                Text(
-                    text = stringResource(R.string.udi_explanation),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            HorizontalDivider()
-        }
-        if (filterable) {
-            item(key = "filter") { FilterField(query, onQueryChange) }
-            if (shown.isEmpty()) {
-                item(key = "no-match") {
+    ReadableInsetBox(modifier = modifier.fillMaxSize().imePadding()) { inset ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = inset),
+        ) {
+            item(key = "header") {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = stringResource(R.string.udi_no_match, bidiWrap(query.trim())),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp),
+                        text = stringResource(R.string.udi_choice_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Text(
+                        text = stringResource(R.string.udi_explanation),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                HorizontalDivider()
             }
-        }
-        items(shown, key = { it.code }) { udi ->
-            ListItem(
-                modifier = Modifier.clickable { onUdiSelected(udi) },
-                headlineContent = { Text(udi.name, style = LocalTextStyle.current.asApiText()) },
-                supportingContent = udi.district?.let { district ->
-                    { Text(district, style = LocalTextStyle.current.asApiText()) }
-                },
-                overlineContent = if (udi.code == currentCode) {
-                    { Text(stringResource(R.string.udi_current_choice)) }
-                } else {
-                    null
-                },
-            )
-            HorizontalDivider()
+            if (filterable) {
+                item(key = "filter") { FilterField(query, onQueryChange) }
+                if (shown.isEmpty()) {
+                    item(key = "no-match") {
+                        Text(
+                            text = stringResource(R.string.udi_no_match, bidiWrap(query.trim())),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                }
+            }
+            items(shown, key = { it.code }) { udi ->
+                ListItem(
+                    modifier = Modifier.clickable { onUdiSelected(udi) },
+                    headlineContent = {
+                        Text(udi.name, style = LocalTextStyle.current.asApiText())
+                    },
+                    supportingContent = udi.district?.let { district ->
+                        { Text(district, style = LocalTextStyle.current.asApiText()) }
+                    },
+                    overlineContent = if (udi.code == currentCode) {
+                        { Text(stringResource(R.string.udi_current_choice)) }
+                    } else {
+                        null
+                    },
+                )
+                HorizontalDivider()
+            }
         }
     }
 }

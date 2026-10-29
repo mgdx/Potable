@@ -39,6 +39,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
@@ -51,6 +52,7 @@ import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
+import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.parameterExplanationRes
@@ -164,15 +166,29 @@ private fun ResultList(
     onOpenHistory: (AnalysisResult) -> Unit,
     modifier: Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize().imePadding()) {
-        SearchField(query, onQueryChange)
+    ReadableInsetBox(modifier = modifier.fillMaxSize().imePadding()) { inset ->
+        ResultListContent(state, query, onQueryChange, onOpenHistory, inset)
+    }
+}
+
+/** [ResultList] with the [inset] that centres it on a large screen. */
+@Composable
+private fun ResultListContent(
+    state: SampleDetailUiState.Loaded,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onOpenHistory: (AnalysisResult) -> Unit,
+    inset: Dp,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        SearchField(query, onQueryChange, Modifier.padding(horizontal = inset))
         if (state.groups.isEmpty()) {
             EmptyState(stringResource(R.string.sample_no_match, bidiWrap(query.trim())))
             return@Column
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(start = inset, end = inset, bottom = 16.dp),
         ) {
             item(key = "notice") { Notice() }
             for (group in state.groups) {
@@ -198,7 +214,7 @@ private fun ResultList(
 }
 
 @Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier) {
     val focusManager = LocalFocusManager.current
     OutlinedTextField(
         value = query,
@@ -218,7 +234,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
     )
