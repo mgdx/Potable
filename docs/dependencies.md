@@ -56,6 +56,7 @@ Services ni bibliothèque supplémentaire.
 | `org.jetbrains.kotlinx:kotlinx-coroutines-test` (test) | 1.11.0 | Tests des ViewModels (temps virtuel, `Dispatchers.Main`) | Apache 2.0 | |
 | `org.robolectric:robolectric` (test) | 4.16.1 | `Context` Android pour les tests JVM des intents de notification et des requêtes WorkManager (image Android 34, `robolectric.properties`) | MIT | Déjà utilisé par `:data` ; sans lui ces tests exigeraient un appareil. Jamais embarqué dans l'APK |
 | `androidx.work:work-testing` (test) | 2.11.2 | `WorkManagerTestInitHelper` : WorkManager en mémoire et synchrone, pour vérifier la requête réellement planifiée (période, contrainte réseau, mise à jour, annulation) | Apache 2.0 | Outil officiel de test de WorkManager ; vérifie ce que WorkManager reçoit et non une copie de la configuration. Jamais embarqué dans l'APK |
+| `androidx.compose.ui:ui-test-junit4` (test) | via BOM 2026.02.01 | Tests d'interface Compose des écrans (`*ScreenTest`), exécutés sur la JVM par Robolectric dans `./gradlew check`, sans émulateur : `createComposeRule`, recherche de nœuds par leur sémantique, saisie et clics | Apache 2.0 | Outil officiel de test de Compose. Jamais embarqué dans l'APK. `ui-test-manifest` n'est volontairement pas utilisé : il ajouterait à l'APK de debug une `ComponentActivity` exportée ; les tests déclarent cette activité au gestionnaire de paquets de Robolectric (`ComposeHostRegistration`) |
 
 ## Déclarées au catalogue, pas encore utilisées
 

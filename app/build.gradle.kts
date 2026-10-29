@@ -162,6 +162,12 @@ dependencies {
     // requests; work-testing runs WorkManager synchronously in them.
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.work.testing)
+    // Compose UI tests of the screens, run by Robolectric on the JVM. The
+    // empty activity they are hosted in is registered by the tests
+    // (ScreenTestSupport.kt) rather than by ui-test-manifest, which would
+    // add an exported activity to the debug APK.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
