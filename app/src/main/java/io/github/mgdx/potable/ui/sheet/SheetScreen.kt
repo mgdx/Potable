@@ -1,9 +1,7 @@
 package io.github.mgdx.potable.ui.sheet
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,17 +12,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,36 +35,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
-import io.github.mgdx.potable.core.PesticideCount
 import io.github.mgdx.potable.core.UnfavourableDigest
-import io.github.mgdx.potable.core.WatchedMeasure
-import io.github.mgdx.potable.core.WatchedSubstance
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
-import io.github.mgdx.potable.ui.common.SectionCard
-import io.github.mgdx.potable.ui.common.bidiWrap
-import io.github.mgdx.potable.ui.common.messageRes
-import io.github.mgdx.potable.ui.history.pointValueText
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.settings.OverflowMenu
-import java.time.Clock
-import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.FormatStyle
 
 /**
  * Above this font scale, the source notice of a loaded sheet leaves the bottom
@@ -315,328 +294,6 @@ private fun SampleContent(
         // Below the last 12 months and the history they open.
         HealthAgencyCard(sample.communeCode, sample.distributor)
         if (showSourceNotice) SourceNotice(pinned = false)
-    }
-}
-
-/**
- * The latest known measure of each watched substance on the unit (SPEC §5
- * F3), however old within the history window: its translated name, its value
- * as published, its date and age, the quality limit as published when there
- * is one, and what the substance is. Value and limit are only shown side by
- * side, never compared (SPEC §14). Each one opens the history of that
- * substance. A failure here only shows in this card.
- */
-@Composable
-private fun WatchedSubstancesCard(
-    state: WatchedUiState,
-    onRetry: () -> Unit,
-    onParameterHistory: (Set<String>, String) -> Unit,
-) {
-    SectionCard(title = stringResource(R.string.sheet_watched_title)) {
-        when (state) {
-            WatchedUiState.Loading -> CardNote(stringResource(R.string.sheet_watched_loading))
-            is WatchedUiState.Error -> {
-                CardNote(stringResource(state.error.messageRes()))
-                RetryButton(onRetry)
-            }
-            is WatchedUiState.Loaded -> {
-                if (state.measures.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.sheet_watched_none, formatDay(state.since)),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                } else {
-                    CardNote(stringResource(R.string.sheet_watched_intro))
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        for (measure in state.measures) {
-                            val pesticides = state.pesticides
-                                .takeIf { measure.substance == WatchedSubstance.TOTAL_PESTICIDES }
-                            WatchedMeasureRow(measure, pesticides, onParameterHistory)
-                        }
-                    }
-                    if (state.notAnalysed.isNotEmpty()) {
-                        NotAnalysedNote(state.notAnalysed, state.since)
-                    }
-                }
-                if (state.partialError != null) {
-                    CardNote(stringResource(R.string.sheet_watched_partial_error))
-                    RetryButton(onRetry)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WatchedMeasureRow(
-    measure: WatchedMeasure,
-    pesticides: PesticideCount?,
-    onParameterHistory: (Set<String>, String) -> Unit,
-) {
-    val locale = currentLocale()
-    val name = stringResource(measure.substance.nameRes())
-    val actionLabel = stringResource(R.string.sheet_parameter_history_action, name)
-    val value = remember(measure, locale) { pointValueText(measure.point, measure.unit, locale) }
-    val date = remember(measure.point.date, locale) {
-        localizedDateFormatter(FormatStyle.MEDIUM, locale).format(publishedDate(measure.point.date))
-    }
-    val age = remember(measure.point.date) { RelativeAge.of(measure.point.date, Clock.systemUTC()) }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = actionLabel) {
-                onParameterHistory(measure.substance.codes, name)
-            },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(text = name, style = MaterialTheme.typography.titleSmall)
-            // As ResultValue: one left-to-right block, value and unit as published.
-            Text(
-                text = bidiWrap(value ?: stringResource(R.string.sample_no_value)),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    textDirection = TextDirection.Ltr,
-                ),
-                fontStyle = if (value == null) FontStyle.Italic else null,
-            )
-            measure.limitText?.let {
-                Text(
-                    text = stringResource(R.string.quality_limit, bidiWrap(it)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Text(
-                text = stringResource(
-                    R.string.sheet_watched_measured_on,
-                    date,
-                    relativeAgeText(age),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            pesticides?.let { PesticideCountText(it) }
-            Text(
-                text = stringResource(measure.substance.explanationRes()),
-                style = MaterialTheme.typography.bodySmall.justified(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/**
- * How many pesticides the sample of the latest total searched for and
- * quantified, and what quantified means: facts of the sample, no verdict.
- */
-@Composable
-private fun PesticideCountText(count: PesticideCount) {
-    Text(
-        text = pluralStringResource(
-            R.plurals.sheet_pesticides_count,
-            count.analysed,
-            count.analysed,
-            count.quantified,
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-    )
-    Text(
-        text = stringResource(R.string.pesticides_quantified_explanation),
-        style = MaterialTheme.typography.bodySmall.justified(),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-/**
- * The substances read without any measure since [since]: said, rather than
- * left out, as no analysis is not an absence.
- */
-@Composable
-private fun NotAnalysedNote(substances: List<WatchedSubstance>, since: LocalDate) {
-    val names = substances.map { stringResource(it.nameRes()) }.joinToString(", ")
-    CardNote(
-        pluralStringResource(
-            R.plurals.sheet_watched_not_analysed,
-            substances.size,
-            formatDay(since),
-            names,
-        ),
-    )
-}
-
-@Composable
-private fun CardNote(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall.justified(),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-/** No start padding: the label lines up with the text above. */
-@Composable
-private fun RetryButton(onRetry: () -> Unit) {
-    TextButton(
-        onClick = onRetry,
-        contentPadding = PaddingValues(
-            horizontal = 0.dp,
-            vertical = ButtonDefaults.TextButtonContentPadding.calculateTopPadding(),
-        ),
-    ) {
-        Text(stringResource(R.string.action_retry))
-    }
-}
-
-private fun WatchedSubstance.nameRes(): Int = when (this) {
-    WatchedSubstance.PFAS -> R.string.watched_pfas
-    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides
-    WatchedSubstance.TFA -> R.string.watched_tfa
-    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride
-    WatchedSubstance.LEAD -> R.string.watched_lead
-    WatchedSubstance.ARSENIC -> R.string.watched_arsenic
-    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate
-    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone
-}
-
-private fun WatchedSubstance.explanationRes(): Int = when (this) {
-    WatchedSubstance.PFAS -> R.string.watched_pfas_explanation
-    WatchedSubstance.TOTAL_PESTICIDES -> R.string.watched_pesticides_explanation
-    WatchedSubstance.TFA -> R.string.watched_tfa_explanation
-    WatchedSubstance.VINYL_CHLORIDE -> R.string.watched_vinyl_chloride_explanation
-    WatchedSubstance.LEAD -> R.string.watched_lead_explanation
-    WatchedSubstance.ARSENIC -> R.string.watched_arsenic_explanation
-    WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate_explanation
-    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone_explanation
-}
-
-/** A day of the history window in the long date format of the language. */
-@Composable
-private fun formatDay(day: LocalDate): String {
-    val locale = currentLocale()
-    return remember(day, locale) { localizedDateFormatter(FormatStyle.LONG, locale).format(day) }
-}
-
-/**
- * The conclusions of the samples taken on the latest day, newest first, each
- * verbatim (SPEC §14) under its published time, or its number when the times
- * do not tell them apart, and each with access to its results.
- */
-@Composable
-private fun SameDayConclusionsCard(
-    samples: List<Sample>,
-    age: RelativeAge,
-    onShowAllResults: (Sample) -> Unit,
-) {
-    val times = remember(samples) { distinctSampleTimes(samples.map { it.date }) }
-    val locale = currentLocale()
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.sheet_conclusions_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.semantics { heading() },
-            )
-            SampledOnLine(R.string.sheet_conclusions_sampled_on, samples.first().date, age)
-            Text(
-                text = pluralStringResource(
-                    R.plurals.sheet_same_day_samples,
-                    samples.size,
-                    samples.size,
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            samples.forEachIndexed { index, sample ->
-                if (index > 0) HorizontalDivider()
-                val time = times[index]
-                Text(
-                    text = if (time != null) {
-                        stringResource(
-                            R.string.sheet_sample_taken_at,
-                            formatSampleTime(time, locale),
-                        )
-                    } else {
-                        stringResource(R.string.sheet_sample_number, index + 1, samples.size)
-                    },
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
-                ConclusionText(sample.conclusion)
-                if (sample.results.isNotEmpty()) {
-                    // No start padding: the label lines up with the conclusion.
-                    TextButton(
-                        onClick = { onShowAllResults(sample) },
-                        contentPadding = PaddingValues(
-                            horizontal = 0.dp,
-                            vertical = ButtonDefaults.TextButtonContentPadding
-                                .calculateTopPadding(),
-                        ),
-                    ) {
-                        Text(stringResource(R.string.sheet_show_all_results))
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * A discreet box: how many samples of the last 12 months were published
- * non-compliant with the quality limits, with the quality references only,
- * or with a restriction in their conclusion only, and the most recent one's
- * date and conclusion as published (SPEC §14: no verdict, no reassuring message when
- * there is none, in which case the box is not shown). Opens the timeline.
- */
-@Composable
-private fun RecentUnfavourableCard(digest: UnfavourableDigest) {
-    val locale = currentLocale()
-    val date = remember(digest.latest.date, locale) {
-        formatSampleDate(digest.latest.date, locale)
-    }
-    SectionCard(title = stringResource(R.string.sheet_recent_unfavourable_title)) {
-        // What was published, limits and references told apart (SPEC §5 F3).
-        listOf(
-            R.plurals.sheet_recent_limits to digest.limitsCount,
-            R.plurals.sheet_recent_references_only to digest.referencesOnlyCount,
-            R.plurals.sheet_recent_conclusion_only to digest.conclusionOnlyCount,
-        ).filter { it.second > 0 }.forEach { (res, count) ->
-            Text(
-                text = pluralStringResource(res, count, count),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        if (digest.limitsCount + digest.referencesOnlyCount > 0) {
-            Text(
-                text = stringResource(R.string.sheet_compliance_explanation),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Text(
-            text = stringResource(R.string.sheet_recent_unfavourable_latest, date),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        ConclusionText(digest.latest.conclusion, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
