@@ -292,7 +292,6 @@ private fun SampleContent(
         watched?.let { WatchedSubstancesCard(it, onRetryWatched, onParameterHistory) }
         SampleInfoCard(sample, age)
         ComplianceSection(sample)
-        HealthAgencyCard(sample.communeCode, sample.distributor)
         // With several samples, each has its own button in the conclusions.
         if (samples.size == 1 && sample.results.isNotEmpty()) {
             FilledTonalButton(
@@ -313,6 +312,8 @@ private fun SampleContent(
             Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
             Text(stringResource(R.string.timeline_title))
         }
+        // Below the last 12 months and the history they open.
+        HealthAgencyCard(sample.communeCode, sample.distributor)
         if (showSourceNotice) SourceNotice(pinned = false)
     }
 }

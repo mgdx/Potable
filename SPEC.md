@@ -179,8 +179,8 @@ Une commune peut être desservie par plusieurs UDI (quartiers différents).
   prélèvement (`PesticideCounts`). Chargée
   après le reste de la fiche, depuis le cache des séries (F5) ; un échec ne
   touche que la carte. Toucher une ligne ouvre l'historique de la substance.
-- Carte « Vos questions sur cette eau », sous les conformités : pour une
-  question de santé, l'ARS de la commune (table embarquée département → ARS,
+- Carte « Vos questions sur cette eau », en bas de la fiche, sous « Sur les
+  12 derniers mois » et le bouton de l'historique : pour une question de santé, l'ARS de la commune (table embarquée département → ARS,
   `RegionalHealthAgencies`, nom officiel et lien vers son site ouvert dans le
   navigateur) ; pour une question sur le service (facture, coupure, travaux),
   le distributeur publié par Hub'Eau, omis s'il est absent. Aucun avis.
