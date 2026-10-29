@@ -304,10 +304,28 @@ radioactivité, 3 autres.
   « totalité » sous diverses casses ; `_` une fois ; aucune autre valeur sans
   lettre ni chiffre, aucune chaîne vide. `UdiSelection` ne montre pas de
   quartier fait **sans lettre ni chiffre** (tiret, soulignement, espaces),
-  comme pour « totalité » et le vide. Restent affichés tels quels d'autres
-  équivalents de « toute la commune » (« en totalité » 843 lignes,
-  « commune » 419, « commune entière » 276, « ensemble » 208, « toute la
-  commune » 207…).
+  comme pour « totalité » et le vide.
+- Formulations de « toute la commune » (sondage du 2026-10-29 : les
+  49 475 lignes de `communes_udi?annee=2026&fields=code_commune,code_reseau,nom_quartier`,
+  trois pages de 20 000 ; `code_departement` est ignoré par cette opération).
+  Valeurs normalisées comme `TextNormalizer` (minuscules, sans accents,
+  `-'’.` en espaces, espaces réduits), comparées **au texte entier**.
+  `UdiSelection` masque : `totalite` (1 279 lignes), `en totalite` (847),
+  `commune entiere` (279), `toute la commune` (210), `ensemble` (209),
+  `tout` (44), `entierement` (9), `en entier` (5), `totalite de la commune`
+  (5), `ensemble de la commune` (4), `ensemble commune` (3),
+  `la commune en totalite` (3), `l ensemble de la commune` (2),
+  `totalite commune` (2), `la totalite de la commune` (1). Restent
+  affichés : `commune` (461) et `la commune` (32), qu'une ARS (Ariège)
+  emploie pour le réseau principal à côté de hameaux nommés (43 communes
+  sur 461 ont une autre UDI), `ville` (251, idem), les pourcentages
+  (`100` 254, `100%` 2, `50%`…), toute formulation avec exception
+  (« totalité sauf hameau », « commune sf écart est », « tout sauf le
+  bourg »), et « <commune déléguée> / toute la commune » (Les Belleville,
+  Charente-Maritime « X / totalité »), qui ne couvre qu'une partie d'une
+  commune nouvelle. Même « totalité » cohabite parfois avec une autre UDI
+  dans la même commune (17 communes) : la donnée est imprécise, l'appli
+  la restitue sans la corriger.
 
 ## Seuils : `limite_qualite_parametre` et `reference_qualite_parametre`
 
