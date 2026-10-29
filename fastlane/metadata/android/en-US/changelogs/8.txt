@@ -1,0 +1,7 @@
+• Export and import your followed communes, to move to a new phone.
+• The settings show when alerts last checked for new results.
+• Tap a sample in the timeline to open its full report.
+• Notes explaining "Not assessed" compliance, and the parameters in the full list.
+• ANSES classification in the history of a pesticide metabolite.
+• Layout for tablets and large screens.
+• Loading indicator for watched substances.
