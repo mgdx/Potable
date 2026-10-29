@@ -35,7 +35,10 @@ adb shell dumpsys jobscheduler | grep -A3 "$PKG"     # aucune tâche alert-check
 adb shell dumpsys package $PKG | grep POST_NOTIFICATIONS   # granted=false
 ```
 Aucune demande de permission au lancement ; Réglages → Alerts : les deux
-interrupteurs sont désactivés.
+interrupteurs sont désactivés, et une phrase dit que les alertes ne
+concernent que les communes suivies et qu'aucune ne l'est, avec « Search for
+a commune » (retour à la recherche). Elle disparaît dès qu'une commune est
+suivie (une commune de « Recent » ne compte pas).
 
 **Permission à l'activation (Android 13+).** Réglages → Alerts →
 « New analyses » : la demande système apparaît à ce moment. Refuser :

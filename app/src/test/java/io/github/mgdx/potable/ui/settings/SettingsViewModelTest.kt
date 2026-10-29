@@ -7,13 +7,17 @@ import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.CachedCommune
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
+import io.github.mgdx.potable.data.follow.Follow
+import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.data.preferences.ThemeMode
+import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -25,6 +29,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -380,6 +385,34 @@ class SettingsViewModelTest {
 
         viewModel.onCommunePurgeMessageShown()
         assertNull(viewModel.communePurged.value)
+    }
+
+    @Test
+    fun `the alerts say so while no commune is followed`() = runTest(main.dispatcher) {
+        val follows = FakeFollowRepository()
+        val viewModel = SettingsViewModel(preferences, FakeWater(), access, communes, follows)
+        backgroundScope.launch(main.dispatcher) { viewModel.noFollows.collect {} }
+        advanceUntilIdle()
+        assertTrue(viewModel.noFollows.value)
+
+        follows.follow("45234", "Orléans", "045000474", "ORLEANS")
+        advanceUntilIdle()
+        assertFalse(viewModel.noFollows.value)
+
+        follows.unfollow(follows.current.single().id)
+        advanceUntilIdle()
+        assertTrue(viewModel.noFollows.value)
+    }
+
+    @Test
+    fun `nothing is said when the follows cannot be read`() = runTest(main.dispatcher) {
+        val unreadable = object : FollowRepository by FakeFollowRepository() {
+            override val follows: Flow<List<Follow>> = flow { throw IOException("disk") }
+        }
+        val viewModel = SettingsViewModel(preferences, FakeWater(), access, communes, unreadable)
+        backgroundScope.launch(main.dispatcher) { viewModel.noFollows.collect {} }
+        advanceUntilIdle()
+        assertFalse(viewModel.noFollows.value)
     }
 
     private companion object {
