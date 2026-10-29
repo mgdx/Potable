@@ -4,6 +4,7 @@ import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.data.alert.AlertChecker
 import io.github.mgdx.potable.data.alert.AlertEvent
+import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.follow
 import kotlinx.coroutines.flow.Flow
@@ -52,5 +53,12 @@ class FakeChecker(var events: List<AlertEvent> = emptyList()) : AlertChecker {
     override suspend fun setBaseline() {
         baselines++
         baselineError?.let { throw it }
+    }
+
+    /** The units given to [setBaseline] one by one. */
+    val followBaselines = mutableListOf<Follow>()
+
+    override suspend fun setBaseline(follow: Follow) {
+        followBaselines += follow
     }
 }

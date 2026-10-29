@@ -45,6 +45,22 @@ class HubEauAlertChecker internal constructor(
         }
     }
 
+    override suspend fun setBaseline(follow: Follow) {
+        running.withLock {
+            bestEffort {
+                val (communeCode, udiCode) = follow.communeCode to follow.udiCode
+                // Already a baseline (followed earlier, or checked): it stays.
+                if (water.lastSeenSampleDate(communeCode, udiCode) != null) return@bestEffort
+                // The sheet that was followed has usually cached it: no request.
+                val date = water.cachedLatestSample(communeCode, udiCode).first()?.sample?.date
+                    ?: latest(communeCode, udiCode)?.date
+                    ?: return@bestEffort
+                // Ignored if the unit was unfollowed in the meantime.
+                water.setLastSeenSampleDate(communeCode, udiCode, date)
+            }
+        }
+    }
+
     /** The event for [follow], or null; throws on a failed request, leaving its last seen date. */
     private suspend fun check(follow: Follow): AlertEvent? {
         val (communeCode, udiCode) = follow.communeCode to follow.udiCode

@@ -30,4 +30,16 @@ interface AlertChecker {
      * first notification is about a sample published afterwards.
      */
     suspend fun setBaseline()
+
+    /**
+     * Records the latest sample of [follow], just followed, as seen, unless
+     * the unit already has a last seen date: so that a sample published
+     * before its first periodic check is announced, not taken as its
+     * baseline. Reads the cached latest sample when there is one, otherwise
+     * asks Hub'Eau (a light request). Best effort: a failure leaves the unit
+     * without a baseline, which its first check then records; never throws,
+     * except for cancellation. Called whether the alerts are on or not (when
+     * they are switched on, [setBaseline] records every unit again).
+     */
+    suspend fun setBaseline(follow: Follow)
 }

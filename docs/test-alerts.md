@@ -67,6 +67,13 @@ Une notification par commune suivie : titre « commune », texte « New
 analysis published: sample taken on <date> ». La toucher ouvre la fiche de
 l'unité (appli fermée comme ouverte) ; le retour revient à l'écran de départ.
 
+**Ligne de base au suivi.** « New analyses » activé, suivre une commune
+depuis sa fiche, puis aussitôt `run` : aucune notification. La date
+« dernier prélèvement vu » est posée dès le suivi, depuis le dernier
+prélèvement en cache de la fiche (sinon une requête légère), et non à la
+première vérification périodique : un prélèvement publié entre le suivi et
+cette vérification sera annoncé. Couvert par `HubEauAlertCheckerTest`.
+
 **« Clear cache » garde la ligne de base.** Une commune suivie, « New
 analyses » activé, ligne de base posée ; `age`, puis Réglages → « Clear
 cache » (confirmer), puis `run` : la notification arrive quand même. La
