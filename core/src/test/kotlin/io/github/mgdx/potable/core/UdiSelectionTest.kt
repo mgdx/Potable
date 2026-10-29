@@ -71,6 +71,58 @@ class UdiSelectionTest {
     }
 
     @Test
+    fun `a wording of the whole commune gives no district`() {
+        // Wordings published by Hub'Eau in 2026 (docs/hubeau-api.md).
+        val wordings = listOf(
+            "En totalité",
+            "TOTALITE COMMUNE",
+            "Totalité de la commune",
+            "La totalité de la commune",
+            "La commune en totalité",
+            "Commune entière",
+            "Toute la commune",
+            "toute  la   commune",
+            "Ensemble",
+            "Ensemble commune",
+            "Ensemble de la commune",
+            "L'ensemble de la commune",
+            "Entièrement",
+            "En entier",
+            "Tout",
+        )
+        for (district in wordings) {
+            val choice = UdiSelection.choose(listOf(row("R1", "RESEAU", "2026", district)))
+            assertEquals(district, UdiChoice.Single(Udi("R1", "RESEAU", null, 2026)), choice)
+        }
+    }
+
+    @Test
+    fun `a wording of a part of the commune is kept`() {
+        val wordings = listOf(
+            "Partie de la commune",
+            "En partie",
+            "Centre",
+            "Commune",
+            "La commune",
+            "Ville",
+            "Hameau de Lacour",
+            "Totalité sauf hameau",
+            "Commune entière sauf hameau Lacour",
+            "Tout sauf le bourg",
+            "Toute la commune sauf les Baisses",
+            "Tout le village",
+            "Bourg entier",
+            "Sud de la commune",
+            "Belleville (Les) / Toute la commune",
+            "Totalitee",
+        )
+        for (district in wordings) {
+            val choice = UdiSelection.choose(listOf(row("R1", "RESEAU", "2026", district)))
+            assertEquals(district, UdiChoice.Single(Udi("R1", "RESEAU", district, 2026)), choice)
+        }
+    }
+
+    @Test
     fun `a district without letter or digit gives no district`() {
         // Brest (29019) and Montpellier (34172) publish "-".
         for (district in listOf("-", " - ", "--", "_", "–", "  ")) {
