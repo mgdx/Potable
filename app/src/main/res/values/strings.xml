@@ -213,6 +213,18 @@
     <string name="sheet_watched_partial_error">Some substances could not be loaded.</string>
     <!-- Date of a measure. %1$s: the date, formatted for the language; %2$s: how long ago (age_today, age_days…). -->
     <string name="sheet_watched_measured_on">Measured on %1$s · %2$s</string>
+    <!-- Under the substances shown: those read without any measure in the history window. %1$s: start of the window, a date formatted for the language; %2$s: their names (watched_…), separated by commas. The quantity is their number. Says nothing about whether they are present (SPEC §14). -->
+    <plurals name="sheet_watched_not_analysed">
+        <item quantity="one">Not analysed on this distribution unit since %1$s: %2$s. Without an analysis, nothing is known of its presence.</item>
+        <item quantity="other">Not analysed on this distribution unit since %1$s: %2$s. Without an analysis, nothing is known of their presence.</item>
+    </plurals>
+    <!-- Under the total of pesticides, about the same sample. %1$d: pesticides and breakdown products searched for in it, sums left out (the quantity); %2$d: those of them quantified. -->
+    <plurals name="sheet_pesticides_count">
+        <item quantity="one">%1$d pesticide searched for in that sample · quantified: %2$d</item>
+        <item quantity="other">%1$d pesticides searched for in that sample · quantified: %2$d</item>
+    </plurals>
+    <!-- Under sheet_pesticides_count and sample_pesticides_count. -->
+    <string name="pesticides_quantified_explanation">Quantified: measured above the quantification limit of the laboratory, whatever the quality limit.</string>
     <!-- Names of the watched substances, translated (docs/glossary.md), unlike the labels published by Hub'Eau. Explanations: what the substance is and where it comes from, no health advice (SPEC §14). -->
     <string name="watched_pfas">PFAS (sum of 20)</string>
     <string name="watched_pfas_explanation">PFAS are very persistent synthetic chemicals, used in many industrial and everyday products such as non-stick or water-repellent coatings.</string>
@@ -227,6 +239,8 @@
     <string name="watched_arsenic">Arsenic</string>
     <string name="watched_arsenic_explanation">Arsenic is mostly of natural origin, from the rocks the water flows through.</string>
     <string name="watched_perchlorate">Perchlorate</string>
+    <string name="watched_chlordecone">Chlordecone</string>
+    <string name="watched_chlordecone_explanation">An insecticide used on the banana plantations of Guadeloupe and Martinique until 1993. It lasts for decades in the soil.</string>
     <string name="watched_perchlorate_explanation">Perchlorate comes mainly from industrial and military activities, such as First World War munitions.</string>
     <!-- %1$s: the sample date, formatted for the language ("26 August 2026"). Also the subtitle of the sample detail. -->
     <string name="sheet_sampled_on">Sampled on %1$s</string>
@@ -291,6 +305,11 @@
     <string name="family_physicochemistry">Physico-chemistry</string>
     <string name="family_disinfection">Disinfection</string>
     <string name="family_pesticides">Pesticides</string>
+    <!-- Under the heading family_pesticides of a sample's results. %1$d: pesticides and breakdown products searched for in the sample, sums left out (the quantity); %2$d: those of them quantified. Counted over the whole sample, whatever the search. -->
+    <plurals name="sample_pesticides_count">
+        <item quantity="one">%1$d pesticide searched for · quantified: %2$d</item>
+        <item quantity="other">%1$d pesticides searched for · quantified: %2$d</item>
+    </plurals>
     <string name="family_metals">Metals</string>
     <string name="family_organic_compounds">Organic compounds</string>
     <string name="family_radioactivity">Radioactivity</string>

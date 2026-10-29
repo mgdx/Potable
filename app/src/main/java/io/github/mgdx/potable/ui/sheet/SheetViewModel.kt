@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
+import io.github.mgdx.potable.core.PesticideCount
+import io.github.mgdx.potable.core.PesticideCounts
 import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.core.WatchedMeasure
 import io.github.mgdx.potable.core.WatchedSubstance
@@ -15,6 +17,7 @@ import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
+import io.github.mgdx.potable.data.SampleRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
@@ -77,14 +80,20 @@ sealed interface WatchedUiState {
 
     /**
      * The latest measure of each substance measured since [since] (the
-     * history window, [years] years); empty when none was. [partialError]
-     * is set when some substances could not be read: the others are shown.
+     * history window, [years] years); empty when none was. [notAnalysed]
+     * are the substances read without any measure since then
+     * ([WatchedSubstances.notAnalysed]). [partialError] is set when some
+     * substances could not be read: the others are shown. [pesticides]
+     * counts the pesticides of the sample of the latest total, once read;
+     * null until then, or when it could not be.
      */
     data class Loaded(
         val measures: List<WatchedMeasure>,
         val since: LocalDate,
         val years: Int,
         val partialError: LoadError? = null,
+        val notAnalysed: List<WatchedSubstance> = emptyList(),
+        val pesticides: PesticideCount? = null,
     ) : WatchedUiState
 }
 
@@ -126,6 +135,8 @@ class SheetViewModel(
      * ([io.github.mgdx.potable.data.alert.AlertChecker.setBaseline]).
      */
     private val baseline: suspend (Follow) -> Unit = {},
+    /** Where the sample of the latest pesticide total is read, to count its pesticides. */
+    private val samples: SampleRepository? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow<SheetUiState>(SheetUiState.Loading)
     val state: StateFlow<SheetUiState> = _state.asStateFlow()
@@ -382,7 +393,8 @@ class SheetViewModel(
             // A request held by Hub'Eau then delays only its own substance
             // (docs/hubeau-api.md, "Blocages"); the bound spares the API.
             val gate = Semaphore(WATCHED_REQUESTS)
-            val reads = WatchedSubstance.entries.map { substance ->
+            val read = WatchedSubstances.readFor(communeCode)
+            val reads = read.map { substance ->
                 async {
                     gate.withPermit {
                         try {
@@ -404,22 +416,45 @@ class SheetViewModel(
             }.awaitAll()
             val series = LinkedHashMap<WatchedSubstance, ParameterSeries?>()
             var error: LoadError? = null
-            for ((substance, read) in WatchedSubstance.entries.zip(reads)) {
-                val e = read.exceptionOrNull()
+            for ((substance, outcome) in read.zip(reads)) {
+                val e = outcome.exceptionOrNull()
                 when {
-                    e == null -> series[substance] = read.getOrNull()
+                    e == null -> series[substance] = outcome.getOrNull()
                     e is DataError -> error = error ?: LoadError.from(e)
                     else -> error = error ?: LoadError.UNEXPECTED
                 }
             }
             val measures = WatchedSubstances.latest(series)
-            _watched.value = when {
-                error == null -> WatchedUiState.Loaded(measures, since, years)
+            val notAnalysed = WatchedSubstances.notAnalysed(series, communeCode)
+            val state = when {
                 // "None measured" cannot be said when some could not be read.
-                measures.isEmpty() -> WatchedUiState.Error(error)
-                else -> WatchedUiState.Loaded(measures, since, years, partialError = error)
+                error != null && measures.isEmpty() -> WatchedUiState.Error(error)
+                else -> WatchedUiState.Loaded(measures, since, years, error, notAnalysed)
             }
+            _watched.value = state
+            if (state is WatchedUiState.Loaded) countPesticides(state)
         }
+    }
+
+    /**
+     * Adds to [loaded] the count of the pesticides of the sample of the
+     * latest total, read from the cache or Hub'Eau ([samples]); any failure
+     * leaves the card without it.
+     */
+    private suspend fun countPesticides(loaded: WatchedUiState.Loaded) {
+        val repository = samples ?: return
+        val total = loaded.measures.firstOrNull {
+            it.substance == WatchedSubstance.TOTAL_PESTICIDES
+        } ?: return
+        val count = try {
+            repository.sample(communeCode, udiCode, total.point.sampleCode)
+                ?.let { PesticideCounts.of(it.results) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        } ?: return
+        if (_watched.value == loaded) _watched.value = loaded.copy(pesticides = count)
     }
 
     /**
@@ -475,6 +510,7 @@ class SheetViewModel(
                     Clock.systemUTC(),
                     recents = container.preferences,
                     baseline = { container.alertChecker.setBaseline(it) },
+                    samples = container.samples,
                 )
             }
         }

@@ -176,6 +176,7 @@ la casse et les accents).
 | Plomb | `1382` | Plomb | µg/L | `<=10 µg/L` | les six (7 à 179 ; Marseille : dernière mesure en 2019) |
 | Arsenic | `1369` | Arsenic (Orléans : aussi « Arsenic dissous ») | µg/L | `<=10 µg/L` | les six (7 à 282) |
 | Perchlorate | `6219` | Perchlorate | µg/L | aucune | quatre : Orléans, Paris, Bordeaux, Toulouse (4 à 168) |
+| Chlordécone | `1866` | Chlordécone | µg/L | `<=0,1 µg/L` | aucune des six ; vérifié le 2026-10-29 par `resultats_dis?code_departement=…&code_parametre=1866&date_min_prelevement=2023-01-01` : 971 (501 lignes), 972 (184), 973 (93), 974 (956), 976 (45), 62 (3), 80 et 75 (0) ; Fort-de-France : 55 lignes, dernière le 2025-10-13 (`<0,005`) |
 
 Un seul code par substance ; toutes les lignes relevées sont des mesures de
 laboratoire (`code_lieu_analyse` = `L`). Voisins volontairement exclus :

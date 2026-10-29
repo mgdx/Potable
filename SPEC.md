@@ -117,8 +117,9 @@ Une seconde table éditoriale, les **substances surveillées**, réunit les
 substances que les usagers cherchent d'abord mais qui sont rarement analysées
 à chaque prélèvement : somme des 20 PFAS, total des pesticides, TFA, chlorure
 de vinyle monomère, plomb, arsenic, perchlorate (codes vérifiés le 2026-10-28,
-`docs/hubeau-api.md` ; `WatchedSubstance`). Les nitrates restent dans la
-première table.
+`docs/hubeau-api.md` ; `WatchedSubstance`), et, outre-mer seulement, le
+chlordécone (vérifié le 2026-10-29). Les nitrates restent dans la première
+table.
 
 ## 5. Fonctionnalités de la v1
 
@@ -160,8 +161,13 @@ Une commune peut être desservie par plusieurs UDI (quartiers différents).
   chaque substance, sa **dernière mesure connue sur l'UDI** dans la fenêtre
   d'historique réglée, même plus ancienne que le dernier prélèvement (valeur
   et limite telles que publiées, côte à côte, sans comparaison ; date et âge ;
-  une phrase d'explication). Une substance non mesurée n'a pas de ligne ;
-  aucune mesurée : une ligne le dit, avec le début de la période. Chargée
+  une phrase d'explication). Les substances lues sans aucune mesure sur la
+  période sont nommées dans une note « non analysées depuis le … », qui
+  rappelle que l'absence d'analyse ne dit rien de leur présence (le
+  chlordécone ne l'est qu'en Guadeloupe et en Martinique) ; aucune mesurée :
+  une ligne le dit, avec le début de la période. Sous le total des
+  pesticides, le nombre de pesticides recherchés et quantifiés dans le même
+  prélèvement (`PesticideCounts`). Chargée
   après le reste de la fiche, depuis le cache des séries (F5) ; un échec ne
   touche que la carte. Toucher une ligne ouvre l'historique de la substance.
 - Accès au détail complet du prélèvement.
@@ -172,6 +178,8 @@ Une commune peut être desservie par plusieurs UDI (quartiers différents).
 Liste des paramètres analysés : libellé, valeur, unité, limite de qualité
 quand elle est fournie. Regroupement par famille (bactériologie,
 physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
+Sous le titre des pesticides, le nombre de pesticides et de métabolites
+recherchés et quantifiés dans tout le prélèvement, sommes exclues.
 
 ### F5 — Historique et graphiques
 

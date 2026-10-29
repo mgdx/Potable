@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.ParameterFamily
+import io.github.mgdx.potable.core.PesticideCount
 import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
@@ -171,6 +173,10 @@ private fun ResultList(
             item(key = "notice") { Notice() }
             for (group in state.groups) {
                 item(key = "family-${group.family}") { FamilyHeader(group.family) }
+                val pesticides = state.pesticides
+                if (group.family == ParameterFamily.PESTICIDES && pesticides != null) {
+                    item(key = "pesticides-count") { PesticideCountHeader(pesticides) }
+                }
                 items(group.results) { result ->
                     ResultItem(result, onClick = { onOpenHistory(result) })
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -237,6 +243,33 @@ private fun FamilyHeader(family: ParameterFamily) {
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
             .semantics { heading() },
     )
+}
+
+/**
+ * How many pesticides the whole sample searched for and quantified, under
+ * their heading, and what quantified means: facts, no verdict (SPEC §14).
+ */
+@Composable
+private fun PesticideCountHeader(count: PesticideCount) {
+    Column(
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = pluralStringResource(
+                R.plurals.sample_pesticides_count,
+                count.analysed,
+                count.analysed,
+                count.quantified,
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = stringResource(R.string.pesticides_quantified_explanation),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 /**

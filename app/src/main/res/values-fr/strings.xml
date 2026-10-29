@@ -143,6 +143,17 @@
     <string name="sheet_watched_none">Aucune de ces substances n’a été mesurée sur cette unité de distribution depuis le %1$s.</string>
     <string name="sheet_watched_partial_error">Certaines substances n’ont pas pu être chargées.</string>
     <string name="sheet_watched_measured_on">Mesuré le %1$s · %2$s</string>
+    <plurals name="sheet_watched_not_analysed">
+        <item quantity="one">Non analysée sur cette unité de distribution depuis le %1$s : %2$s. Sans analyse, on ne sait rien de sa présence.</item>
+        <item quantity="many">Non analysées sur cette unité de distribution depuis le %1$s : %2$s. Sans analyse, on ne sait rien de leur présence.</item>
+        <item quantity="other">Non analysées sur cette unité de distribution depuis le %1$s : %2$s. Sans analyse, on ne sait rien de leur présence.</item>
+    </plurals>
+    <plurals name="sheet_pesticides_count">
+        <item quantity="one">%1$d pesticide recherché dans ce prélèvement · quantifiés : %2$d</item>
+        <item quantity="many">%1$d pesticides recherchés dans ce prélèvement · quantifiés : %2$d</item>
+        <item quantity="other">%1$d pesticides recherchés dans ce prélèvement · quantifiés : %2$d</item>
+    </plurals>
+    <string name="pesticides_quantified_explanation">Quantifié : mesuré au-dessus de la limite de quantification du laboratoire, quelle que soit la limite de qualité.</string>
     <string name="watched_pfas">PFAS (somme de 20)</string>
     <string name="watched_pfas_explanation">Les PFAS sont des composés chimiques de synthèse très persistants, utilisés dans de nombreux produits industriels et courants, comme les revêtements antiadhésifs ou imperméabilisants.</string>
     <string name="watched_pesticides">Total des pesticides</string>
@@ -155,6 +166,8 @@
     <string name="watched_lead_explanation">Le plomb provient surtout d’anciennes canalisations en plomb, dans le réseau ou à l’intérieur des bâtiments.</string>
     <string name="watched_arsenic">Arsenic</string>
     <string name="watched_arsenic_explanation">L’arsenic est le plus souvent d’origine naturelle, issu des roches traversées par l’eau.</string>
+    <string name="watched_chlordecone">Chlordécone</string>
+    <string name="watched_chlordecone_explanation">Un insecticide utilisé dans les bananeraies de Guadeloupe et de Martinique jusqu’en 1993. Il persiste des décennies dans les sols.</string>
     <string name="watched_perchlorate">Perchlorate</string>
     <string name="watched_perchlorate_explanation">Le perchlorate provient surtout d’activités industrielles et militaires, comme les munitions de la Première Guerre mondiale.</string>
     <string name="sheet_sampled_on">Prélevé le %1$s</string>
@@ -204,6 +217,11 @@
     <string name="family_physicochemistry">Physico-chimie</string>
     <string name="family_disinfection">Désinfection</string>
     <string name="family_pesticides">Pesticides</string>
+    <plurals name="sample_pesticides_count">
+        <item quantity="one">%1$d pesticide recherché · quantifiés : %2$d</item>
+        <item quantity="many">%1$d pesticides recherchés · quantifiés : %2$d</item>
+        <item quantity="other">%1$d pesticides recherchés · quantifiés : %2$d</item>
+    </plurals>
     <string name="family_metals">Métaux</string>
     <string name="family_organic_compounds">Composés organiques</string>
     <string name="family_radioactivity">Radioactivité</string>

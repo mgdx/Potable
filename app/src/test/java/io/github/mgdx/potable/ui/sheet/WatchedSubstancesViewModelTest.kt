@@ -1,11 +1,16 @@
 package io.github.mgdx.potable.ui.sheet
 
+import io.github.mgdx.potable.core.PesticideCount
 import io.github.mgdx.potable.core.WatchedSubstance
+import io.github.mgdx.potable.core.WatchedSubstances
+import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.core.model.ParameterSeries
+import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.data.CachedSample
 import io.github.mgdx.potable.data.DataError
 import io.github.mgdx.potable.data.HistoryRepository
+import io.github.mgdx.potable.data.SampleRepository
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeFollowRepository
 import io.github.mgdx.potable.ui.FakeHistoryRepository
@@ -28,6 +33,16 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
+private class CountingSampleRepository : SampleRepository {
+    var answer: Result<Sample?> = Result.success(null)
+    val calls = mutableListOf<String>()
+
+    override suspend fun sample(communeCode: String, udiCode: String, sampleCode: String): Sample? {
+        calls += sampleCode
+        return answer.getOrThrow()
+    }
+}
+
 /** The watched substances card of the sheet (SPEC §5 F3). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WatchedSubstancesViewModelTest {
@@ -41,17 +56,26 @@ class WatchedSubstancesViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-25T10:00:00Z"), ZoneOffset.UTC)
     private val fetchedAt = Instant.parse("2026-10-25T09:59:00Z")
 
-    private fun viewModel() = SheetViewModel(
+    private val samples = CountingSampleRepository()
+
+    /** The substances read for Orléans: chlordecone is read overseas only. */
+    private val mainland = WatchedSubstances.readFor("45234")
+
+    private fun viewModel(communeCode: String = "45234") = SheetViewModel(
         water,
         follows,
         history,
-        "45234",
+        communeCode,
         "045000123",
         "Orléans",
         "ORLEANS",
         clock,
         recents = preferences,
+        samples = samples,
     )
+
+    private fun pesticide(code: String, label: String, text: String, number: Double) =
+        AnalysisResult(code, label, "N", text, number, "µg/L", "<=0,1 µg/L", null, "L")
 
     private fun series(code: String, vararg points: Pair<String, String>) = ParameterSeries(
         parameterCode = code,
@@ -98,13 +122,13 @@ class WatchedSubstancesViewModelTest {
             assertNull(loaded.partialError)
             // Every substance, three years back from today in France.
             assertEquals(
-                WatchedSubstance.entries.map { it.codes to LocalDate.parse("2023-10-25") },
+                mainland.map { it.codes to LocalDate.parse("2023-10-25") },
                 history.seriesCalls,
             )
             // Once per sample shown.
             viewModel.pullToRefresh()
             advanceUntilIdle()
-            assertEquals(WatchedSubstance.entries.size, history.seriesCalls.size)
+            assertEquals(mainland.size, history.seriesCalls.size)
         }
 
     @Test
@@ -137,7 +161,7 @@ class WatchedSubstancesViewModelTest {
         advanceUntilIdle()
 
         // A4: every other substance was asked while the first one waits.
-        assertEquals(WatchedSubstance.entries.size, history.seriesCalls.size + 1)
+        assertEquals(mainland.size, history.seriesCalls.size + 1)
         assertEquals(WatchedUiState.Loading, viewModel.watched.value)
 
         held.complete(Unit)
@@ -159,7 +183,7 @@ class WatchedSubstancesViewModelTest {
     @Test
     fun `a failure only touches the card, and retry reads again`() = runTest(main.dispatcher) {
         water.refreshedCache = CachedSample(sample(), fetchedAt)
-        for (substance in WatchedSubstance.entries) {
+        for (substance in mainland) {
             history.series[substance.codes] = Result.failure(DataError.Network(IOException()))
         }
         val viewModel = viewModel()
@@ -211,6 +235,84 @@ class WatchedSubstancesViewModelTest {
         val loaded = viewModel.watched.value as WatchedUiState.Loaded
         assertEquals(10, loaded.years)
         assertEquals(LocalDate.parse("2016-10-25"), loaded.since)
-        assertEquals(2 * WatchedSubstance.entries.size, history.seriesCalls.size)
+        assertEquals(2 * mainland.size, history.seriesCalls.size)
+    }
+
+    @Test
+    fun `substances read without any measure are said not analysed, failed ones are not`() =
+        runTest(main.dispatcher) {
+            water.refreshedCache = CachedSample(sample(), fetchedAt)
+            history.series[WatchedSubstance.LEAD.codes] =
+                Result.success(series("1382", "2024-01-10T10:00:00Z" to "<1"))
+            history.series[WatchedSubstance.PFAS.codes] = Result.failure(DataError.Http(503))
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            val loaded = viewModel.watched.value as WatchedUiState.Loaded
+            assertEquals(
+                mainland - WatchedSubstance.LEAD - WatchedSubstance.PFAS,
+                loaded.notAnalysed,
+            )
+        }
+
+    @Test
+    fun `chlordecone is read and said not analysed in the Antilles`() = runTest(main.dispatcher) {
+        water.refreshedCache = CachedSample(sample(), fetchedAt)
+        history.series[WatchedSubstance.LEAD.codes] =
+            Result.success(series("1382", "2024-01-10T10:00:00Z" to "<1"))
+        val viewModel = viewModel(communeCode = "97209")
+        advanceUntilIdle()
+        assertTrue(history.seriesCalls.any { it.first == WatchedSubstance.CHLORDECONE.codes })
+        val loaded = viewModel.watched.value as WatchedUiState.Loaded
+        assertTrue(WatchedSubstance.CHLORDECONE in loaded.notAnalysed)
+    }
+
+    @Test
+    fun `the pesticides of the sample of the latest total are counted`() =
+        runTest(main.dispatcher) {
+            water.refreshedCache = CachedSample(sample(), fetchedAt)
+            history.series[WatchedSubstance.TOTAL_PESTICIDES.codes] = Result.success(
+                series(
+                    "6276",
+                    "2025-03-01T10:00:00Z" to "0,1",
+                    "2026-03-26T10:00:00Z" to "0,54",
+                ),
+            )
+            samples.answer = Result.success(
+                sample().copy(
+                    code = "S2026-03-26T10:00:00Z",
+                    results = listOf(
+                        pesticide("6276", "Total des pesticides analysés", "0,54", 0.54),
+                        pesticide("6378", "Chloridazone desphényl", "0,397", 0.397),
+                        pesticide("1107", "Atrazine", "<0,005", 0.0),
+                    ),
+                ),
+            )
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            assertEquals(listOf("S2026-03-26T10:00:00Z"), samples.calls)
+            val loaded = viewModel.watched.value as WatchedUiState.Loaded
+            assertEquals(PesticideCount(analysed = 2, quantified = 1), loaded.pesticides)
+        }
+
+    @Test
+    fun `a sample that cannot be read leaves the card without a count`() =
+        runTest(main.dispatcher) {
+            water.refreshedCache = CachedSample(sample(), fetchedAt)
+            history.series[WatchedSubstance.TOTAL_PESTICIDES.codes] =
+                Result.success(series("6276", "2026-03-26T10:00:00Z" to "0,54"))
+            samples.answer = Result.failure(DataError.Network(IOException()))
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            val loaded = viewModel.watched.value as WatchedUiState.Loaded
+            assertNull(loaded.pesticides)
+            assertEquals(1, loaded.measures.size)
+        }
+
+    @Test
+    fun `no total of pesticides, no sample read`() = runTest(main.dispatcher) {
+        water.refreshedCache = CachedSample(sample(), fetchedAt)
+        viewModel()
+        advanceUntilIdle()
+        assertTrue(samples.calls.isEmpty())
     }
 }

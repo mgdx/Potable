@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import io.github.mgdx.potable.core.PesticideCount
+import io.github.mgdx.potable.core.PesticideCounts
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.sheet.SheetUiState
@@ -29,7 +31,10 @@ sealed interface SampleDetailUiState {
      * [groups] are the results of [sample] that match the query, by family:
      * empty with results in [sample] means that nothing matches.
      */
-    data class Loaded(val sample: Sample, val groups: List<FamilyGroup>) : SampleDetailUiState
+    data class Loaded(val sample: Sample, val groups: List<FamilyGroup>) : SampleDetailUiState {
+        /** The pesticides of the whole sample, whatever the query; null without any. */
+        val pesticides: PesticideCount? = PesticideCounts.of(sample.results)
+    }
 }
 
 /**

@@ -3,6 +3,7 @@ package io.github.mgdx.potable.core
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.model.ParameterSeries
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,6 +43,46 @@ class WatchedSubstancesTest {
         assertEquals(WatchedSubstance.LEAD, WatchedSubstance.of("1382"))
         assertEquals(WatchedSubstance.ARSENIC, WatchedSubstance.of("1369"))
         assertEquals(WatchedSubstance.PERCHLORATE, WatchedSubstance.of("6219"))
+        assertEquals(WatchedSubstance.CHLORDECONE, WatchedSubstance.of("1866"))
+    }
+
+    @Test
+    fun `chlordecone is read overseas only, and said not analysed in the Antilles only`() {
+        val mainland = WatchedSubstances.readFor("45234")
+        assertEquals(WatchedSubstance.entries - WatchedSubstance.CHLORDECONE, mainland)
+        assertEquals(WatchedSubstance.entries, WatchedSubstances.readFor("97209"))
+        assertEquals(WatchedSubstance.entries, WatchedSubstances.readFor("97411"))
+        assertTrue(WatchedSubstance.CHLORDECONE.isAbsenceShownIn("97209"))
+        assertTrue(WatchedSubstance.CHLORDECONE.isAbsenceShownIn("97101"))
+        assertFalse(WatchedSubstance.CHLORDECONE.isAbsenceShownIn("97411"))
+        assertFalse(WatchedSubstance.CHLORDECONE.isAbsenceShownIn("45234"))
+        // "97" alone is not a department: Corsica and the rest keep two characters.
+        assertTrue(WatchedSubstance.TFA.isAbsenceShownIn("2A004"))
+    }
+
+    @Test
+    fun `a substance read without any measure is not analysed, a failed one is unknown`() {
+        val lead = series(
+            WatchedSubstance.LEAD,
+            row("P1", "2026-01-05T10:00:00Z", "1382", "2", label = "Plomb"),
+        )
+        val arsenic = row("P1", "2026-01-05T10:00:00Z", "1369", "1")
+        val empty = series(WatchedSubstance.ARSENIC, arsenic)!!.copy(points = emptyList())
+        val read = mapOf(
+            WatchedSubstance.TFA to null,
+            WatchedSubstance.LEAD to lead,
+            WatchedSubstance.ARSENIC to empty,
+            WatchedSubstance.CHLORDECONE to null,
+            // PFAS missing: its read failed.
+        )
+        assertEquals(
+            listOf(WatchedSubstance.TFA, WatchedSubstance.ARSENIC, WatchedSubstance.CHLORDECONE),
+            WatchedSubstances.notAnalysed(read, "97209"),
+        )
+        assertEquals(
+            listOf(WatchedSubstance.TFA, WatchedSubstance.ARSENIC),
+            WatchedSubstances.notAnalysed(read, "97411"),
+        )
     }
 
     @Test

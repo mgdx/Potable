@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameter
 import io.github.mgdx.potable.core.FeaturedParameters
+import io.github.mgdx.potable.core.PesticideCount
 import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.core.WatchedMeasure
 import io.github.mgdx.potable.core.WatchedSubstance
@@ -468,8 +469,13 @@ private fun WatchedSubstancesCard(
                     CardNote(stringResource(R.string.sheet_watched_intro))
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         for (measure in state.measures) {
-                            WatchedMeasureRow(measure, onParameterHistory)
+                            val pesticides = state.pesticides
+                                .takeIf { measure.substance == WatchedSubstance.TOTAL_PESTICIDES }
+                            WatchedMeasureRow(measure, pesticides, onParameterHistory)
                         }
+                    }
+                    if (state.notAnalysed.isNotEmpty()) {
+                        NotAnalysedNote(state.notAnalysed, state.since)
                     }
                 }
                 if (state.partialError != null) {
@@ -484,6 +490,7 @@ private fun WatchedSubstancesCard(
 @Composable
 private fun WatchedMeasureRow(
     measure: WatchedMeasure,
+    pesticides: PesticideCount?,
     onParameterHistory: (Set<String>, String) -> Unit,
 ) {
     val locale = currentLocale()
@@ -532,6 +539,7 @@ private fun WatchedMeasureRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            pesticides?.let { PesticideCountText(it) }
             Text(
                 text = stringResource(measure.substance.explanationRes()),
                 style = MaterialTheme.typography.bodySmall.justified(),
@@ -544,6 +552,45 @@ private fun WatchedMeasureRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * How many pesticides the sample of the latest total searched for and
+ * quantified, and what quantified means: facts of the sample, no verdict.
+ */
+@Composable
+private fun PesticideCountText(count: PesticideCount) {
+    Text(
+        text = pluralStringResource(
+            R.plurals.sheet_pesticides_count,
+            count.analysed,
+            count.analysed,
+            count.quantified,
+        ),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    Text(
+        text = stringResource(R.string.pesticides_quantified_explanation),
+        style = MaterialTheme.typography.bodySmall.justified(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/**
+ * The substances read without any measure since [since]: said, rather than
+ * left out, as no analysis is not an absence.
+ */
+@Composable
+private fun NotAnalysedNote(substances: List<WatchedSubstance>, since: LocalDate) {
+    val names = substances.map { stringResource(it.nameRes()) }.joinToString(", ")
+    CardNote(
+        pluralStringResource(
+            R.plurals.sheet_watched_not_analysed,
+            substances.size,
+            formatDay(since),
+            names,
+        ),
+    )
 }
 
 @Composable
@@ -577,6 +624,7 @@ private fun WatchedSubstance.nameRes(): Int = when (this) {
     WatchedSubstance.LEAD -> R.string.watched_lead
     WatchedSubstance.ARSENIC -> R.string.watched_arsenic
     WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate
+    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone
 }
 
 private fun WatchedSubstance.explanationRes(): Int = when (this) {
@@ -587,6 +635,7 @@ private fun WatchedSubstance.explanationRes(): Int = when (this) {
     WatchedSubstance.LEAD -> R.string.watched_lead_explanation
     WatchedSubstance.ARSENIC -> R.string.watched_arsenic_explanation
     WatchedSubstance.PERCHLORATE -> R.string.watched_perchlorate_explanation
+    WatchedSubstance.CHLORDECONE -> R.string.watched_chlordecone_explanation
 }
 
 /** A day of the history window in the long date format of the language. */
