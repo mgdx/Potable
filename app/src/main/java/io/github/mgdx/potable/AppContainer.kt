@@ -19,6 +19,7 @@ import io.github.mgdx.potable.data.RemoteWaterRepository
 import io.github.mgdx.potable.data.SampleRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.alert.AlertChecker
+import io.github.mgdx.potable.data.backup.FollowsBackup
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.follow.RoomFollowRepository
 import io.github.mgdx.potable.data.local.PotableDatabase
@@ -82,4 +83,14 @@ class AppContainer(context: Context) {
 
     /** Checks the followed units for new samples (SPEC §5 F7). */
     val alertChecker: AlertChecker by lazy { AlertChecker(hubEau, follows, water) }
+
+    /** Export and import of the follows; the baseline is the sheet's ([alertChecker]). */
+    val backup: FollowsBackup by lazy {
+        FollowsBackup(
+            follows,
+            preferences,
+            baseline = { alertChecker.setBaseline(it) },
+            applyRetention = { water.purgeOlderThanRetention() },
+        )
+    }
 }

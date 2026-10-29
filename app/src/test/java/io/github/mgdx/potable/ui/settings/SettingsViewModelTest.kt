@@ -7,6 +7,12 @@ import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.CachedCommune
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
+import io.github.mgdx.potable.data.backup.Backup
+import io.github.mgdx.potable.data.backup.BackupCodec
+import io.github.mgdx.potable.data.backup.BackupError
+import io.github.mgdx.potable.data.backup.BackupFollow
+import io.github.mgdx.potable.data.backup.BackupRead
+import io.github.mgdx.potable.data.backup.FollowsBackup
 import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.data.follow.FollowRepository
 import io.github.mgdx.potable.data.preferences.AppPreferences
@@ -460,6 +466,80 @@ class SettingsViewModelTest {
         assertTrue(LastAlertCheck(null, failed).lastFailed)
         assertFalse(LastAlertCheck(null, null).lastFailed)
     }
+
+    @Test
+    fun `an export writes the followed communes, then says so once`() = runTest(main.dispatcher) {
+        val follows = FakeFollowRepository()
+        follows.follow("45234", "Orléans", "045000474", "ORLEANS")
+        val backup = FollowsBackup(follows, preferences, baseline = {})
+        val viewModel =
+            SettingsViewModel(preferences, FakeWater(), access, communes, follows, backup)
+        var written = ""
+        viewModel.exportBackup { written = it }
+        advanceUntilIdle()
+        val read = BackupCodec.decode(written) as BackupRead.Valid
+        assertEquals(listOf("045000474"), read.backup.follows.map { it.udiCode })
+        assertEquals(BackupMessage.Exported, viewModel.backupMessage.value)
+        assertFalse(viewModel.backupRunning.value)
+
+        viewModel.onBackupMessageShown()
+        assertNull(viewModel.backupMessage.value)
+
+        viewModel.exportBackup { throw IOException("disk full") }
+        advanceUntilIdle()
+        assertEquals(BackupMessage.ExportFailed, viewModel.backupMessage.value)
+    }
+
+    @Test
+    fun `an import merges, reports, then sets the baseline of the new follows`() =
+        runTest(main.dispatcher) {
+            val follows = FakeFollowRepository()
+            follows.follow("45234", "Orléans", "045000474", "ORLEANS")
+            val baselines = mutableListOf<String>()
+            val backup = FollowsBackup(follows, preferences, baseline = { baselines += it.udiCode })
+            val viewModel =
+                SettingsViewModel(preferences, FakeWater(), access, communes, follows, backup)
+            val file = BackupCodec.encode(
+                Backup(
+                    listOf(
+                        BackupFollow("45234", "045000474", "Orléans", "ORLEANS"),
+                        BackupFollow("75056", "075000123", "Paris", "PARIS CENTRE"),
+                    ),
+                ),
+            )
+            viewModel.importBackup { BackupCodec.decode(file) }
+            advanceUntilIdle()
+
+            val message = viewModel.backupMessage.value as BackupMessage.Imported
+            assertEquals(1, message.summary.imported)
+            assertEquals(1, message.summary.alreadyFollowed)
+            assertEquals(2, follows.current.size)
+            assertEquals(listOf("075000123"), baselines)
+            assertFalse(viewModel.backupRunning.value)
+        }
+
+    @Test
+    fun `a file that cannot be imported says why, and changes nothing`() =
+        runTest(main.dispatcher) {
+            val follows = FakeFollowRepository()
+            val backup = FollowsBackup(follows, preferences, baseline = {})
+            val viewModel =
+                SettingsViewModel(preferences, FakeWater(), access, communes, follows, backup)
+            viewModel.importBackup { BackupCodec.decode("""{"format":"other"}""") }
+            advanceUntilIdle()
+            assertEquals(
+                BackupMessage.ImportFailed(BackupError.NOT_A_BACKUP),
+                viewModel.backupMessage.value,
+            )
+
+            viewModel.importBackup { throw IOException("gone") }
+            advanceUntilIdle()
+            assertEquals(
+                BackupMessage.ImportFailed(BackupError.UNREADABLE),
+                viewModel.backupMessage.value,
+            )
+            assertTrue(follows.current.isEmpty())
+        }
 
     private companion object {
         val ALERTS_OFF = AlertSettings(

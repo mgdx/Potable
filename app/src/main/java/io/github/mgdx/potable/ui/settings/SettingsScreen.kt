@@ -42,8 +42,18 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
     val cachedCommunes by viewModel.cachedCommunes.collectAsStateWithLifecycle()
     val communeToPurge by viewModel.communeToPurge.collectAsStateWithLifecycle()
     val communePurged by viewModel.communePurged.collectAsStateWithLifecycle()
+    val backupRunning by viewModel.backupRunning.collectAsStateWithLifecycle()
+    val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
     NotificationPermissionRequest(viewModel)
+    backupMessage?.let { message ->
+        val text = backupMessageText(message)
+        LaunchedEffect(message) {
+            // Same as the purges: acknowledged first, shown once.
+            viewModel.onBackupMessageShown()
+            scope.launch { snackbarHostState.showSnackbar(text) }
+        }
+    }
     communePurged?.let { commune ->
         val message = stringResource(R.string.settings_clear_commune_done, bidiWrap(commune.label))
         LaunchedEffect(commune) {
@@ -107,6 +117,16 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
                 onPeriod = viewModel::setAlertPeriodWeeks,
                 onOpenNotificationSettings = { openNotificationSettings(context) },
                 onSearch = onSearch,
+            )
+
+            BackupSection(
+                running = backupRunning,
+                onExport = { uri ->
+                    viewModel.exportBackup { context.contentResolver.writeBackup(uri, it) }
+                },
+                onImport = { uri ->
+                    viewModel.importBackup { context.contentResolver.readBackup(uri) }
+                },
             )
         }
     }

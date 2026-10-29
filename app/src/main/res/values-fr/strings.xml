@@ -349,6 +349,31 @@
     <string name="settings_notifications_denied">Potable n’a pas l’autorisation d’afficher des notifications : cette alerte reste donc désactivée. Vous pouvez autoriser les notifications dans les paramètres du système.</string>
     <string name="settings_notifications_blocked">Les notifications de Potable sont désactivées : vos communes ne sont plus vérifiées tant que vous ne les réactivez pas.</string>
     <string name="settings_notifications_open">Ouvrir les paramètres de notification</string>
+    <string name="settings_backup_title">Sauvegarde</string>
+    <string name="settings_backup_description">Enregistrez dans un fichier les communes que vous suivez et vos réglages d’affichage, pour les retrouver sur un autre téléphone. Les alertes ne sont pas sauvegardées : réactivez-les après l’importation.</string>
+    <string name="settings_backup_export">Exporter les communes suivies</string>
+    <string name="settings_backup_import">Importer</string>
+    <string name="settings_backup_exported">Communes suivies exportées.</string>
+    <string name="settings_backup_export_failed">Le fichier n’a pas pu être enregistré.</string>
+    <plurals name="settings_backup_imported">
+        <item quantity="one">%d commune importée.</item>
+        <item quantity="many">%d communes importées.</item>
+        <item quantity="other">%d communes importées.</item>
+    </plurals>
+    <plurals name="settings_backup_already">
+        <item quantity="one">%d déjà suivie.</item>
+        <item quantity="many">%d déjà suivies.</item>
+        <item quantity="other">%d déjà suivies.</item>
+    </plurals>
+    <plurals name="settings_backup_invalid">
+        <item quantity="one">%d entrée non valide ignorée.</item>
+        <item quantity="many">%d entrées non valides ignorées.</item>
+        <item quantity="other">%d entrées non valides ignorées.</item>
+    </plurals>
+    <string name="settings_backup_unreadable">Ce fichier n’a pas pu être lu.</string>
+    <string name="settings_backup_not_backup">Ce fichier n’est pas une sauvegarde de Potable.</string>
+    <string name="settings_backup_unsupported">Cette sauvegarde provient d’une version plus récente de Potable. Mettez l’application à jour, puis réessayez.</string>
+    <string name="settings_backup_too_large">Ce fichier est trop volumineux pour être une sauvegarde de Potable.</string>
 
     <!-- ===== Notifications (SPEC §5 F7) ===== -->
 
