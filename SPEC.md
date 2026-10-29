@@ -121,6 +121,15 @@ de vinyle monomère, plomb, arsenic, perchlorate (codes vérifiés le 2026-10-28
 chlordécone (vérifié le 2026-10-29). Les nitrates restent dans la première
 table.
 
+Une troisième table, non éditoriale, reprend le **classement officiel des
+métabolites de pesticides** pour les eaux destinées à la consommation
+humaine : le tableau de l'Anses (« pertinent », limite de qualité de
+0,1 µg/L ; « non pertinent », valeur indicative de 0,9 µg/L ; mise à jour de
+juillet 2025), embarqué dans `:core` et apparié aux codes Hub'Eau par le
+numéro CAS publié par l'API ou l'identifiant du fabricant, jamais par le
+libellé seul (`docs/hubeau-api.md`, `MetaboliteRelevance`). Un métabolite
+absent du tableau n'est pas classé.
+
 ## 5. Fonctionnalités de la v1
 
 ### F1 — Choix de la commune
@@ -184,7 +193,11 @@ Liste des paramètres analysés : libellé, valeur, unité, limite de qualité
 quand elle est fournie. Regroupement par famille (bactériologie,
 physico-chimie, pesticides, métaux…). Recherche textuelle dans la liste.
 Sous le titre des pesticides, le nombre de pesticides et de métabolites
-recherchés et quantifiés dans tout le prélèvement, sommes exclues.
+recherchés et quantifiés dans tout le prélèvement, sommes exclues. Sous le
+résultat d'un métabolite classé par l'Anses, son classement (« Métabolite
+pertinent (ANSES) » ou « non pertinent »), et une seule fois, sous le titre
+des pesticides, ce qu'il signifie, sans jamais le confronter à la valeur
+(§4.3, §14).
 
 Ouvert depuis l'historique d'un paramètre (F5, appui long sur une mesure),
 un prélèvement, même ancien, s'affiche d'abord comme la fiche : conclusion

@@ -248,6 +248,10 @@ Pour soutenir le travail lui-même, vous pouvez faire un don sur
   [geo.api.gouv.fr](https://geo.api.gouv.fr), et Code officiel géographique
   de l’INSEE (dont le fichier des mouvements de communes), sous
   [Licence Ouverte Etalab 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/).
+- **Pertinence des métabolites de pesticides** : Anses,
+  [« Tableau relatif aux métabolites pertinents pour les EDCH »](https://www.anses.fr/fr/content/tableau-metabolites-pesticides-edch),
+  mise à jour de juillet 2025, informations publiques réutilisées en citant
+  l’Anses et la date de mise à jour (voir `docs/dependencies.md`).
 
 Ces mentions figurent aussi dans l’écran « À propos » de l’application.
 

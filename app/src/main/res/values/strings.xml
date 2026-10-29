@@ -225,6 +225,11 @@
     </plurals>
     <!-- Under sheet_pesticides_count and sample_pesticides_count. -->
     <string name="pesticides_quantified_explanation">Quantified: measured above the quantification limit of the laboratory, whatever the quality limit.</string>
+    <!-- Under a result of the sample detail: the classification of a pesticide metabolite in the ANSES table (docs/hubeau-api.md). "ANSES": the French food, environmental and occupational health and safety agency, not translated. -->
+    <string name="metabolite_relevant">Relevant metabolite (ANSES)</string>
+    <string name="metabolite_not_relevant">Non-relevant metabolite (ANSES)</string>
+    <!-- Under sample_pesticides_count, when the list shows a metabolite classified by ANSES. What the classification means, never a judgement of the value. -->
+    <string name="metabolite_relevance_explanation">Metabolites are breakdown products of pesticides. ANSES classifies those it has assessed: a relevant one is subject to the quality limit of 0.1 µg/L, a non-relevant one to an indicative value of 0.9 µg/L. Source: ANSES table, July 2025 update.</string>
     <!-- Names of the watched substances, translated (docs/glossary.md), unlike the labels published by Hub'Eau. Explanations: what the substance is and where it comes from, no health advice (SPEC §14). -->
     <string name="watched_pfas">PFAS (sum of 20)</string>
     <string name="watched_pfas_explanation">PFAS are very persistent synthetic chemicals, used in many industrial and everyday products such as non-stick or water-repellent coatings.</string>
@@ -518,6 +523,10 @@
     <string name="about_source_hubeau">Water quality results: Hub\'Eau “Qualité de l\'eau potable” API, French Ministry of Health and regional health agencies (ARS).</string>
     <!-- Link. -->
     <string name="about_source_hubeau_terms">Hub\'Eau terms of use</string>
+    <!-- The ANSES table of pesticide metabolites (docs/dependencies.md): its licence requires naming ANSES and the date of the update. -->
+    <string name="about_source_anses">Relevance of pesticide metabolites: ANSES table, July 2025 update.</string>
+    <!-- Link. -->
+    <string name="about_source_anses_link">ANSES table of metabolites</string>
     <!-- “Découpage administratif communal” and “Licence Ouverte Etalab 2.0” are French names: keep them as is. -->
     <string name="about_source_communes">Communes: Découpage administratif communal — geo.api.gouv.fr, Licence Ouverte Etalab 2.0.</string>
     <!-- Source citation, French names only. -->
@@ -540,6 +549,7 @@
     <string name="about_open_link_failed">No app can open this link.</string>
     <string name="url_hubeau_terms" translatable="false">https://hubeau.eaufrance.fr/page/conditions-generales</string>
     <string name="url_geo_api" translatable="false">https://geo.api.gouv.fr</string>
+    <string name="url_anses_metabolites" translatable="false">https://www.anses.fr/fr/content/tableau-metabolites-pesticides-edch</string>
     <string name="url_gpl" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="url_repository" translatable="false">https://github.com/mgdx/Potable</string>
     <!-- Library names and licenses, from docs/dependencies.md. Not translated. -->
