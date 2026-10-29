@@ -243,12 +243,30 @@ class CacheJanitorTest {
         follow(paris)
         fill(paris)
         val seen = Instant.parse("2026-08-12T10:54:00Z")
-        water.setLastSeenSampleDate(paris.communeCode, paris.udiCode, seen)
+        val sample = SampleSummary(
+            code = "P1",
+            date = seen,
+            conclusion = null,
+            bacteriologicalLimits = Compliance.COMPLIANT,
+            physicochemicalLimits = Compliance.COMPLIANT,
+            bacteriologicalReferences = Compliance.COMPLIANT,
+            physicochemicalReferences = Compliance.COMPLIANT,
+        )
+        water.recordSeenSamples(
+            paris.communeCode,
+            paris.udiCode,
+            seen,
+            listOf(sample),
+            Instant.EPOCH,
+        )
 
         water.pruneUnreferenced()
 
         assertTrue(fullyCached(paris))
-        assertEquals(seen, water.lastSeenSampleDate(paris.communeCode, paris.udiCode))
+        assertEquals(
+            SeenSamples(seen, setOf("P1"), Instant.EPOCH),
+            water.seenSamples(paris.communeCode, paris.udiCode),
+        )
     }
 
     @Test

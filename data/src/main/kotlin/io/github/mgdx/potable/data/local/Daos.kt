@@ -123,12 +123,65 @@ internal interface CacheDao {
     )
     suspend fun setLastSeenSampleDate(communeCode: String, udiCode: String, date: Long?)
 
-    /** Forgets the date the alert task has seen for a unit (it is no longer followed). */
+    /**
+     * Forgets the date the alert task has seen for a unit (it is no longer
+     * followed), and that it was followed by codes; its codes go with
+     * [deleteUnitSeenSamples].
+     */
     @Query(
-        "UPDATE synchro SET dernier_prelevement_vu = NULL " +
+        "UPDATE synchro SET dernier_prelevement_vu = NULL, codes_vus_depuis = NULL " +
             "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
     )
     suspend fun clearLastSeenSampleDate(communeCode: String, udiCode: String)
+
+    /** Records what the alert task has seen for a unit: its newest date, and from when its codes are kept. */
+    @Query(
+        "UPDATE synchro SET dernier_prelevement_vu = :date, codes_vus_depuis = :codesSince " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun setSeenState(communeCode: String, udiCode: String, date: Long, codesSince: Long)
+
+    /** The codes of the samples the alert task has seen for a unit. */
+    @Query(
+        "SELECT code_prelevement FROM prelevement_vu " +
+            "WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun seenSampleCodes(communeCode: String, udiCode: String): List<String>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSeenSamples(samples: List<SeenSampleEntity>)
+
+    /** Drops the seen codes of a unit dated before [before] (epoch ms): out of the alert window. */
+    @Query(
+        "DELETE FROM prelevement_vu WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
+            "AND date_prelevement < :before",
+    )
+    suspend fun deleteSeenSamplesBefore(communeCode: String, udiCode: String, before: Long)
+
+    /** Forgets the seen codes of a unit dated after [after] (epoch ms); for the debug tools. */
+    @Query(
+        "DELETE FROM prelevement_vu WHERE code_commune = :communeCode AND code_reseau = :udiCode " +
+            "AND date_prelevement > :after",
+    )
+    suspend fun deleteSeenSamplesAfter(communeCode: String, udiCode: String, after: Long)
+
+    /** Forgets every seen code of a unit (it is no longer followed). */
+    @Query(
+        "DELETE FROM prelevement_vu WHERE code_commune = :communeCode AND code_reseau = :udiCode",
+    )
+    suspend fun deleteUnitSeenSamples(communeCode: String, udiCode: String)
+
+    /**
+     * Deletes the seen codes of every unit whose sync row no longer keeps a
+     * date the alert task has seen: they follow [SyncEntity.lastSeenSampleDate].
+     */
+    @Query(
+        "DELETE FROM prelevement_vu WHERE NOT EXISTS (SELECT 1 FROM synchro " +
+            "WHERE synchro.code_commune = prelevement_vu.code_commune " +
+            "AND synchro.code_reseau = prelevement_vu.code_reseau " +
+            "AND synchro.dernier_prelevement_vu IS NOT NULL)",
+    )
+    suspend fun deleteSeenSamplesWithoutLastSeen()
 
     /**
      * Every unit with something cached, one row per unit: the last

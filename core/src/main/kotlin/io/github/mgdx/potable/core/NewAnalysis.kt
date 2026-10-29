@@ -1,21 +1,38 @@
 package io.github.mgdx.potable.core
 
+import io.github.mgdx.potable.core.model.SampleSummary
 import java.time.Instant
 
 object NewAnalysis {
     /**
-     * Whether the [latest] sample date seen on Hub'Eau is newer than the one
-     * already shown to the user, [lastSeen].
+     * The samples of [candidates] (the headers Hub'Eau publishes for a
+     * followed unit over the alert window) not yet shown to the user, newest
+     * first (then by code), each once.
      *
-     * - No [latest] date (no sample at all): nothing new.
-     * - No [lastSeen] date (first check of a followed commune): **not** new.
-     *   The first pass only records a baseline; notifying then would announce
-     *   as "new" an analysis that may be months old.
-     * - Otherwise, new only if strictly more recent.
+     * - No [lastSeen] date (first check of a followed unit): none. The first
+     *   pass only records a baseline; notifying then would announce as "new"
+     *   analyses that may be months old.
+     * - No [seenCodes] (a unit followed before the codes were kept, 0.3.1 and
+     *   earlier): those taken strictly after [lastSeen], the former rule, so
+     *   that an update does not announce the whole window.
+     * - Otherwise, those whose `code_prelevement` is not in [seenCodes], even
+     *   empty: two samples of the same day, a sample published late with an
+     *   earlier date, several published between two checks are all found.
      */
-    fun isNew(lastSeen: Instant?, latest: Instant?): Boolean = when {
-        latest == null -> false
-        lastSeen == null -> false
-        else -> latest > lastSeen
+    fun newSamples(
+        lastSeen: Instant?,
+        seenCodes: Set<String>?,
+        candidates: List<SampleSummary>,
+    ): List<SampleSummary> {
+        if (lastSeen == null) return emptyList()
+        val fresh =
+            if (seenCodes == null) {
+                candidates.filter { it.date > lastSeen }
+            } else {
+                candidates.filter { it.code !in seenCodes }
+            }
+        return fresh
+            .distinctBy { it.code }
+            .sortedWith(compareByDescending<SampleSummary> { it.date }.thenBy { it.code })
     }
 }

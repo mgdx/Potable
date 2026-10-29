@@ -1,10 +1,13 @@
 package io.github.mgdx.potable.data
 
+import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.Sample
+import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.core.model.UdiChoice
 import io.github.mgdx.potable.data.follow.RoomFollowRepository
 import io.github.mgdx.potable.data.local.MutableClock
 import io.github.mgdx.potable.data.local.PotableDatabase
+import io.github.mgdx.potable.data.local.SeenSampleEntity
 import io.github.mgdx.potable.data.local.SyncEntity
 import io.github.mgdx.potable.data.local.TimelineSyncEntity
 import io.github.mgdx.potable.data.local.inMemoryDatabase
@@ -560,6 +563,149 @@ class CachingWaterRepositoryTest {
         repository.refreshCache("45234", UDI, force = false)
         repository.setLastSeenSampleDate("45234", UDI, Instant.parse("2026-08-12T10:54:00Z"))
         assertNull(repository.lastSeenSampleDate("45234", UDI))
+    }
+
+    private fun summary(code: String, date: String) = SampleSummary(
+        code = code,
+        date = Instant.parse(date),
+        conclusion = "Eau conforme.",
+        bacteriologicalLimits = Compliance.COMPLIANT,
+        physicochemicalLimits = Compliance.COMPLIANT,
+        bacteriologicalReferences = Compliance.COMPLIANT,
+        physicochemicalReferences = Compliance.COMPLIANT,
+    )
+
+    private val windowStart = Instant.parse("2026-05-26T12:50:00Z")
+
+    /** Orléans followed, two samples seen by its alerts. */
+    private suspend fun seenOrleans() {
+        followOrleans()
+        repository.recordSeenSamples(
+            "45234",
+            UDI,
+            lastSeen = Instant.parse("2026-08-26T12:50:00Z"),
+            samples = listOf(
+                summary("P2", "2026-08-26T12:50:00Z"),
+                summary("P1", "2026-08-26T12:49:00Z"),
+            ),
+            codesSince = windowStart,
+        )
+    }
+
+    private val orleansSeen =
+        SeenSamples(Instant.parse("2026-08-26T12:50:00Z"), setOf("P1", "P2"), windowStart)
+
+    @Test
+    fun `the samples the alerts have seen are recorded with the last seen date`() = runTest {
+        // Not followed: nothing is recorded, as for the date alone.
+        repository.recordSeenSamples(
+            "45234",
+            UDI,
+            windowStart,
+            listOf(summary("P0", "2026-08-01T10:00:00Z")),
+            windowStart,
+        )
+        assertEquals(SeenSamples(null, null, null), repository.seenSamples("45234", UDI))
+
+        seenOrleans()
+
+        assertEquals(orleansSeen, repository.seenSamples("45234", UDI))
+        // An alert state alone is not a cache.
+        assertEquals(emptyList<CachedCommune>(), repository.cachedCommunes().first())
+    }
+
+    @Test
+    fun `a unit followed before the codes were kept has a date and no codes`() = runTest {
+        followOrleans()
+        val seen = Instant.parse("2026-08-26T12:50:00Z")
+        repository.setLastSeenSampleDate("45234", UDI, seen)
+
+        assertEquals(SeenSamples(seen, null, null), repository.seenSamples("45234", UDI))
+    }
+
+    @Test
+    fun `the codes seen before the window are dropped, the others kept`() = runTest {
+        seenOrleans()
+        val later = Instant.parse("2026-08-26T12:49:30Z")
+
+        repository.recordSeenSamples(
+            "45234",
+            UDI,
+            lastSeen = Instant.parse("2026-09-15T09:00:00Z"),
+            samples = listOf(
+                summary("P3", "2026-09-15T09:00:00Z"),
+                summary("P0", "2026-08-26T12:00:00Z"),
+            ),
+            codesSince = later,
+        )
+
+        // P1 and P0 predate the window; P2 stays though not among the samples.
+        assertEquals(
+            SeenSamples(Instant.parse("2026-09-15T09:00:00Z"), setOf("P2", "P3"), later),
+            repository.seenSamples("45234", UDI),
+        )
+    }
+
+    @Test
+    fun `purgeCache keeps the samples the alerts have seen for a followed unit`() = runTest {
+        seenOrleans()
+        network.samples["45234" to UDI] = sample("P2", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+        // Leftover codes of a unit no longer followed are not kept.
+        database.cache().insertSyncIfAbsent(
+            SyncEntity(
+                "13055",
+                "013000001",
+                lastSeenSampleDate = 1_000,
+                lastSuccess = 2_000,
+                seenCodesSince = 0,
+            ),
+        )
+        database.cache().insertSeenSamples(
+            listOf(SeenSampleEntity("13055", "013000001", "M1", 1_000)),
+        )
+
+        repository.purgeCache()
+
+        assertEquals(orleansSeen, repository.seenSamples("45234", UDI))
+        assertEquals(emptyList<String>(), database.cache().seenSampleCodes("13055", "013000001"))
+    }
+
+    @Test
+    fun `purging a commune or pruning keeps the samples the alerts have seen`() = runTest {
+        seenOrleans()
+        network.samples["45234" to UDI] = sample("P2", "2026-08-26T12:50:00Z")
+        repository.refreshCache("45234", UDI, force = false)
+
+        repository.purgeCommune("45234")
+        assertEquals(orleansSeen, repository.seenSamples("45234", UDI))
+
+        repository.refreshCache("45234", UDI, force = true)
+        repository.pruneUnreferenced()
+        assertEquals(orleansSeen, repository.seenSamples("45234", UDI))
+    }
+
+    @Test
+    fun `unfollowing forgets the samples the alerts have seen`() = runTest {
+        seenOrleans()
+        val orleans = follows.follows.first().single()
+
+        follows.unfollow(orleans.id)
+
+        assertEquals(SeenSamples(null, null, null), repository.seenSamples("45234", UDI))
+        assertEquals(emptyList<String>(), database.cache().seenSampleCodes("45234", UDI))
+        // Following it again: a new baseline, not the codes of before.
+        followOrleans()
+        assertEquals(SeenSamples(null, null, null), repository.seenSamples("45234", UDI))
+    }
+
+    @Test
+    fun `the debug tools can forget the codes seen after a date`() = runTest {
+        seenOrleans()
+
+        repository.forgetSeenSamplesAfter("45234", UDI, Instant.parse("2026-08-26T12:49:00Z"))
+
+        assertEquals(setOf("P1"), repository.seenSamples("45234", UDI).codes)
     }
 
     private companion object {

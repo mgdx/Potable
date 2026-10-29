@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
  * migration, is written 0 and never read. The `principale` column is a leftover of the primary
  * commune, dropped in 0.1.2 (docs/decisions.md, 2026-10-27): it stays in the
  * schema to avoid a migration, is written false and never read.
- * Unfollowing forgets the date its alerts have seen; the unit's cache goes
+ * Unfollowing forgets the date and the samples its alerts have seen; the unit's cache goes
  * too, through [io.github.mgdx.potable.data.CacheJanitor], unless the unit is
  * among the recent ones.
  */
@@ -56,6 +56,7 @@ class RoomFollowRepository(private val database: PotableDatabase) : FollowReposi
             // CacheJanitor sees the follow go and prunes it, unless the unit
             // is among the recent ones.
             cache.clearLastSeenSampleDate(removed.communeCode, removed.udiCode)
+            cache.deleteUnitSeenSamples(removed.communeCode, removed.udiCode)
         }
     }
 

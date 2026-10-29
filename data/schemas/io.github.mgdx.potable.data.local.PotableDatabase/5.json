@@ -1,0 +1,597 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "c0598494dadfbdf7bf14df48fa64a681",
+    "entities": [
+      {
+        "tableName": "suivi",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `code_commune` TEXT NOT NULL, `nom_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `nom_reseau` TEXT NOT NULL, `position` INTEGER NOT NULL, `principale` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "communeName",
+            "columnName": "nom_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiName",
+            "columnName": "nom_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "principale",
+            "columnName": "principale",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_suivi_code_commune_code_reseau",
+            "unique": true,
+            "columnNames": [
+              "code_commune",
+              "code_reseau"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_suivi_code_commune_code_reseau` ON `${TABLE_NAME}` (`code_commune`, `code_reseau`)"
+          }
+        ]
+      },
+      {
+        "tableName": "prelevement",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `code_prelevement` TEXT NOT NULL, `reseau_prelevement` TEXT, `date` INTEGER NOT NULL, `conclusion` TEXT, `conformite_limites_bact` TEXT, `conformite_limites_pc` TEXT, `conformite_references_bact` TEXT, `conformite_references_pc` TEXT, `distributeur` TEXT, `maitre_ouvrage` TEXT, `dernier` INTEGER NOT NULL DEFAULT 1, `installation_amont` TEXT, PRIMARY KEY(`code_commune`, `code_reseau`, `code_prelevement`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code_prelevement",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleNetworkCode",
+            "columnName": "reseau_prelevement",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conclusion",
+            "columnName": "conclusion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bacteriologicalLimits",
+            "columnName": "conformite_limites_bact",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "physicochemicalLimits",
+            "columnName": "conformite_limites_pc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bacteriologicalReferences",
+            "columnName": "conformite_references_bact",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "physicochemicalReferences",
+            "columnName": "conformite_references_pc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "distributeur",
+            "columnName": "distributeur",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "owner",
+            "columnName": "maitre_ouvrage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latest",
+            "columnName": "dernier",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "upstreamFacility",
+            "columnName": "installation_amont",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "code_prelevement"
+          ]
+        }
+      },
+      {
+        "tableName": "resultat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `code_prelevement` TEXT NOT NULL, `ordre` INTEGER NOT NULL, `code_parametre` TEXT NOT NULL, `libelle` TEXT NOT NULL, `type_parametre` TEXT, `resultat_texte` TEXT, `resultat_numerique` REAL, `unite` TEXT, `limite` TEXT, `reference` TEXT, `lieu_analyse` TEXT, PRIMARY KEY(`code_commune`, `code_reseau`, `code_prelevement`, `ordre`), FOREIGN KEY(`code_commune`, `code_reseau`, `code_prelevement`) REFERENCES `prelevement`(`code_commune`, `code_reseau`, `code_prelevement`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleCode",
+            "columnName": "code_prelevement",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ordre",
+            "columnName": "ordre",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parameterCode",
+            "columnName": "code_parametre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "libelle",
+            "columnName": "libelle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parameterTypeCode",
+            "columnName": "type_parametre",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "resultText",
+            "columnName": "resultat_texte",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "resultNumber",
+            "columnName": "resultat_numerique",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "unite",
+            "columnName": "unite",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "limite",
+            "columnName": "limite",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reference",
+            "columnName": "reference",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "analysisPlace",
+            "columnName": "lieu_analyse",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "code_prelevement",
+            "ordre"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "prelevement",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "code_commune",
+              "code_reseau",
+              "code_prelevement"
+            ],
+            "referencedColumns": [
+              "code_commune",
+              "code_reseau",
+              "code_prelevement"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "synchro",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `dernier_prelevement_vu` INTEGER, `dernier_succes` INTEGER, `codes_vus_depuis` INTEGER, PRIMARY KEY(`code_commune`, `code_reseau`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSeenSampleDate",
+            "columnName": "dernier_prelevement_vu",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastSuccess",
+            "columnName": "dernier_succes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "seenCodesSince",
+            "columnName": "codes_vus_depuis",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau"
+          ]
+        }
+      },
+      {
+        "tableName": "serie",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `cle_parametres` TEXT NOT NULL, `code_parametre` TEXT, `libelle` TEXT, `unite` TEXT, `limite` TEXT, `reference` TEXT, `depuis` INTEGER NOT NULL, `dernier_succes` INTEGER NOT NULL, PRIMARY KEY(`code_commune`, `code_reseau`, `cle_parametres`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parameterKey",
+            "columnName": "cle_parametres",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parameterCode",
+            "columnName": "code_parametre",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "libelle",
+            "columnName": "libelle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "unite",
+            "columnName": "unite",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "limite",
+            "columnName": "limite",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reference",
+            "columnName": "reference",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "depuis",
+            "columnName": "depuis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSuccess",
+            "columnName": "dernier_succes",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "cle_parametres"
+          ]
+        }
+      },
+      {
+        "tableName": "serie_point",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `cle_parametres` TEXT NOT NULL, `code_prelevement` TEXT NOT NULL, `date` INTEGER NOT NULL, `resultat_numerique` REAL, `resultat_texte` TEXT, `censure` INTEGER NOT NULL, PRIMARY KEY(`code_commune`, `code_reseau`, `cle_parametres`, `code_prelevement`), FOREIGN KEY(`code_commune`, `code_reseau`, `cle_parametres`) REFERENCES `serie`(`code_commune`, `code_reseau`, `cle_parametres`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parameterKey",
+            "columnName": "cle_parametres",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleCode",
+            "columnName": "code_prelevement",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "resultat_numerique",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "resultat_texte",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "censure",
+            "columnName": "censure",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "cle_parametres",
+            "code_prelevement"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "serie",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "code_commune",
+              "code_reseau",
+              "cle_parametres"
+            ],
+            "referencedColumns": [
+              "code_commune",
+              "code_reseau",
+              "cle_parametres"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "historique_prelevement",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `code_prelevement` TEXT NOT NULL, `date` INTEGER NOT NULL, `conclusion` TEXT, `conformite_limites_bact` TEXT, `conformite_limites_pc` TEXT, `conformite_references_bact` TEXT, `conformite_references_pc` TEXT, PRIMARY KEY(`code_commune`, `code_reseau`, `code_prelevement`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code_prelevement",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "conclusion",
+            "columnName": "conclusion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bacteriologicalLimits",
+            "columnName": "conformite_limites_bact",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "physicochemicalLimits",
+            "columnName": "conformite_limites_pc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bacteriologicalReferences",
+            "columnName": "conformite_references_bact",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "physicochemicalReferences",
+            "columnName": "conformite_references_pc",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "code_prelevement"
+          ]
+        }
+      },
+      {
+        "tableName": "historique_synchro",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `depuis` INTEGER NOT NULL, `dernier_succes` INTEGER NOT NULL, PRIMARY KEY(`code_commune`, `code_reseau`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "depuis",
+            "columnName": "depuis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSuccess",
+            "columnName": "dernier_succes",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau"
+          ]
+        }
+      },
+      {
+        "tableName": "prelevement_vu",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code_commune` TEXT NOT NULL, `code_reseau` TEXT NOT NULL, `code_prelevement` TEXT NOT NULL, `date_prelevement` INTEGER NOT NULL, PRIMARY KEY(`code_commune`, `code_reseau`, `code_prelevement`))",
+        "fields": [
+          {
+            "fieldPath": "communeCode",
+            "columnName": "code_commune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "udiCode",
+            "columnName": "code_reseau",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code_prelevement",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date_prelevement",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code_commune",
+            "code_reseau",
+            "code_prelevement"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c0598494dadfbdf7bf14df48fa64a681')"
+    ]
+  }
+}

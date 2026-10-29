@@ -117,4 +117,32 @@ internal data class SyncEntity(
     @ColumnInfo(name = "dernier_prelevement_vu") val lastSeenSampleDate: Long?,
     /** When the last successful Hub'Eau fetch of the unit ended (epoch ms). */
     @ColumnInfo(name = "dernier_succes") val lastSuccess: Long?,
+    /**
+     * From when (epoch ms) the samples the alert task has seen for the unit
+     * are all in `prelevement_vu` ([SeenSampleEntity]); null while the unit
+     * is not followed by codes (followed with 0.3.1 or earlier, or no
+     * baseline yet): its next check then compares dates only. Written
+     * with [lastSeenSampleDate], under the same rules. Schema v5.
+     */
+    @ColumnInfo(name = "codes_vus_depuis") val seenCodesSince: Long? = null,
+)
+
+/**
+ * A sample the alert task has seen for a followed unit (table
+ * `prelevement_vu`, SPEC §5 F7): its code, and its date so that the codes
+ * older than the alert window can be dropped. Kept and deleted exactly as
+ * [SyncEntity.lastSeenSampleDate]: kept by "Clear cache", by the purge of a
+ * commune and by the pruning of the units no longer looked at, deleted when
+ * the unit is unfollowed. Schema v5.
+ */
+@Entity(
+    tableName = "prelevement_vu",
+    primaryKeys = ["code_commune", "code_reseau", "code_prelevement"],
+)
+internal data class SeenSampleEntity(
+    @ColumnInfo(name = "code_commune") val communeCode: String,
+    @ColumnInfo(name = "code_reseau") val udiCode: String,
+    @ColumnInfo(name = "code_prelevement") val code: String,
+    /** `date_prelevement`, epoch milliseconds. */
+    @ColumnInfo(name = "date_prelevement") val date: Long,
 )

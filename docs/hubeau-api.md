@@ -405,6 +405,52 @@ première ligne suffit. Mesures du 2026-10-25 :
 un quart de seconde. `HubEauAlertChecker` en fait une par suivi et par
 passage.
 
+### Fenêtre de prélèvements (mesures du 2026-10-29)
+
+Une seule ligne ne suffit pas : Vatry (51595, `051000767`) a publié le
+2026-08-31 deux prélèvements, `05100146767` (14:05, conforme, la ligne la plus
+récente) et `05100146860` (14:04, non conforme pour les pesticides) ; la ligne
+seule ne voit que le premier. `HubEauAlertChecker` lit donc aussi les en-têtes
+des prélèvements de la fenêtre (du jour précédant `dernier vu − 92 jours` au
+surlendemain, exclu), sur le modèle de la frise : `code_parametre` de
+l'alerte, champs d'en-tête, `sort=desc`, pages de 500 lignes (délai de lecture
+court du client). Il garde en plus la requête `size=1` : un prélèvement le plus
+récent qui ne mesure aucun des paramètres reste vu.
+
+Couverture : prélèvements distincts obtenus / toutes les lignes de la même
+fenêtre (`code_reseau` filtré), avec les paramètres de la frise
+(`1302,1382,1449`) et avec, en plus, le total des pesticides `6276` et la
+somme des PFAS `8847`.
+
+| Unité, fenêtre | Toutes lignes | 1302+1382+1449 : prél., lignes, taille, durée | + 6276, 8847 : prél., lignes, taille, durée |
+|---|---|---|---|
+| Vatry `051000767`, 3 mois | 2 | 2, 4, 3,1 Ko, 0,28 s | 2, 5, 3,8 Ko, 0,28 s |
+| Vatry `051000767`, 7 mois | 4 | 4, 10, 7,7 Ko, 0,24 s | 4, 12, 9,5 Ko, 0,23 s |
+| Vatry `051000767`, 3 ans | 18 | 18, 52, 29,4 Ko, 0,27 s | 18, 65, 37,6 Ko, 0,26 s |
+| Sommepy-Tahure `051000727`, 3 mois | 2 | 2, 4, 4,0 Ko, 0,22 s | 2, 4, 4,0 Ko, 0,24 s |
+| Sommepy-Tahure `051000727`, 7 mois | 3 | 3, 7, 6,5 Ko, 0,25 s | 3, 8, 7,3 Ko, 0,24 s |
+| Paris CENTRE `075000221`, 7 mois | 81 | 81, 230, 93,7 Ko, 0,41 s | 81, 234, 95,3 Ko, 0,38 s |
+| Orléans `045000474`, 3 mois | 7 | 7, 14, 7,2 Ko, 0,23 s | 7, 14, 7,2 Ko, 0,48 s |
+| Orléans `045000474`, 1 an | 74 | 74, 160, 70,1 Ko, 0,34 s | 74, 170, 74,2 Ko, 0,36 s |
+| Toulouse (31555, sans `code_reseau`), 1 an | 323 | 317, 626, 261 Ko, 0,94 s | 317, 638, 266 Ko, 0,76 s |
+
+Paris CENTRE n'avait aucun prélèvement publié dans les 3 derniers mois (le
+plus récent date du 2026-06-30) : sa fenêtre réelle part donc de fin mars,
+d'où la ligne « 7 mois ».
+
+`6276` et `8847` n'ajoutent **aucun prélèvement** : ceux qui les mesurent
+mesurent aussi le pH. Ils ajoutent 2 à 25 % de lignes. Ils ne sont donc pas
+demandés (`ALERT_PARAMETERS` = `1302,1382,1449`, constante propre à l'alerte).
+Les six prélèvements manquants de Toulouse ne portent que `1752` ou
+`1958`/`5397` (17β-estradiol, 4-nonylphénol), campagnes de micropolluants :
+limite connue, comme pour la frise ; un tel prélèvement n'est vu que s'il est
+le plus récent (ligne `size=1`).
+
+Coût par unité suivie et par passage : deux requêtes, ~1,6 Ko + 3 à 100 Ko,
+moins d'une demi-seconde chacune hors blocage. Pendant ces mesures, deux
+requêtes ont été retenues sans réponse plus de 90 s (voir « Blocages ») : le
+client les relance après 15 s.
+
 ### Conclusions défavorables
 
 Corpus : `resultats_dis` des départements 01, 02, 13, 22, 29, 33, 45, 59, 62,

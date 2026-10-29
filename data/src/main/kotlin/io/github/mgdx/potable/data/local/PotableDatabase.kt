@@ -20,7 +20,10 @@ import java.util.concurrent.atomic.AtomicLong
  * default: every v2 row was written by a refresh) so that a sample kept from
  * the history is never taken for a latest one, automatic migration too; 4,
  * adds `prelevement.installation_amont` and `resultat.lieu_analyse`, both
- * nullable (null until the next refresh), automatic migration.
+ * nullable (null until the next refresh), automatic migration; 5, adds the
+ * codes of the samples the alert task has seen (`prelevement_vu`, new table)
+ * and `synchro.codes_vus_depuis` (nullable: a unit followed before compares
+ * dates only until its next check), automatic migration.
  */
 @Database(
     entities = [
@@ -32,13 +35,15 @@ import java.util.concurrent.atomic.AtomicLong
         SeriesPointEntity::class,
         TimelineSampleEntity::class,
         TimelineSyncEntity::class,
+        SeenSampleEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
     ],
 )
 abstract class PotableDatabase : RoomDatabase() {

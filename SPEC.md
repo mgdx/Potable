@@ -226,9 +226,13 @@ factuelle sur ce qu'est une dérogation, sans verdict (§14).
 
 - Tâche périodique via **WorkManager**, contrainte réseau requise, périodicité
   par défaut **hebdomadaire** (les données ne bougent qu'une fois par mois).
-- Pour chaque commune suivie : requête `resultats_dis` triée
-  décroissante, limitée aux champs nécessaires, comparaison de la date du
-  prélèvement le plus récent avec la valeur mémorisée.
+- Pour chaque commune suivie : requêtes `resultats_dis` légères (en-têtes
+  des prélèvements des 92 jours précédant le dernier vu jusqu'à aujourd'hui,
+  plus la ligne la plus récente), triées décroissantes, limitées aux champs
+  nécessaires ; est nouveau tout prélèvement dont le code n'a pas encore été
+  vu (deux prélèvements du même jour, publication tardive, plusieurs entre
+  deux passages). Une notification par commune et par passage, sur le
+  prélèvement défavorable le plus récent s'il y en a un parmi les nouveaux.
 - Deux types de notification, activables séparément :
   - **Nouvelle analyse disponible** (toutes conclusions confondues)
   - **Conclusion défavorable uniquement** (non-conformité, consommation
@@ -267,7 +271,12 @@ Tables minimales :
 - `prelevement` (code_prelevement, code_reseau, date, conclusions, distributeur)
 - `resultat` (code_prelevement, code_parametre, libellé, valeur, unité, limite)
 - `synchro` (par unité en cache : horodatage de la dernière requête réussie ;
-  pour un suivi seulement, date du dernier prélèvement vu)
+  pour un suivi seulement, date du dernier prélèvement vu et date depuis
+  laquelle ses codes sont gardés)
+- `prelevement_vu` (pour un suivi seulement : codes et dates des
+  prélèvements vus par les alertes sur leur fenêtre de 92 jours ; mêmes
+  règles que la date du dernier prélèvement vu : gardés par les purges,
+  effacés au retrait du suivi)
 
 Règles :
 
