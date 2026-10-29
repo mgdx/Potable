@@ -249,6 +249,7 @@
         <item quantity="other">%1$d prélèvements depuis le %2$s</item>
     </plurals>
     <string name="timeline_non_compliance">%1$s : %2$s</string>
+    <string name="timeline_open_report">Ouvrir le rapport</string>
     <string name="timeline_refresh_failed">Impossible de mettre à jour l’historique. %1$s</string>
 
     <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->

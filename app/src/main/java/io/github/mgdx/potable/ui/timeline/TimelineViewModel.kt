@@ -7,6 +7,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.toRoute
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
@@ -16,6 +17,7 @@ import io.github.mgdx.potable.data.preferences.AppPreferences
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.SLOW_LOAD_THRESHOLD
 import io.github.mgdx.potable.ui.common.slowLoading
+import io.github.mgdx.potable.ui.navigation.TimelineRoute
 import io.github.mgdx.potable.ui.sheet.FRANCE_ZONE
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -217,19 +219,21 @@ class TimelineViewModel(
     companion object {
         private const val YEARS_KEY = "years"
 
-        fun factory(
-            container: AppContainer,
-            communeCode: String,
-            udiCode: String,
-        ): ViewModelProvider.Factory = viewModelFactory {
+        /**
+         * Reads the unit from the [TimelineRoute] of the back stack entry
+         * the ViewModel is created for.
+         */
+        fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer {
+                val savedState = createSavedStateHandle()
+                val route = savedState.toRoute<TimelineRoute>()
                 TimelineViewModel(
                     container.history,
                     container.preferences,
-                    communeCode,
-                    udiCode,
+                    route.communeCode,
+                    route.udiCode,
                     Clock.systemUTC(),
-                    createSavedStateHandle(),
+                    savedState,
                 )
             }
         }

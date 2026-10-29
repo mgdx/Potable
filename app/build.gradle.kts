@@ -5,6 +5,8 @@ plugins {
     // on top of it is an error.
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // Type-safe navigation routes (ui/navigation/Destinations.kt).
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ktlint)
 }
 

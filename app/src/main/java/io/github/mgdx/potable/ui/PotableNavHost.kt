@@ -1,31 +1,40 @@
 package io.github.mgdx.potable.ui
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.alert.AlertTarget
 import io.github.mgdx.potable.alert.FollowsTarget
 import io.github.mgdx.potable.alert.SheetNames
 import io.github.mgdx.potable.alert.SheetTarget
 import io.github.mgdx.potable.alert.names
-import io.github.mgdx.potable.data.follow.Follow
 import io.github.mgdx.potable.ui.about.AboutScreen
 import io.github.mgdx.potable.ui.follows.FollowsScreen
 import io.github.mgdx.potable.ui.follows.FollowsViewModel
 import io.github.mgdx.potable.ui.history.ParameterHistoryScreen
 import io.github.mgdx.potable.ui.history.ParameterHistoryViewModel
 import io.github.mgdx.potable.ui.history.historyCodes
+import io.github.mgdx.potable.ui.navigation.AboutRoute
+import io.github.mgdx.potable.ui.navigation.FollowsRoute
+import io.github.mgdx.potable.ui.navigation.ParameterHistoryRoute
+import io.github.mgdx.potable.ui.navigation.ReportResultsRoute
+import io.github.mgdx.potable.ui.navigation.ReportRoute
+import io.github.mgdx.potable.ui.navigation.SampleRoute
+import io.github.mgdx.potable.ui.navigation.SearchRoute
+import io.github.mgdx.potable.ui.navigation.SettingsRoute
+import io.github.mgdx.potable.ui.navigation.SheetRoute
+import io.github.mgdx.potable.ui.navigation.TimelineRoute
+import io.github.mgdx.potable.ui.navigation.UdisRoute
 import io.github.mgdx.potable.ui.sample.SampleDetailScreen
 import io.github.mgdx.potable.ui.sample.SampleDetailViewModel
 import io.github.mgdx.potable.ui.sample.SampleReportResultsScreen
@@ -43,163 +52,34 @@ import io.github.mgdx.potable.ui.timeline.TimelineViewModel
 import io.github.mgdx.potable.ui.udi.UdiScreen
 import io.github.mgdx.potable.ui.udi.UdiViewModel
 import kotlinx.coroutines.CancellationException
-
-/** Navigation routes. Arguments are URL-encoded when a route is built. */
-object Routes {
-    const val SEARCH = "search"
-    const val ABOUT = "about"
-    const val SETTINGS = "settings"
-
-    /** "My communes" (SPEC §5 F6). */
-    const val FOLLOWS = "follows"
-
-    const val ARG_COMMUNE = "commune"
-    const val ARG_NAME = "name"
-    const val ARG_UDI = "udi"
-    const val ARG_UDI_NAME = "udiName"
-    const val ARG_SAMPLE = "sample"
-    const val ARG_CHOOSE = "choose"
-    const val ARG_CHANGE = "change"
-    const val ARG_CODES = "codes"
-    const val ARG_LABEL = "label"
-
-    /**
-     * Resolution, then choice when there are several, of a commune's units;
-     * [ARG_CHOOSE] always offers the choice (the user asked to change).
-     */
-    const val UDIS = "udis/{$ARG_COMMUNE}?$ARG_NAME={$ARG_NAME}&$ARG_CHOOSE={$ARG_CHOOSE}"
-
-    /**
-     * The "my water" sheet of a commune's unit; [ARG_CHANGE] offers to go
-     * back to the choice of unit, for a commune that has several.
-     */
-    const val SHEET = "sheet/{$ARG_COMMUNE}/{$ARG_UDI}" +
-        "?$ARG_NAME={$ARG_NAME}&$ARG_UDI_NAME={$ARG_UDI_NAME}&$ARG_CHANGE={$ARG_CHANGE}"
-
-    /**
-     * Every result of the sample the sheet below holds. The sample is not
-     * passed nor loaded again: the screen reads the sheet's ViewModel, scoped
-     * to the sheet's back stack entry; the code only checks it is the same.
-     */
-    const val SAMPLE = "sample/{$ARG_SAMPLE}"
-
-    /** The timeline of the conclusions of a unit's samples (SPEC §5 F5). */
-    const val TIMELINE = "timeline/{$ARG_COMMUNE}/{$ARG_UDI}?$ARG_NAME={$ARG_NAME}"
-
-    /** The history of one parameter of a unit (SPEC §5 F5); see [parameterHistory]. */
-    const val HISTORY =
-        "history/{$ARG_COMMUNE}/{$ARG_UDI}?$ARG_CODES={$ARG_CODES}&$ARG_LABEL={$ARG_LABEL}"
-
-    /**
-     * The full report of any sample of a unit, loaded by its code (SPEC §5
-     * F4), opened from a parameter's history; see [report].
-     */
-    const val REPORT = "report/{$ARG_COMMUNE}/{$ARG_UDI}/{$ARG_SAMPLE}"
-
-    /**
-     * Every result of the sample of the report below. Like [SAMPLE], nothing
-     * is loaded again: the screen reads the report's ViewModel, scoped to the
-     * report's back stack entry.
-     */
-    const val REPORT_RESULTS = "report/{$ARG_COMMUNE}/{$ARG_UDI}/{$ARG_SAMPLE}/results"
-
-    fun udis(communeCode: String, name: String, choose: Boolean = false) =
-        "udis/${Uri.encode(communeCode)}?$ARG_NAME=${Uri.encode(name)}&$ARG_CHOOSE=$choose"
-
-    fun sheet(
-        communeCode: String,
-        udiCode: String,
-        name: String,
-        udiName: String,
-        change: Boolean = false,
-    ) = "sheet/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}" +
-        "?$ARG_NAME=${Uri.encode(name)}&$ARG_UDI_NAME=${Uri.encode(udiName)}&$ARG_CHANGE=$change"
-
-    fun sheet(follow: Follow) =
-        sheet(follow.communeCode, follow.udiCode, follow.communeName, follow.udiName)
-
-    fun sample(sampleCode: String) = "sample/${Uri.encode(sampleCode)}"
-
-    /** The report of the sample [sampleCode] of the unit [udiCode] serving [communeCode]. */
-    fun report(communeCode: String, udiCode: String, sampleCode: String) =
-        "report/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}/${Uri.encode(sampleCode)}"
-
-    /** Every result of the report [report] opened, just below it. */
-    fun reportResults(communeCode: String, udiCode: String, sampleCode: String) =
-        report(communeCode, udiCode, sampleCode) + "/results"
-
-    fun timeline(communeCode: String, udiCode: String, name: String) =
-        "timeline/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}?$ARG_NAME=${Uri.encode(name)}"
-
-    /**
-     * The history screen of one parameter (SPEC §5 F5) of the unit [udiCode]
-     * serving [communeCode] (the code Hub'Eau publishes the commune under).
-     *
-     * [parameterCodes] are every `code_parametre` the parameter is published
-     * under (hardness has two: `FeaturedParameter.codes`, or
-     * [io.github.mgdx.potable.ui.history.historyCodes] from a single code);
-     * not empty, and no code may contain a comma. [label] is the title until
-     * the series is loaded; the API label (`libelle_parametre`) then replaces
-     * it. The window opens on the history setting and can be changed there.
-     */
-    fun parameterHistory(
-        communeCode: String,
-        udiCode: String,
-        parameterCodes: Set<String>,
-        label: String,
-    ): String {
-        require(parameterCodes.isNotEmpty()) { "no parameter code" }
-        return "history/${Uri.encode(communeCode)}/${Uri.encode(udiCode)}" +
-            "?$ARG_CODES=${Uri.encode(parameterCodes.joinToString(","))}" +
-            "&$ARG_LABEL=${Uri.encode(label)}"
-    }
-}
-
-private fun requiredString(name: String) = navArgument(name) {
-    type = NavType.StringType
-}
-
-private fun optionalString(name: String) = navArgument(name) {
-    type = NavType.StringType
-    nullable = true
-    defaultValue = null
-}
-
-private fun flag(name: String) = navArgument(name) {
-    type = NavType.BoolType
-    defaultValue = false
-}
-
-private fun NavBackStackEntry.string(name: String): String? = arguments?.getString(name)
-
-private fun NavBackStackEntry.flag(name: String): Boolean = arguments?.getBoolean(name) ?: false
+import kotlin.reflect.KClass
 
 /** The sheet's ViewModel, stored in the sheet's back stack entry, whoever asks for it. */
 @Composable
 private fun sheetViewModel(container: AppContainer, sheetEntry: NavBackStackEntry): SheetViewModel {
-    val udiCode = sheetEntry.string(Routes.ARG_UDI).orEmpty()
+    val sheet = sheetEntry.toRoute<SheetRoute>()
     return viewModel(
         viewModelStoreOwner = sheetEntry,
         factory = SheetViewModel.factory(
             container = container,
-            communeCode = sheetEntry.string(Routes.ARG_COMMUNE).orEmpty(),
-            udiCode = udiCode,
-            communeName = sheetEntry.string(Routes.ARG_NAME).orEmpty(),
-            udiName = sheetEntry.string(Routes.ARG_UDI_NAME) ?: udiCode,
+            communeCode = sheet.communeCode,
+            udiCode = sheet.udiCode,
+            communeName = sheet.communeName,
+            udiName = sheet.udiName ?: sheet.udiCode,
         ),
     )
 }
 
 /** The entry of the sheet in the back stack, or null when there is none. */
 internal fun NavController.sheetEntryOrNull(): NavBackStackEntry? = try {
-    getBackStackEntry(Routes.SHEET)
+    getBackStackEntry<SheetRoute>()
 } catch (_: IllegalArgumentException) {
     null
 }
 
 /** The entry of the topmost report in the back stack, or null when there is none. */
 internal fun NavController.reportEntryOrNull(): NavBackStackEntry? = try {
-    getBackStackEntry(Routes.REPORT)
+    getBackStackEntry<ReportRoute>()
 } catch (_: IllegalArgumentException) {
     null
 }
@@ -208,11 +88,11 @@ internal fun NavController.reportEntryOrNull(): NavBackStackEntry? = try {
  * Leaves a sample screen ([route]) that has no sheet, or report, below it:
  * back to the screen below, or, when it is alone, to the search in its place.
  */
-internal fun NavController.leaveOrphanSample(route: String = Routes.SAMPLE) {
+internal fun NavController.leaveOrphanSample(route: KClass<*> = SampleRoute::class) {
     if (previousBackStackEntry != null) {
         popBackStack()
     } else {
-        navigate(Routes.SEARCH) {
+        navigate(SearchRoute) {
             popUpTo(route) { inclusive = true }
         }
     }
@@ -223,29 +103,34 @@ internal fun NavController.leaveOrphanSample(route: String = Routes.SAMPLE) {
 private fun reportViewModel(
     container: AppContainer,
     reportEntry: NavBackStackEntry,
-): SampleReportViewModel = viewModel(
-    viewModelStoreOwner = reportEntry,
-    factory = SampleReportViewModel.factory(
-        container,
-        communeCode = reportEntry.string(Routes.ARG_COMMUNE).orEmpty(),
-        udiCode = reportEntry.string(Routes.ARG_UDI).orEmpty(),
-        sampleCode = reportEntry.string(Routes.ARG_SAMPLE).orEmpty(),
-    ),
-)
+): SampleReportViewModel {
+    val report = reportEntry.toRoute<ReportRoute>()
+    return viewModel(
+        viewModelStoreOwner = reportEntry,
+        factory = SampleReportViewModel.factory(
+            container,
+            communeCode = report.communeCode,
+            udiCode = report.udiCode,
+            sampleCode = report.sampleCode,
+        ),
+    )
+}
 
 /** Goes back to the search if it is below, or opens it otherwise. */
 private fun NavHostController.openSearch() {
-    if (!popBackStack(Routes.SEARCH, inclusive = false)) navigate(Routes.SEARCH)
+    if (!popBackStack<SearchRoute>(inclusive = false)) navigate(SearchRoute)
 }
 
 /** Opens the sheet of [target], named [names], unless it is the one already shown. */
 private fun NavHostController.openSheet(target: SheetTarget, names: SheetNames) {
     val current = currentBackStackEntry
-    val shown = current?.destination?.route == Routes.SHEET &&
-        current.string(Routes.ARG_COMMUNE) == target.communeCode &&
-        current.string(Routes.ARG_UDI) == target.udiCode
+    val shown = current != null &&
+        current.destination.hasRoute<SheetRoute>() &&
+        current.toRoute<SheetRoute>().let {
+            it.communeCode == target.communeCode && it.udiCode == target.udiCode
+        }
     if (shown) return
-    navigate(Routes.sheet(target.communeCode, target.udiCode, names.communeName, names.udiName))
+    navigate(SheetRoute(target.communeCode, target.udiCode, names.communeName, names.udiName))
 }
 
 /** [target]'s names from its follow, or null (not followed, or unreadable). */
@@ -259,8 +144,8 @@ private suspend fun sheetNames(container: AppContainer, target: SheetTarget): Sh
 
 /** Opens "My communes", unless it is already shown. */
 private fun NavHostController.openFollows() {
-    if (currentBackStackEntry?.destination?.route == Routes.FOLLOWS) return
-    navigate(Routes.FOLLOWS)
+    if (currentBackStackEntry?.destination?.hasRoute<FollowsRoute>() == true) return
+    navigate(FollowsRoute)
 }
 
 /**
@@ -291,19 +176,19 @@ fun PotableNavHost(
         }
         onAlertTargetOpened()
     }
-    NavHost(navController = navController, startDestination = Routes.SEARCH) {
-        composable(Routes.SEARCH) {
+    NavHost(navController = navController, startDestination = SearchRoute) {
+        composable<SearchRoute> {
             SearchScreen(
                 viewModel = viewModel(factory = SearchViewModel.factory(container)),
                 onCommuneSelected = { commune, choose ->
                     // Hub'Eau is queried under the code it publishes the place under.
                     // With several known units, the full choice opens (choose).
-                    navController.navigate(Routes.udis(commune.queryCode, commune.name, choose))
+                    navController.navigate(UdisRoute(commune.queryCode, commune.name, choose))
                 },
                 onKnownUdiSelected = { commune, communeName, udi ->
                     // Like a remembered unit: its sheet offers to change it.
                     navController.navigate(
-                        Routes.sheet(
+                        SheetRoute(
                             commune.queryCode,
                             udi.code,
                             communeName,
@@ -314,7 +199,7 @@ fun PotableNavHost(
                 },
                 onRecentSelected = { unit ->
                     navController.navigate(
-                        Routes.sheet(
+                        SheetRoute(
                             unit.communeCode,
                             unit.udiCode,
                             unit.communeName,
@@ -323,93 +208,77 @@ fun PotableNavHost(
                         ),
                     )
                 },
-                onMyCommunes = { navController.navigate(Routes.FOLLOWS) },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onAbout = { navController.navigate(Routes.ABOUT) },
+                onMyCommunes = { navController.navigate(FollowsRoute) },
+                onSettings = { navController.navigate(SettingsRoute) },
+                onAbout = { navController.navigate(AboutRoute) },
             )
         }
-        composable(Routes.ABOUT) {
+        composable<AboutRoute> {
             AboutScreen(
                 onBack = { navController.navigateUp() },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
+                onSettings = { navController.navigate(SettingsRoute) },
             )
         }
-        composable(Routes.SETTINGS) {
+        composable<SettingsRoute> {
             SettingsScreen(
                 viewModel = viewModel(factory = SettingsViewModel.factory(container)),
                 onBack = { navController.navigateUp() },
                 onSearch = { navController.openSearch() },
             )
         }
-        composable(Routes.FOLLOWS) {
+        composable<FollowsRoute> {
             FollowsScreen(
                 viewModel = viewModel(factory = FollowsViewModel.factory(container)),
                 onBack = { navController.navigateUp() },
-                onOpen = { follow -> navController.navigate(Routes.sheet(follow)) },
+                onOpen = { follow -> navController.navigate(SheetRoute.of(follow)) },
                 onSearch = { navController.openSearch() },
             )
         }
-        composable(
-            route = Routes.UDIS,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                optionalString(Routes.ARG_NAME),
-                flag(Routes.ARG_CHOOSE),
-            ),
-        ) { entry ->
-            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
-            val name = entry.string(Routes.ARG_NAME).orEmpty()
-            val forceChoice = entry.flag(Routes.ARG_CHOOSE)
+        composable<UdisRoute> { entry ->
+            val route = entry.toRoute<UdisRoute>()
+            val communeCode = route.communeCode
+            val name = route.communeName
             UdiScreen(
                 viewModel = viewModel(
-                    factory = UdiViewModel.factory(container, communeCode, forceChoice),
+                    factory = UdiViewModel.factory(container, communeCode, route.choose),
                 ),
                 communeName = name,
                 onBack = { navController.navigateUp() },
                 onUdiResolved = { udi ->
-                    navController.navigate(Routes.sheet(communeCode, udi.code, name, udi.name)) {
+                    navController.navigate(SheetRoute(communeCode, udi.code, name, udi.name)) {
                         // Back from the sheet returns to the search, not to a
                         // resolution screen that would forward again at once.
-                        popUpTo(Routes.UDIS) { inclusive = true }
+                        popUpTo<UdisRoute> { inclusive = true }
                     }
                 },
                 onUdiRemembered = { udi ->
                     // Same as above, but the sheet offers to change the unit.
                     // A unit just picked goes this way too: back from its
                     // sheet does not offer the choice again (SPEC §5 F2).
-                    val route = Routes.sheet(communeCode, udi.code, name, udi.name, change = true)
-                    navController.navigate(route) {
-                        popUpTo(Routes.UDIS) { inclusive = true }
+                    val sheet = SheetRoute(communeCode, udi.code, name, udi.name, change = true)
+                    navController.navigate(sheet) {
+                        popUpTo<UdisRoute> { inclusive = true }
                     }
                 },
             )
         }
-        composable(
-            route = Routes.SHEET,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                requiredString(Routes.ARG_UDI),
-                optionalString(Routes.ARG_NAME),
-                optionalString(Routes.ARG_UDI_NAME),
-                flag(Routes.ARG_CHANGE),
-            ),
-        ) { entry ->
-            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
-            val communeName = entry.string(Routes.ARG_NAME).orEmpty()
-            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
+        composable<SheetRoute> { entry ->
+            val route = entry.toRoute<SheetRoute>()
+            val communeCode = route.communeCode
+            val communeName = route.communeName
+            val udiCode = route.udiCode
             // The search is always below a sheet. Should a sheet ever be
             // alone (a back stack restored oddly), it shows no back arrow and
             // offers the search in its top bar instead, rather than a dead end.
             val isRoot = remember(entry) { navController.previousBackStackEntry == null }
             val fromFollows = remember(entry) {
-                navController.previousBackStackEntry?.destination?.route == Routes.FOLLOWS
+                navController.previousBackStackEntry?.destination?.hasRoute<FollowsRoute>() == true
             }
-            val onChangeUdi: (() -> Unit)? = if (entry.flag(Routes.ARG_CHANGE)) {
+            val onChangeUdi: (() -> Unit)? = if (route.change) {
                 {
-                    val route = Routes.udis(communeCode, communeName, choose = true)
-                    navController.navigate(route) {
+                    navController.navigate(UdisRoute(communeCode, communeName, choose = true)) {
                         // Back from the choice returns where this sheet did.
-                        popUpTo(Routes.SHEET) { inclusive = true }
+                        popUpTo<SheetRoute> { inclusive = true }
                     }
                 }
             } else {
@@ -418,15 +287,15 @@ fun PotableNavHost(
             SheetScreen(
                 viewModel = sheetViewModel(container, entry),
                 communeName = communeName,
-                udiName = entry.string(Routes.ARG_UDI_NAME),
+                udiName = route.udiName,
                 onBack = if (isRoot) null else ({ navController.navigateUp() }),
-                onShowAllResults = { sample -> navController.navigate(Routes.sample(sample.code)) },
+                onShowAllResults = { sample -> navController.navigate(SampleRoute(sample.code)) },
                 onShowHistory = {
-                    navController.navigate(Routes.timeline(communeCode, udiCode, communeName))
+                    navController.navigate(TimelineRoute(communeCode, udiCode, communeName))
                 },
                 onParameterHistory = { codes, label ->
                     navController.navigate(
-                        Routes.parameterHistory(communeCode, udiCode, codes, label),
+                        ParameterHistoryRoute.of(communeCode, udiCode, codes, label),
                     )
                 },
                 // Opened from My communes: going there again would stack a
@@ -434,18 +303,15 @@ fun PotableNavHost(
                 onMyCommunes = if (fromFollows) {
                     null
                 } else {
-                    { navController.navigate(Routes.FOLLOWS) }
+                    { navController.navigate(FollowsRoute) }
                 },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onAbout = { navController.navigate(Routes.ABOUT) },
+                onSettings = { navController.navigate(SettingsRoute) },
+                onAbout = { navController.navigate(AboutRoute) },
                 onSearch = if (isRoot) ({ navController.openSearch() }) else null,
                 onChangeUdi = onChangeUdi,
             )
         }
-        composable(
-            route = Routes.SAMPLE,
-            arguments = listOf(navArgument(Routes.ARG_SAMPLE) { type = NavType.StringType }),
-        ) { entry ->
+        composable<SampleRoute> { entry ->
             // The sheet's entry is below this one, the only way here; were it
             // missing, the screen goes away instead of crashing.
             val sheetEntry = remember(entry) { navController.sheetEntryOrNull() }
@@ -453,11 +319,12 @@ fun PotableNavHost(
                 LaunchedEffect(entry) { navController.leaveOrphanSample() }
                 return@composable
             }
+            val sheetRoute = sheetEntry.toRoute<SheetRoute>()
             val sheet = sheetViewModel(container, sheetEntry)
             SampleDetailScreen(
                 viewModel = viewModel(
                     factory = SampleDetailViewModel.factory(
-                        entry.string(Routes.ARG_SAMPLE).orEmpty(),
+                        entry.toRoute<SampleRoute>().sampleCode,
                         sheet.state,
                     ),
                 ),
@@ -465,9 +332,9 @@ fun PotableNavHost(
                 onBack = { navController.navigateUp() },
                 onOpenHistory = { result ->
                     navController.navigate(
-                        Routes.parameterHistory(
-                            communeCode = sheetEntry.string(Routes.ARG_COMMUNE).orEmpty(),
-                            udiCode = sheetEntry.string(Routes.ARG_UDI).orEmpty(),
+                        ParameterHistoryRoute.of(
+                            communeCode = sheetRoute.communeCode,
+                            udiCode = sheetRoute.udiCode,
                             parameterCodes = historyCodes(result.parameterCode),
                             label = result.parameterLabel,
                         ),
@@ -475,82 +342,52 @@ fun PotableNavHost(
                 },
             )
         }
-        composable(
-            route = Routes.HISTORY,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                requiredString(Routes.ARG_UDI),
-                optionalString(Routes.ARG_CODES),
-                optionalString(Routes.ARG_LABEL),
-            ),
-        ) { entry ->
-            val codes = entry.string(Routes.ARG_CODES).orEmpty()
-                .split(',')
-                .filter { it.isNotBlank() }
-                .toSet()
-            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
-            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
+        composable<ParameterHistoryRoute> { entry ->
+            val route = entry.toRoute<ParameterHistoryRoute>()
             ParameterHistoryScreen(
-                viewModel = viewModel(
-                    factory = ParameterHistoryViewModel.factory(
-                        container,
-                        communeCode = communeCode,
-                        udiCode = udiCode,
-                        parameterCodes = codes,
-                    ),
-                ),
-                label = entry.string(Routes.ARG_LABEL).orEmpty(),
+                // The ViewModel reads its arguments from the entry's saved state.
+                viewModel = viewModel(factory = ParameterHistoryViewModel.factory(container)),
+                label = route.label,
                 onBack = { navController.navigateUp() },
                 onOpenSample = { sampleCode ->
-                    navController.navigate(Routes.report(communeCode, udiCode, sampleCode))
-                },
-            )
-        }
-        composable(
-            route = Routes.REPORT,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                requiredString(Routes.ARG_UDI),
-                requiredString(Routes.ARG_SAMPLE),
-            ),
-        ) { entry ->
-            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
-            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
-            val sampleCode = entry.string(Routes.ARG_SAMPLE).orEmpty()
-            SampleReportScreen(
-                viewModel = reportViewModel(container, entry),
-                onBack = { navController.navigateUp() },
-                onShowAllResults = {
-                    navController.navigate(Routes.reportResults(communeCode, udiCode, sampleCode))
-                },
-                onParameterHistory = { codes, label ->
                     navController.navigate(
-                        Routes.parameterHistory(communeCode, udiCode, codes, label),
+                        ReportRoute(route.communeCode, route.udiCode, sampleCode),
                     )
                 },
             )
         }
-        composable(
-            route = Routes.REPORT_RESULTS,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                requiredString(Routes.ARG_UDI),
-                requiredString(Routes.ARG_SAMPLE),
-            ),
-        ) { entry ->
+        composable<ReportRoute> { entry ->
+            val route = entry.toRoute<ReportRoute>()
+            SampleReportScreen(
+                viewModel = reportViewModel(container, entry),
+                onBack = { navController.navigateUp() },
+                onShowAllResults = {
+                    navController.navigate(
+                        ReportResultsRoute(route.communeCode, route.udiCode, route.sampleCode),
+                    )
+                },
+                onParameterHistory = { codes, label ->
+                    navController.navigate(
+                        ParameterHistoryRoute.of(route.communeCode, route.udiCode, codes, label),
+                    )
+                },
+            )
+        }
+        composable<ReportResultsRoute> { entry ->
+            val route = entry.toRoute<ReportResultsRoute>()
             // The report's entry is right below this one, the only way here;
             // were it missing, the screen goes away instead of crashing.
             val reportEntry = remember(entry) {
                 navController.reportEntryOrNull()?.takeIf {
-                    it.string(Routes.ARG_SAMPLE) == entry.string(Routes.ARG_SAMPLE)
+                    it.toRoute<ReportRoute>().sampleCode == route.sampleCode
                 }
             }
             if (reportEntry == null) {
-                LaunchedEffect(entry) { navController.leaveOrphanSample(Routes.REPORT_RESULTS) }
+                LaunchedEffect(entry) {
+                    navController.leaveOrphanSample(ReportResultsRoute::class)
+                }
                 return@composable
             }
-            val communeCode = entry.string(Routes.ARG_COMMUNE).orEmpty()
-            val udiCode = entry.string(Routes.ARG_UDI).orEmpty()
             val report = reportViewModel(container, reportEntry)
             SampleReportResultsScreen(
                 viewModel = viewModel(factory = SampleReportResultsViewModel.factory(report.state)),
@@ -558,9 +395,9 @@ fun PotableNavHost(
                 onBack = { navController.navigateUp() },
                 onOpenHistory = { result ->
                     navController.navigate(
-                        Routes.parameterHistory(
-                            communeCode = communeCode,
-                            udiCode = udiCode,
+                        ParameterHistoryRoute.of(
+                            communeCode = route.communeCode,
+                            udiCode = route.udiCode,
                             parameterCodes = historyCodes(result.parameterCode),
                             label = result.parameterLabel,
                         ),
@@ -568,24 +405,19 @@ fun PotableNavHost(
                 },
             )
         }
-        composable(
-            route = Routes.TIMELINE,
-            arguments = listOf(
-                requiredString(Routes.ARG_COMMUNE),
-                requiredString(Routes.ARG_UDI),
-                optionalString(Routes.ARG_NAME),
-            ),
-        ) { entry ->
+        composable<TimelineRoute> { entry ->
+            val route = entry.toRoute<TimelineRoute>()
             TimelineScreen(
-                viewModel = viewModel(
-                    factory = TimelineViewModel.factory(
-                        container,
-                        entry.string(Routes.ARG_COMMUNE).orEmpty(),
-                        entry.string(Routes.ARG_UDI).orEmpty(),
-                    ),
-                ),
-                communeName = entry.string(Routes.ARG_NAME).orEmpty(),
+                // The ViewModel reads its arguments from the entry's saved state.
+                viewModel = viewModel(factory = TimelineViewModel.factory(container)),
+                communeName = route.communeName,
                 onBack = { navController.navigateUp() },
+                // Like a long press on a point of a parameter's history.
+                onOpenSample = { sampleCode ->
+                    navController.navigate(
+                        ReportRoute(route.communeCode, route.udiCode, sampleCode),
+                    )
+                },
             )
         }
     }
