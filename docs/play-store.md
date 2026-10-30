@@ -100,7 +100,7 @@ unzip -p app/build/outputs/bundle/release/app-release.aab 'META-INF/*.RSA' \
 | Description complète | `fastlane/metadata/android/<langue>/full_description.txt`, sous les 4000 caractères |
 | Langues | `en-US` et `fr-FR`, celles de l'interface |
 | Icône | `fastlane/metadata/android/en-US/images/icon.png`, 512×512 |
-| Image de présentation | 1024×500, **obligatoire sur Play et encore absente** |
+| Image de présentation | `fastlane/metadata/android/<langue>/images/featureGraphic.png`, 1024×500 : fiche et pH sur un an de Lille, capturés sur le Fairphone 3 |
 | Captures d'écran | `fastlane/metadata/android/<langue>/images/phoneScreenshots/`, 1080×2160 |
 | Catégorie | Alimentation et boisson (voir plus bas) |
 | Politique de confidentialité | `https://github.com/mgdx/Potable/blob/master/docs/privacy-policy.en.md` |
