@@ -102,7 +102,7 @@ unzip -p app/build/outputs/bundle/release/app-release.aab 'META-INF/*.RSA' \
 | Icône | `fastlane/metadata/android/en-US/images/icon.png`, 512×512 |
 | Image de présentation | 1024×500, **obligatoire sur Play et encore absente** |
 | Captures d'écran | `fastlane/metadata/android/<langue>/images/phoneScreenshots/`, 1080×2160 |
-| Catégorie | Maison et intérieur (voir plus bas) |
+| Catégorie | Alimentation et boisson (voir plus bas) |
 | Politique de confidentialité | `https://github.com/mgdx/Potable/blob/master/docs/privacy-policy.en.md` |
 | Adresse de contact | `leo@magadoux.fr` |
 | Site web | `https://github.com/mgdx/Potable` |
@@ -129,9 +129,10 @@ couleurs du logo (`docs/brand/`).
 
 **La catégorie.** Potable ne mesure rien sur l'utilisateur et ne donne aucun
 avis sanitaire (SPEC §14) : « Santé et remise en forme » et « Médecine »
-appelleraient des déclarations santé qui ne le concernent pas. « Maison et
-intérieur » décrit ce qu'il montre, l'eau qui arrive au robinet ; « Éducation »
-serait l'alternative.
+appelleraient des déclarations santé qui ne le concernent pas. « Alimentation
+et boisson » dit ce qu'il montre, l'eau que l'on boit au robinet. Les
+concurrents ont choisi autrement (EauChezMoi : Outils ; LYZO : Santé et remise
+en forme), et la catégorie pèse peu face à la recherche par mots-clés.
 
 **Les notes de version** : les fichiers `changelogs/<versionCode>.txt` tiennent
 déjà sous les 500 caractères de Play (limite F-Droid identique). Ils se
