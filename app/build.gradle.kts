@@ -10,6 +10,10 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+// Whether this invocation builds an app bundle, i.e. something for Google Play.
+val buildsAnAppBundle =
+    gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+
 android {
     namespace = "io.github.mgdx.potable"
     compileSdk {
@@ -49,6 +53,22 @@ android {
                 // to a new key one day without breaking every update.
                 enableV3Signing = true
             }
+            // Google Play signs what it serves with a key it generated and
+            // holds (docs/play-store.md): the upload key below only proves who
+            // uploads the bundle, and Google replaces it on request if lost.
+            // Kept apart from the publishing key, which F-Droid's recipe names
+            // and whose loss would end every update outside Play.
+            val uploadValues = Properties()
+            signingProperties.inputStream().use { uploadValues.load(it) }
+            uploadValues.getProperty("uploadStoreFile")?.let { uploadStore ->
+                create("playUpload") {
+                    storeFile = rootProject.file(uploadStore)
+                    storePassword = uploadValues.getProperty("uploadStorePassword")
+                    keyAlias = uploadValues.getProperty("uploadKeyAlias")
+                    keyPassword = uploadValues.getProperty("uploadKeyPassword")
+                    enableV3Signing = true
+                }
+            }
         }
     }
 
@@ -60,8 +80,12 @@ android {
             // see that file for why it adds almost nothing.
             isMinifyEnabled = true
             isShrinkResources = true
+            // A bundle only ever goes to Play, under the upload key when
+            // `keystore.properties` declares one; the APKs of the releases
+            // page, which F-Droid verifies, keep the publishing key.
             if (signingProperties.exists()) {
-                signingConfig = signingConfigs.getByName("release")
+                val upload = signingConfigs.findByName("playUpload")?.takeIf { buildsAnAppBundle }
+                signingConfig = upload ?: signingConfigs.getByName("release")
             }
             // AGP writes the commit hash into the APK when it finds a Git
             // checkout, and an error message when it does not (a worktree, a

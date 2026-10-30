@@ -27,33 +27,44 @@ dépendance.
 | Application ou jeu | Application |
 | Gratuite ou payante | Sans frais (définitif une fois publiée) |
 
-## La signature : un choix à faire avant le premier envoi
+## La signature : clé générée par Google
 
 Play refuse un APK pour une nouvelle application : il prend un **app bundle**
-(`.aab`) et signe lui-même ce qu'il distribue, avec la clé de signature de
-l'application qu'il détient. Deux possibilités, à trancher **avant le premier
-envoi** parce qu'elles ne se défont pas :
+(`.aab`) et signe lui-même ce qu'il distribue. Le choix a été fait le
+30 octobre 2026, comme pour Roue Libre : **Google génère et détient la clé de
+signature de l'application**, plutôt que de recevoir celle du projet.
 
-- **Clé générée par Google** (choix de Roue Libre, le 14 septembre 2026).
-  Play devient une **installation séparée** : qui a installé Potable depuis
+La conséquence est écrite ici plutôt que découverte plus tard :
+
+- La page des versions et F-Droid sont **une seule installation** : la recette
+  F-Droid nomme le certificat dans `AllowedAPKSigningKeys` et vérifie sa
+  reconstruction contre le fichier publié au lieu de signer elle-même, donc une
+  mise à jour passe de l'un à l'autre.
+- Play est une **seconde installation, séparée**. Qui a installé Potable depuis
   GitHub ou F-Droid ne peut pas passer à la version Play, ni l'inverse, sans
-  désinstaller d'abord, ce qui perd ses communes suivies et ses réglages
-  (l'export de Paramètres → Sauvegarde limite la perte). La clé de publication
-  du projet ne quitte jamais le poste.
-- **Clé du projet confiée à Google** (« Utiliser la clé de signature d'une
-  autre application », export chiffré par l'outil PEPK de la Console). Les
-  trois canaux deviennent **une seule installation**, mises à jour croisées
-  comprises. En échange, Google détient une copie de la clé de publication,
-  celle que nomme la recette F-Droid (`AllowedAPKSigningKeys`).
+  désinstaller d'abord, ce qui perd ses communes suivies et ses réglages ;
+  l'export de Paramètres → Sauvegarde permet de les retrouver. La clé de
+  publication du projet ne quitte jamais le poste.
 
-Dans les deux cas, une **clé d'envoi** distincte prouve seulement qui envoie
-le bundle ; Google la remplace sur demande si elle est perdue. Sur le modèle de
-Roue Libre, elle irait dans `~/.android-keys/potable-play-upload.jks`, avec ses
-quatre lignes dans `keystore.properties` sous un préfixe `upload`, et
-`app/build.gradle.kts` signerait `bundleRelease` avec elle et
-`assembleRelease` avec la clé de publication. **Rien de cela n'existe encore** :
-aujourd'hui `bundleRelease` signe avec la clé de publication, qui deviendrait
-donc la clé d'envoi.
+La **clé d'envoi** est une troisième clé, qui n'est pas une identité : elle
+prouve seulement qui envoie le bundle, et Google la remplace sur demande si
+elle est perdue. Elle va dans `~/.android-keys/potable-play-upload.jks`, alias
+`potable-upload`, RSA 4096, et ses quatre lignes s'ajoutent à
+`keystore.properties`, à côté de celles de la clé de publication :
+
+```properties
+uploadStoreFile=/home/leo/.android-keys/potable-play-upload.jks
+uploadStorePassword=…
+uploadKeyAlias=potable-upload
+uploadKeyPassword=…
+```
+
+`app/build.gradle.kts` signe alors `bundleRelease` avec elle, et seulement
+`bundleRelease` : `assembleRelease` garde la clé de publication, sur laquelle
+repose la vérification de F-Droid. Tant que ces lignes manquent, le bundle est
+signé par la clé de publication, et Play enregistrerait ce certificat comme
+celui des envois : cela marche, mais la clé sert à un endroit de plus que
+nécessaire. **Créer la clé d'envoi avant le premier envoi.**
 
 ## Construire le bundle
 
@@ -64,7 +75,8 @@ donc la clé d'envoi.
 Potable n'a pas de découpage par ABI : `assembleRelease` et `bundleRelease`
 peuvent tourner dans la même invocation sans se gêner.
 
-Vérifier le certificat avant l'envoi :
+Vérifier le certificat avant l'envoi ; attendu `CN=Potable Upload`, et
+`CN=Potable` signifie que les lignes `upload` manquent :
 
 ```bash
 unzip -p app/build/outputs/bundle/release/app-release.aab 'META-INF/*.RSA' \
