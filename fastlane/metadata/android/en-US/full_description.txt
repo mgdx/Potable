@@ -34,7 +34,3 @@ Sanitary control results: Hub'Eau “Qualité de l'eau potable” API, data from
 Potable is an independent application, not affiliated with Hub'Eau, the Ministry or the ARS.
 
 Free software under the GNU GPL v3 licence.
-
-<b>Translations</b>
-
-The French translation was produced by AI and is waiting for a review by a native speaker. Corrections are welcome on the project repository.

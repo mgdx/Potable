@@ -34,7 +34,3 @@ Résultats du contrôle sanitaire : API « Qualité de l’eau potable » de 
 Potable est une application indépendante, sans lien avec Hub'Eau, le ministère ou les ARS.
 
 Logiciel libre sous licence GNU GPL v3.
-
-<b>Traductions</b>
-
-La traduction française a été produite par IA et attend la relecture d’un locuteur natif. Les corrections sont bienvenues sur le dépôt du projet.
