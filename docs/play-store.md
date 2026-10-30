@@ -59,12 +59,20 @@ uploadKeyAlias=potable-upload
 uploadKeyPassword=…
 ```
 
-`app/build.gradle.kts` signe alors `bundleRelease` avec elle, et seulement
+Créée le 30 octobre 2026 :
+
+```
+CN=Potable Upload, O=Potable, C=FR   (valide jusqu'au 22 octobre 2056)
+SHA-256  00:10:29:79:59:22:D3:82:32:73:FA:C9:3F:D4:BC:55:
+         07:59:BB:6B:1D:C6:7F:CE:BE:DB:68:76:9E:D6:0D:0E
+```
+
+`app/build.gradle.kts` signe `bundleRelease` avec elle, et seulement
 `bundleRelease` : `assembleRelease` garde la clé de publication, sur laquelle
 repose la vérification de F-Droid. Tant que ces lignes manquent, le bundle est
 signé par la clé de publication, et Play enregistrerait ce certificat comme
 celui des envois : cela marche, mais la clé sert à un endroit de plus que
-nécessaire. **Créer la clé d'envoi avant le premier envoi.**
+nécessaire.
 
 ## Construire le bundle
 
