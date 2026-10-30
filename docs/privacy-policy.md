@@ -1,8 +1,8 @@
 # Politique de confidentialité
 
-*Potable — `io.github.mgdx.potable`.*
+*Potable — `io.github.mgdx.potable`. Version du 30 octobre 2026.*
 
-<!-- Date d'entrée en vigueur à fixer à la première publication. -->
+*[English version](privacy-policy.en.md).*
 
 Potable ne collecte rien sur vous. Il n’y a ni compte, ni publicité, ni mesure
 d’audience, ni rapport de plantage, ni identifiant unique, ni kit de
@@ -130,6 +130,15 @@ l’autre, même si la sauvegarde est activée sur votre appareil.
 La contrepartie : sur un nouveau téléphone, ou après une réinstallation, il
 faut de nouveau choisir ses communes et ses réglages. Le reste n’est qu’un
 cache de données publiques, que l’application télécharge à nouveau.
+
+Pour retrouver ses communes ailleurs, **Paramètres → Sauvegarde** écrit, à
+votre demande, un fichier JSON à l’endroit que vous choisissez dans le
+sélecteur de fichiers du système : les communes suivies (codes et noms de la
+commune et de l’unité de distribution), l’unité choisie pour chaque commune et
+les réglages d’affichage (thème, période de l’historique, durée de
+conservation). Il ne contient ni position, ni cache, ni alertes. Ce fichier ne
+va que là où vous le mettez ; l’application ne lit, pour l’importer, que le
+fichier que vous lui désignez.
 
 ## Permissions, et à quoi chacune sert
 

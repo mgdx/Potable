@@ -318,3 +318,8 @@ auteur, même toolchain : AGP 9.3, Gradle 9.5.0, JDK 21).
 
 F-Droid ne lance pas les tests : le téléchargement de l'image Android de
 Robolectric à leur première exécution ne concerne pas sa build.
+
+## Google Play
+
+Ce que Play ajoute à cette procédure (bundle, fiche, déclarations, test
+fermé) est dans [`docs/play-store.md`](play-store.md).
