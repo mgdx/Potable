@@ -2,8 +2,7 @@
 
 Un canal de plus, à côté de la page des versions et de F-Droid, et le seul qui
 impose ses propres règles. Ce fichier dit ce que Play demande à Potable, ce qui
-y a été répondu, et ce qui se refait à chaque version. Le modèle est
-`docs/play-store.md` de Roue Libre (même auteur, même compte Play).
+y a été répondu, et ce qui se refait à chaque version.
 
 `docs/release.md` reste la référence pour la version elle-même : numéro,
 notes, contrôles, signature, tag. Ce fichier ne couvre que ce que Play ajoute.
@@ -31,7 +30,7 @@ dépendance.
 
 Play refuse un APK pour une nouvelle application : il prend un **app bundle**
 (`.aab`) et signe lui-même ce qu'il distribue. Le choix a été fait le
-30 octobre 2026, comme pour Roue Libre : **Google génère et détient la clé de
+30 octobre 2026 : **Google génère et détient la clé de
 signature de l'application**, plutôt que de recevoir celle du projet.
 
 La conséquence est écrite ici plutôt que découverte plus tard :
@@ -123,8 +122,7 @@ pour officielle. À garder ainsi aux prochaines modifications.
 **Les captures sont à la limite du format.** Play refuse une image dont le
 grand côté dépasse le double du petit ; celles du Fairphone 3 font exactement
 le double. Si la Console les refuse, les poser entières sur un fond uni de
-1080×1920, comme le fait `tools/make_play_assets.py` de Roue Libre, plutôt que
-de les rogner. L'image de présentation se compose de la même façon, aux
+1080×1920 plutôt que de les rogner. L'image de présentation se compose de la même façon, aux
 couleurs du logo (`docs/brand/`).
 
 **La catégorie.** Potable ne mesure rien sur l'utilisateur et ne donne aucun
@@ -169,7 +167,7 @@ est ce qui fait retirer une fiche.
   communication ou autre » ; ni violence, ni sexualité, ni grossièreté, ni
   jeux d'argent, ni achats, ni contenu créé par les utilisateurs, ni partage
   de la position avec qui que ce soit.
-- **Public cible** : 16 ans et plus, comme Roue Libre. Inclure les moins de
+- **Public cible** : 16 ans et plus. Inclure les moins de
   13 ans ferait entrer la règle Familles, qui demande ce dont l'application n'a
   pas l'usage. Cela ne contredit pas la politique de confidentialité, qui dit
   que l'application convient à tous et ne collecte rien quel que soit l'âge.
@@ -187,12 +185,12 @@ Un compte développeur personnel ouvert après le 13 novembre 2023 ne peut
 publier en production qu'après un **test fermé d'au moins douze testeurs,
 inscrits sans interruption pendant quatorze jours**, et Google vérifie qu'ils
 ont réellement ouvert l'application. L'obligation vaut **pour chaque
-application** : l'avoir remplie pour Roue Libre n'en dispense pas Potable.
+application** : l'avoir remplie pour une autre application du compte n'en
+dispense pas Potable.
 Douze comptes Google distincts, sur de vrais appareils ; ni émulateurs, ni
 seconds comptes de la même personne.
 
-Les testeurs passent par un **groupe Google propre à Potable**, distinct de
-celui de Roue Libre : chacun le rejoint seul par son lien, puis accepte le test
+Les testeurs passent par un **groupe Google propre à Potable** : chacun le rejoint seul par son lien, puis accepte le test
 par le lien d'inscription de la piste. Le groupe est ouvert à tous, seuls les
 gestionnaires y publient et voient la liste des membres ; aucune adresse
 e-mail n'est collectée ni saisie dans la Console. Viser quinze ou seize testeurs,

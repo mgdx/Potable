@@ -312,9 +312,7 @@ l'étape 6 ci-dessus est donc imposé par la recette.
 La première soumission ne porte que la dernière version ; les suivantes sont
 ajoutées par `checkupdates` à partir des tags.
 
-Le format exact de la recette est celui que produit `fdroid rewritemeta` ; la
-référence d'un dossier accepté est `docs/release.md` de Roue Libre (même
-auteur, même toolchain : AGP 9.3, Gradle 9.5.0, JDK 21).
+Le format exact de la recette est celui que produit `fdroid rewritemeta`.
 
 F-Droid ne lance pas les tests : le téléchargement de l'image Android de
 Robolectric à leur première exécution ne concerne pas sa build.
