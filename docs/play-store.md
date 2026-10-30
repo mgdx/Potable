@@ -190,7 +190,9 @@ dispense pas Potable.
 Douze comptes Google distincts, sur de vrais appareils ; ni émulateurs, ni
 seconds comptes de la même personne.
 
-Les testeurs passent par un **groupe Google propre à Potable** : chacun le rejoint seul par son lien, puis accepte le test
+Les testeurs passent par un **groupe Google propre à Potable**,
+`potable-testeur@googlegroups.com` (https://groups.google.com/g/potable-testeur),
+annoncé dans l'issue épinglée n° 1 du dépôt : chacun le rejoint seul par son lien, puis accepte le test
 par le lien d'inscription de la piste. Le groupe est ouvert à tous, seuls les
 gestionnaires y publient et voient la liste des membres ; aucune adresse
 e-mail n'est collectée ni saisie dans la Console. Viser quinze ou seize testeurs,
