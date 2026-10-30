@@ -1,5 +1,4 @@
 # Draft of metadata/io.github.mgdx.potable.yml for fdroiddata.
-# Review: docs/audits/fdroid-review-io.github.mgdx.potable-2026-10-30.md.
 # Before the merge request, run `fdroid rewritemeta io.github.mgdx.potable`
 # and `fdroid lint io.github.mgdx.potable`.
 # Name, Summary and Description are left out on purpose: they come from
