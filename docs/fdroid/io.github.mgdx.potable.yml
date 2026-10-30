@@ -1,10 +1,10 @@
 # Draft of metadata/io.github.mgdx.potable.yml for fdroiddata.
-# Review: docs/audits/fdroid-2026-10-25.md. Before the merge request:
-# - publish https://github.com/mgdx/Potable and push the v0.5.0 tag;
-# - replace `commit: v0.x.y` with the full hashes of the tagged commits;
-# - run `fdroid rewritemeta io.github.mgdx.potable` and `fdroid lint`.
+# Review: docs/audits/fdroid-review-io.github.mgdx.potable-2026-10-30.md.
+# Before the merge request, run `fdroid rewritemeta io.github.mgdx.potable`
+# and `fdroid lint io.github.mgdx.potable`.
 # Name, Summary and Description are left out on purpose: they come from
 # fastlane/metadata/android/ in the source repository.
+# No AntiFeatures: see docs/decisions.md (Hub'Eau, 2026-10-30).
 
 Categories:
   - Science & Education
@@ -14,71 +14,27 @@ AuthorName: mgdx
 WebSite: https://github.com/mgdx/Potable
 SourceCode: https://github.com/mgdx/Potable
 IssueTracker: https://github.com/mgdx/Potable/issues
+Changelog: https://github.com/mgdx/Potable/releases
 Liberapay: mgdx
 
 AutoName: Potable
 
 RepoType: git
 Repo: https://github.com/mgdx/Potable.git
+Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
 Builds:
-  - versionName: 0.1.2
-    versionCode: 3
-    commit: v0.1.2
-    subdir: app
-    gradle:
-      - yes
-    ndk: r28c
-
-  - versionName: 0.2.0
-    versionCode: 4
-    commit: v0.2.0
-    subdir: app
-    gradle:
-      - yes
-    ndk: r28c
-
-  - versionName: 0.3.0
-    versionCode: 5
-    commit: v0.3.0
-    subdir: app
-    gradle:
-      - yes
-    ndk: r28c
-
-  - versionName: 0.3.1
-    versionCode: 6
-    commit: v0.3.1
-    subdir: app
-    gradle:
-      - yes
-    ndk: r28c
-
-  - versionName: 0.4.0
-    versionCode: 7
-    commit: v0.4.0
-    subdir: app
-    gradle:
-      - yes
-    ndk: r28c
-
   - versionName: 0.5.0
     versionCode: 8
-    commit: v0.5.0
+    commit: b6693d78eb357506ac6debc0840eaae7da1039b4
     subdir: app
     gradle:
       - yes
     ndk: r28c
-    # Once a signed APK is published by the project (docs/release.md):
-    # binary: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
-# SHA-256 of the release certificate (docs/release.md). Uncomment together
-# with `binary:` above, once a signed APK is published on the releases page.
-# AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
+AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
 
 AutoUpdateMode: Version
-# No UpdateCheckData: checkupdates reads the literal versionCode/versionName
-# of app/build.gradle.kts (subdir) at the tagged commit.
 UpdateCheckMode: Tags ^v[0-9.]+$
 CurrentVersion: 0.5.0
 CurrentVersionCode: 8

@@ -284,22 +284,33 @@ La recette vit dans [fdroiddata](https://gitlab.com/fdroid/fdroiddata),
 NDK que `app/build.gradle.kts` (`r28c` = 28.2.13676358) :
 
 ```yaml
+Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
+
 Builds:
-  - versionName: 0.1.0
-    versionCode: 1
-    commit: v0.1.0
+  - versionName: 0.5.0
+    versionCode: 8
+    commit: b6693d78eb357506ac6debc0840eaae7da1039b4
     subdir: app
     gradle:
       - yes
     ndk: r28c
+
+AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
 ```
 
-Pour que F-Droid serve l'APK signé par le projet plutôt qu'un APK signé de sa
-propre clé, la recette ajoute `binary:` (URL de l'APK publié) et
-`AllowedAPKSigningKeys:` (empreinte SHA-256 du certificat) : F-Droid vérifie
-alors que sa reconstruction coïncide avec le fichier publié. Ce choix se fait
-**à la première soumission** : une version déjà signée par F-Droid ne peut plus
-passer sous la clé du projet.
+`commit:` porte le hash complet du commit étiqueté
+(`git rev-list -n1 vX.Y.Z`), jamais le nom du tag, qui peut être déplacé.
+
+F-Droid sert l'APK signé par le projet (builds reproductibles, choix fait à la
+première soumission : une version déjà signée par F-Droid ne peut plus passer
+sous la clé du projet). `Binaries:` donne l'URL de l'APK publié et
+`AllowedAPKSigningKeys:` l'empreinte SHA-256 du certificat : F-Droid
+reconstruit l'APK, vérifie qu'il coïncide avec le fichier publié à la
+signature près, et ne publie rien sinon. Le nom `potable-<version>.apk` de
+l'étape 6 ci-dessus est donc imposé par la recette.
+
+La première soumission ne porte que la dernière version ; les suivantes sont
+ajoutées par `checkupdates` à partir des tags.
 
 Le format exact de la recette est celui que produit `fdroid rewritemeta` ; la
 référence d'un dossier accepté est `docs/release.md` de Roue Libre (même

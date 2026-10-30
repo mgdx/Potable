@@ -148,10 +148,12 @@ chaque permission — est dans la
 
 ## Installer
 
-Potable n’est pas encore publié. Il le sera sur
-[F-Droid](https://f-droid.org/), sur Google Play et sur la
-[page des versions](https://github.com/mgdx/Potable/releases) de ce dépôt ; en
-attendant, il se compile depuis les sources.
+Chaque version est publiée sur la
+[page des versions](https://github.com/mgdx/Potable/releases/latest) de ce
+dépôt : un APK signé, son empreinte SHA-256 et celle du certificat de
+signature. La publication sur [F-Droid](https://f-droid.org/) est en
+préparation, celle sur Google Play viendra ensuite ; Potable se compile aussi
+depuis les sources.
 
 <!-- À décommenter à la publication.
 Depuis [F-Droid](https://f-droid.org/packages/io.github.mgdx.potable/), qui
@@ -273,5 +275,5 @@ porte le nom de la question, elle ne prétend pas y répondre à sa place.
 
 ## Licence
 
-[GPLv3](LICENSE). Les données affichées restent sous leurs licences propres,
-rappelées ci-dessus.
+[GPLv3](LICENSE), version 3 uniquement (`GPL-3.0-only`). Les données
+affichées restent sous leurs licences propres, rappelées ci-dessus.
