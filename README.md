@@ -43,9 +43,9 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
 ## Captures d’écran
 
 <p align="center">
-  <img src="docs/images/screenshot-sheet.png" width="30%" alt="La fiche d’Orléans : la conclusion sanitaire du dernier prélèvement, telle que publiée, puis les paramètres clés — nitrates, dureté, pH, chlore libre — avec leur valeur et une phrase d’explication.">
-  <img src="docs/images/screenshot-detail.png" width="30%" alt="Le détail d’un prélèvement : les paramètres analysés, groupés par famille, chacun avec la valeur publiée et sa limite ou référence de qualité.">
-  <img src="docs/images/screenshot-history.png" width="30%" alt="L’historique des nitrates à Orléans sur trois ans : une courbe sous la ligne de la limite de qualité de 50 mg/L, les valeurs publiées comme bornes en marqueurs creux.">
+  <img src="docs/images/screenshot-sheet.png" width="30%" alt="La fiche de Lille : la conclusion sanitaire du dernier prélèvement, telle que publiée, puis les paramètres clés — nitrates, dureté, pH, chlore libre — avec leur valeur et une phrase d’explication.">
+  <img src="docs/images/screenshot-detail.png" width="30%" alt="Les paramètres analysés d’un prélèvement à Lille : les paramètres, groupés par famille, chacun avec la valeur publiée et sa limite ou référence de qualité.">
+  <img src="docs/images/screenshot-history.png" width="30%" alt="L’historique des nitrates à Lille sur trois ans : une courbe sous la ligne de la limite de qualité de 50 mg/L.">
 </p>
 
 ## Fonctionnalités
