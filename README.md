@@ -214,8 +214,8 @@ par le `LocationManager` d’Android, sans Google Play Services.
 Les contributions sont bienvenues : voir **[CONTRIBUTING.md](CONTRIBUTING.md)**,
 et ouvrir une issue avant un changement important.
 
-- 🗣️ **Relire la traduction française.** Elle a été produite par IA et
-  **attend la relecture d’un locuteur natif**. Le vocabulaire est fixé par le
+- 🗣️ **Relire la traduction française.** Les corrections d’un locuteur
+  natif sont bienvenues. Le vocabulaire est fixé par le
   [glossaire](docs/glossary.md), et
   [`docs/translations.md`](docs/translations.md) tient l’état de relecture et
   explique comment s’y prendre. Potable n’est proposé qu’en anglais et en
