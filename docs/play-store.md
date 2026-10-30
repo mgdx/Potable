@@ -191,6 +191,12 @@ application** : l'avoir remplie pour Roue Libre n'en dispense pas Potable.
 Douze comptes Google distincts, sur de vrais appareils ; ni émulateurs, ni
 seconds comptes de la même personne.
 
+Les testeurs viennent du **groupe Google déjà utilisé pour Roue Libre** : il
+suffit de l'ajouter aux testeurs de la piste, et ses membres n'ont plus qu'à
+accepter le test par le lien d'inscription de Potable. Aucune adresse e-mail
+n'est collectée ni saisie dans la Console. Viser quinze ou seize testeurs,
+pour garder de la marge si l'un se désinscrit pendant la quinzaine.
+
 L'ordre est donc : créer la piste de test fermé, réunir les douze, laisser
 passer la quinzaine, puis demander l'accès à la production. C'est la quinzaine
 qui fixe la date de publication, pas le code.
