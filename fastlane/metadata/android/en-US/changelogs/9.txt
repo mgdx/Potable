@@ -1,0 +1,4 @@
+First stable release.
+
+• The app is unchanged since 0.5.0: search, sample sheets, history, watched substances, alerts and backups work as before.
+• New screenshots and a cleaner store description.

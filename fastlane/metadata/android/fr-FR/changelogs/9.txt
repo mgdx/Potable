@@ -1,0 +1,4 @@
+Première version stable.
+
+• L’application est identique à la 0.5.0 : recherche, fiches de prélèvement, historique, substances surveillées, alertes et sauvegardes fonctionnent comme avant.
+• Nouvelles captures d’écran et description de la fiche épurée.
