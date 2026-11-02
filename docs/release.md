@@ -287,9 +287,9 @@ NDK que `app/build.gradle.kts` (`r28c` = 28.2.13676358) :
 Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
 Builds:
-  - versionName: 0.5.0
-    versionCode: 8
-    commit: b6693d78eb357506ac6debc0840eaae7da1039b4
+  - versionName: 1.0.0
+    versionCode: 9
+    commit: a0dc4116d8f3b62b80c8b9dbf7507288961ebf46
     subdir: app
     gradle:
       - yes

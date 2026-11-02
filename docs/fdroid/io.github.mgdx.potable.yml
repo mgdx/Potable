@@ -23,9 +23,9 @@ Repo: https://github.com/mgdx/Potable.git
 Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
 Builds:
-  - versionName: 0.5.0
-    versionCode: 8
-    commit: b6693d78eb357506ac6debc0840eaae7da1039b4
+  - versionName: 1.0.0
+    versionCode: 9
+    commit: a0dc4116d8f3b62b80c8b9dbf7507288961ebf46
     subdir: app
     gradle:
       - yes
@@ -35,5 +35,5 @@ AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d30
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
-CurrentVersion: 0.5.0
-CurrentVersionCode: 8
+CurrentVersion: 1.0.0
+CurrentVersionCode: 9
