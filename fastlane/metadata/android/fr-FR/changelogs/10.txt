@@ -1,0 +1,2 @@
+• Aucun changement dans l’application.
+• La compilation n’a plus besoin du NDK Android : les bibliothèques natives fournies par AndroidX sont empaquetées telles quelles.

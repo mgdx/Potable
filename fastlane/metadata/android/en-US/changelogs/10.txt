@@ -1,0 +1,2 @@
+• No change to the app.
+• The build no longer needs the Android NDK: the native libraries shipped by AndroidX are packaged as published.
