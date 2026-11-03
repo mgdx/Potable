@@ -75,11 +75,10 @@ les mises à jour.
 ## Construire
 
 Prérequis : un **JDK 21** (celui de l'image de build F-Droid ; la build ne
-télécharge aucune toolchain), le SDK Android (plateforme 37) et le **NDK
-28.2.13676358** (`sdkmanager "ndk;28.2.13676358"`). L'application ne compile
-aucun code natif, mais AGP élague les bibliothèques natives de DataStore et
-d'`androidx.graphics.path` avec le NDK : c'est pourquoi sa version est fixée
-dans `app/build.gradle.kts` (voir « Reproductibilité »).
+télécharge aucune toolchain) et le SDK Android (plateforme 37). Aucun NDK :
+l'application ne compile aucun code natif, et les bibliothèques natives de
+DataStore et d'`androidx.graphics.path` sont empaquetées telles que publiées,
+sans élagage (voir « Reproductibilité »).
 
 ```bash
 ./gradlew check                       # tests, lint, ktlint, checkRtl, checkTranslations
@@ -170,7 +169,10 @@ qu'ils coïncident :
 - `vcsInfo { include = false }` en release : AGP n'écrit ni le commit ni, hors
   dépôt Git, le message `NO_VALID_GIT_FOUND`
   (`META-INF/version-control-info.textproto`) ;
-- `ndkVersion` fixé (voir plus haut) ;
+- `packaging.jniLibs.keepDebugSymbols += "**/*.so"` : AGP n'élague pas les
+  `.so` des dépendances. Sinon il les élague avec le NDK qu'il trouve, ou les
+  laisse tels quels s'il n'en trouve aucun, et l'APK dépend de la machine.
+  Coût : 9 ko (seul `libdatastore_shared_counter.so` n'est pas déjà élagué) ;
 - `BuildConfig` ne contient ni date ni chemin (`VERSION_NAME`, `VERSION_CODE`,
   `BUILD_TYPE`, `APPLICATION_ID`, `DEBUG`) ; les entrées du zip sont datées
   du 1er janvier 1981 par AGP ;
@@ -280,8 +282,9 @@ WorkManager).
 ## F-Droid
 
 La recette vit dans [fdroiddata](https://gitlab.com/fdroid/fdroiddata),
-`metadata/io.github.mgdx.potable.yml`. L'entrée de build doit nommer le même
-NDK que `app/build.gradle.kts` (`r28c` = 28.2.13676358) :
+`metadata/io.github.mgdx.potable.yml`. La 1.0.0 demandait le NDK `r28c` ;
+les versions qui suivent n'en déclarent plus (`ndk:` à retirer de la recette
+avec elles) :
 
 ```yaml
 Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk

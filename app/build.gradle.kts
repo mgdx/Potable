@@ -28,12 +28,17 @@ android {
         versionName = "1.0.0"
     }
 
-    // The NDK that strips the native libraries the dependencies ship
-    // (DataStore's shared counter, androidx.graphics.path), named rather than
-    // left to whichever one AGP finds: two NDKs strip to two different files,
-    // and the APK is no longer reproducible. The F-Droid recipe names the same
-    // version in its `ndk` field (docs/release.md).
-    ndkVersion = "28.2.13676358"
+    // The app has no native code, but two dependencies ship prebuilt .so
+    // files (DataStore's shared counter, androidx.graphics.path). AGP strips
+    // them with whichever NDK it finds, or packages them as they are when it
+    // finds none: the APK would then depend on the build machine. Packaging
+    // them as published makes the build need no NDK at all, for 9 kB
+    // (graphics.path is already stripped upstream). See docs/decisions.md.
+    packaging {
+        jniLibs {
+            keepDebugSymbols += "**/*.so"
+        }
+    }
 
     // Release signing (docs/release.md). The key and its passwords live in
     // `keystore.properties` at the root, which Git ignores and which usually
