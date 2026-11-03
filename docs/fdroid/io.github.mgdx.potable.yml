@@ -3,8 +3,11 @@
 # and `fdroid lint io.github.mgdx.potable`.
 # Name, Summary and Description are left out on purpose: they come from
 # fastlane/metadata/android/ in the source repository.
-# No AntiFeatures: see docs/decisions.md (Hub'Eau, 2026-10-30).
+# NonFreeNet: see docs/decisions.md (Hub'Eau, 2026-11-03).
 
+AntiFeatures:
+  NonFreeNet:
+    en-US: Relies on Hub'Eau (hubeau.eaufrance.fr), whose server software is not published.
 Categories:
   - Science & Education
   - Sports & Health
@@ -23,17 +26,16 @@ Repo: https://github.com/mgdx/Potable.git
 Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
 Builds:
-  - versionName: 1.0.0
-    versionCode: 9
-    commit: a0dc4116d8f3b62b80c8b9dbf7507288961ebf46
+  - versionName: 1.0.1
+    versionCode: 10
+    commit: c36a3c376d4a3f326f60dc1a8d4b6c036384ccad
     subdir: app
     gradle:
       - yes
-    ndk: r28c
 
 AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
-CurrentVersion: 1.0.0
-CurrentVersionCode: 9
+CurrentVersion: 1.0.1
+CurrentVersionCode: 10

@@ -282,21 +282,19 @@ WorkManager).
 ## F-Droid
 
 La recette vit dans [fdroiddata](https://gitlab.com/fdroid/fdroiddata),
-`metadata/io.github.mgdx.potable.yml`. La 1.0.0 demandait le NDK `r28c` ;
-les versions qui suivent n'en déclarent plus (`ndk:` à retirer de la recette
-avec elles) :
+`metadata/io.github.mgdx.potable.yml`. Elle ne déclare pas de NDK (la 1.0.0
+demandait `r28c`, voir « Reproductibilité ») :
 
 ```yaml
 Binaries: https://github.com/mgdx/Potable/releases/download/v%v/potable-%v.apk
 
 Builds:
-  - versionName: 1.0.0
-    versionCode: 9
-    commit: a0dc4116d8f3b62b80c8b9dbf7507288961ebf46
+  - versionName: 1.0.1
+    versionCode: 10
+    commit: c36a3c376d4a3f326f60dc1a8d4b6c036384ccad
     subdir: app
     gradle:
       - yes
-    ndk: r28c
 
 AllowedAPKSigningKeys: 1a60e23938a43fccda3c3046b09a940d114da8a986ddeeda501ad0d303e3c82d
 ```
