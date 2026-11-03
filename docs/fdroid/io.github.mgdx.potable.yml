@@ -7,12 +7,12 @@
 
 AntiFeatures:
   NonFreeNet:
-    en-US: Relies on Hub'Eau (hubeau.eaufrance.fr), the official open-data service of
-      the French State, which publishes the results of the sanitary control of tap
-      water.
+    en-US: Relies on Hub'Eau (hubeau.eaufrance.fr), the official open-data service
+      of the French State, which publishes the results of the sanitary control of
+      tap water.
     fr-FR: Dépend de Hub'Eau (hubeau.eaufrance.fr), le service officiel de données
-      ouvertes de l'État français, qui publie les résultats du contrôle sanitaire de
-      l'eau du robinet.
+      ouvertes de l'État français, qui publie les résultats du contrôle sanitaire
+      de l'eau du robinet.
 Categories:
   - Science & Education
   - Sports & Health
