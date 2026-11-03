@@ -313,7 +313,10 @@ l'étape 6 ci-dessus est donc imposé par la recette.
 La première soumission ne porte que la dernière version ; les suivantes sont
 ajoutées par `checkupdates` à partir des tags.
 
-Le format exact de la recette est celui que produit `fdroid rewritemeta`.
+Le format de la recette suit celui de `fdroid rewritemeta`, à une exception
+près : chaque raison `NonFreeNet` tient sur une seule ligne, plus lisible et
+plus simple à relire en diff. Si `rewritemeta` la replie, garder sa version
+dans la merge request fdroiddata.
 
 F-Droid ne lance pas les tests : le téléchargement de l'image Android de
 Robolectric à leur première exécution ne concerne pas sa build.
