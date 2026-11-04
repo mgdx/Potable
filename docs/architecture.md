@@ -86,7 +86,9 @@ Hub’Eau les publie. Il est produit par
 et du COG de l’INSEE, et versionné tel quel.
 
 `AssetCommuneRepository` (`:data`) le lit une fois, à la demande ;
-`CommuneIndex` (`:core`) l’indexe en mémoire. La recherche par nom ou code
+`CommuneIndex` (`:core`) l’indexe en mémoire, en tableaux parallèles (textes
+mis bout à bout, un `Commune` n’étant construit que pour un résultat), et
+toute recherche tourne sur `Dispatchers.Default`. La recherche par nom ou code
 postal et « Autour de moi » (commune dont le centroïde est le plus proche, à
 moins de 20 km) ne quittent jamais le téléphone. Le choix d’un fichier texte
 plutôt que d’une table Room pré-remplie est consigné dans

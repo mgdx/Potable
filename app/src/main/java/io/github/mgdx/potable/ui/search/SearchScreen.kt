@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.core.Departments
 import io.github.mgdx.potable.core.model.Commune
 import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.ui.common.CenteredColumn
@@ -377,7 +378,7 @@ private fun CommuneRow(commune: Commune, parentName: String?, onClick: () -> Uni
         headlineContent = { Text(commune.name, style = LocalTextStyle.current.asApiText()) },
         supportingContent = {
             Column {
-                postalCodesText(commune.postalCodes)?.let { Text(it) }
+                postalCodesAndDepartment(commune)?.let { Text(it) }
                 commune.hubEauCode?.let { parentCode ->
                     Text(
                         text = stringResource(
@@ -393,6 +394,27 @@ private fun CommuneRow(commune: Commune, parentName: String?, onClick: () -> Uni
         },
     )
 }
+
+/**
+ * "81310 · Tarn (81)": postal codes and department, which tell homonyms apart
+ * ("Parisot" in Tarn and in Tarn-et-Garonne). Either alone when the other is
+ * unknown, null when both are.
+ */
+@Composable
+private fun postalCodesAndDepartment(commune: Commune): String? {
+    val postalCodes = postalCodesText(commune.postalCodes)
+    val department = departmentText(commune.code) ?: return postalCodes
+    return postalCodes?.let {
+        stringResource(R.string.search_postal_codes_and_department, it, department)
+    } ?: department
+}
+
+/** "Tarn (81)", the department of the commune with this INSEE code; null if unknown. */
+@Composable
+private fun departmentText(communeCode: String): String? =
+    Departments.forCommune(communeCode)?.let {
+        stringResource(R.string.search_department, bidiWrap(it.name), it.code)
+    }
 
 /** Commune codes have no "/": the key of a unit row never equals a commune's. */
 private fun SearchRow.key(): String = when (this) {
@@ -447,7 +469,16 @@ private fun RecentSection(
                     Text(unit.communeName, style = LocalTextStyle.current.asApiText())
                 },
                 supportingContent = {
-                    Text(unit.udiName, style = LocalTextStyle.current.asApiText())
+                    Column {
+                        Text(unit.udiName, style = LocalTextStyle.current.asApiText())
+                        departmentText(unit.communeCode)?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 },
                 trailingContent = {
                     IconButton(onClick = { onRemoved(unit) }) {

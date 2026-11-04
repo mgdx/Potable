@@ -19,14 +19,45 @@ object CommuneFile {
      */
     fun parse(lines: Sequence<String>): List<Commune> {
         val communes = ArrayList<Commune>()
-        lines.forEachIndexed { index, line ->
-            if (line.isEmpty() || line.startsWith("#")) return@forEachIndexed
-            communes += parseLine(line, index + 1)
+        read(lines) { code, name, postalCodes, latitude, longitude, hubEauCode, population ->
+            communes += Commune(
+                code = code,
+                name = name,
+                postalCodes = postalCodes.split(',').filter { it.isNotEmpty() },
+                latitude = latitude,
+                longitude = longitude,
+                hubEauCode = hubEauCode,
+                population = population,
+            )
         }
         return communes
     }
 
-    private fun parseLine(line: String, number: Int): Commune {
+    /** One entry of the file, as [read] passes it: postal codes as written, "," separated. */
+    internal fun interface Row {
+        fun accept(
+            code: String,
+            name: String,
+            postalCodes: String,
+            latitude: Double,
+            longitude: Double,
+            hubEauCode: String?,
+            population: Int?,
+        )
+    }
+
+    /**
+     * Checks and passes each entry to [row], in file order, without building
+     * a [Commune]: what [CommuneIndex.parse] stores in its own arrays.
+     */
+    internal fun read(lines: Sequence<String>, row: Row) {
+        lines.forEachIndexed { index, line ->
+            if (line.isEmpty() || line.startsWith("#")) return@forEachIndexed
+            readLine(line, index + 1, row)
+        }
+    }
+
+    private fun readLine(line: String, number: Int, row: Row) {
         val columns = line.split('\t')
         require(columns.size == V1_COLUMNS || columns.size == V2_COLUMNS) {
             "line $number: expected $V1_COLUMNS or $V2_COLUMNS columns, found ${columns.size}"
@@ -34,14 +65,14 @@ object CommuneFile {
         val (code, name, postalCodes, latitude, longitude) = columns
         require(code.isNotBlank()) { "line $number: empty code" }
         require(name.isNotBlank()) { "line $number: empty name" }
-        return Commune(
-            code = code,
-            name = name,
-            postalCodes = postalCodes.split(',').filter { it.isNotEmpty() },
-            latitude = coordinate(latitude, "latitude", number),
-            longitude = coordinate(longitude, "longitude", number),
-            hubEauCode = columns[5].ifEmpty { null },
-            population = columns.getOrNull(6)?.let { population(it, number) },
+        row.accept(
+            code,
+            name,
+            postalCodes,
+            coordinate(latitude, "latitude", number),
+            coordinate(longitude, "longitude", number),
+            columns[5].ifEmpty { null },
+            columns.getOrNull(6)?.let { population(it, number) },
         )
     }
 
