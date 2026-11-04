@@ -219,12 +219,17 @@ private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) 
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.semantics { heading() },
                     )
-                    loaded.digest?.let { DigestLines(it) }
-                    Text(
-                        text = stringResource(R.string.sheet_official_wording),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    val digest = loaded.digest
+                    if (digest != null) {
+                        // Counts, not published labels: no "official wording" under them.
+                        DigestLines(digest)
+                    } else {
+                        Text(
+                            text = stringResource(R.string.sheet_official_wording),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 HorizontalDivider()
             }

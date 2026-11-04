@@ -13,11 +13,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.ui.ComposeHostRegistration
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeHistoryRepository
+import io.github.mgdx.potable.ui.string
 import io.github.mgdx.potable.ui.theme.PotableTheme
 import io.github.mgdx.potable.ui.waitForText
 import org.junit.Assert.assertEquals
@@ -115,6 +117,7 @@ class TimelineScreenTest {
         compose.onNode(hasText("All") and radio).assertIsSelected()
         val nonCompliances = compose.onNode(hasText("Non-compliances") and radio)
         nonCompliances.assertIsNotSelected().assertHeightIsAtLeast(48.dp)
+        compose.onNodeWithText(string(R.string.sheet_official_wording)).assertExists()
 
         nonCompliances.performClick()
 
@@ -126,6 +129,8 @@ class TimelineScreenTest {
         compose.onNodeWithText(
             "1 sample not compliant with the quality references only",
         ).assertExists()
+        // The counts are not published labels.
+        compose.onNodeWithText(string(R.string.sheet_official_wording)).assertDoesNotExist()
         compose.onNodeWithText("Conclusion du 15 septembre.").assertExists()
         compose.onNodeWithText("Conclusion du 2 juin.").assertDoesNotExist()
 
