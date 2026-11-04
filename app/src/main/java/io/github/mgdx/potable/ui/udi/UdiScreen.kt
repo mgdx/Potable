@@ -1,25 +1,31 @@
 package io.github.mgdx.potable.ui.udi
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,12 +45,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Udi
 import io.github.mgdx.potable.ui.common.BackTopBar
-import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.readableWidth
+import io.github.mgdx.potable.ui.sheet.HealthAgencyCard
 
 @Composable
 fun UdiScreen(
@@ -78,7 +85,7 @@ fun UdiScreen(
             UdiUiState.Loading, is UdiUiState.Resolved, is UdiUiState.Remembered ->
                 LoadingState(stringResource(R.string.udi_loading), modifier, slow = isSlow)
             is UdiUiState.Error -> ErrorState(current.error, viewModel::retry, modifier)
-            UdiUiState.None -> EmptyState(stringResource(R.string.udi_none), modifier)
+            UdiUiState.None -> NoUdi(viewModel.communeCode, onSearchOther = onBack, modifier)
             is UdiUiState.Choice -> UdiChoiceList(
                 udis = current.udis,
                 currentCode = current.currentCode,
@@ -90,6 +97,62 @@ fun UdiScreen(
         }
     }
 }
+
+/**
+ * No unit listed for the commune (SPEC §15): why this may be, without asserting
+ * anything about the commune, whom to ask (the regional health agency only, no
+ * distributor being known) and a way back to the search, rather than a dead end.
+ */
+@Composable
+private fun NoUdi(communeCode: String, onSearchOther: () -> Unit, modifier: Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .readableWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(R.string.udi_none),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(R.string.udi_none_causes_intro),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            NO_UDI_CAUSES.forEach { cause ->
+                Row {
+                    // A list bullet, not a word: nothing to translate.
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                    Text(text = stringResource(cause), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        HealthAgencyCard(communeCode)
+        OutlinedButton(onClick = onSearchOther) {
+            Text(stringResource(R.string.udi_none_search_other))
+        }
+    }
+}
+
+/** Why Hub'Eau may list no unit for a commune, in the order shown. */
+private val NO_UDI_CAUSES = listOf(
+    R.string.udi_none_cause_neighbour,
+    R.string.udi_none_cause_private,
+    R.string.udi_none_cause_unpublished,
+)
 
 /**
  * The units to choose from, after a title and an explanation; a long list

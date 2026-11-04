@@ -33,10 +33,11 @@ import io.github.mgdx.potable.ui.common.asApiText
  * of the commune ([RegionalHealthAgencies]) for a question about health, with
  * a link to its website opened in the browser, and the distributor published
  * by Hub'Eau for a question about the service. Facts only: no advice, no
- * verdict. Not shown when neither is known.
+ * verdict. Not shown when neither is known. Without [distributor] (a commune
+ * that Hub'Eau lists no unit for, `UdiScreen`), only the agency is shown.
  */
 @Composable
-internal fun HealthAgencyCard(communeCode: String, distributor: String?) {
+internal fun HealthAgencyCard(communeCode: String, distributor: String? = null) {
     val agency = RegionalHealthAgencies.forCommune(communeCode)
     val service = distributor?.takeIf { it.isNotBlank() }
     if (agency == null && service == null) return

@@ -126,6 +126,13 @@
 
     <string name="udi_loading">Looking for the distribution units of this commune…</string>
     <string name="udi_none">No distribution unit is listed for this commune.</string>
+    <!-- Under udi_none: possible causes, followed by the three udi_none_cause_* items. Nothing is asserted about the commune: Hub'Eau doesn't say why (SPEC §14). -->
+    <string name="udi_none_causes_intro">Hub’Eau doesn’t say why. Possible causes:</string>
+    <string name="udi_none_cause_neighbour">the commune is served by the network of a neighbouring commune, and its results are published under that commune;</string>
+    <string name="udi_none_cause_private">the water comes from a private source, or from a resource the public sanitary control doesn’t monitor;</string>
+    <string name="udi_none_cause_unpublished">the data hasn’t been published yet.</string>
+    <!-- Button under the contact card, when no unit is listed: back to the commune search. -->
+    <string name="udi_none_search_other">Search another commune</string>
     <string name="udi_choice_title">Choose your distribution unit</string>
     <!-- Explains the notion, never assumed known (SPEC §9; docs/glossary.md, udi). -->
     <string name="udi_explanation">A distribution unit is the part of the water network that delivers water of the same quality. Several serve this commune: pick the one for your area.</string>
