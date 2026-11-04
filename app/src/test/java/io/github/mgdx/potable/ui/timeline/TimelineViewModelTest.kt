@@ -285,4 +285,72 @@ class TimelineViewModelTest {
         assertFalse(viewModel.isSlow.value)
         assertTrue(viewModel.state.value is TimelineUiState.Loaded)
     }
+
+    private val referencesOnly = summary(
+        "C",
+        "2026-05-01T08:00:00Z",
+        physicochemicalReferences = Compliance.NON_COMPLIANT,
+    )
+
+    private val restricted = summary("D", "2026-04-01T08:00:00Z").copy(
+        conclusion = "Eau conforme. Consommation déconseillée aux nourrissons.",
+    )
+
+    @Test
+    fun `the filter keeps the samples with a published non-compliance, counted as on the sheet`() =
+        runTest(main.dispatcher) {
+            history.answers += Result.success(listOf(older, newer, referencesOnly, restricted))
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            assertEquals(TimelineFilter.ALL, viewModel.filter.value)
+            assertEquals(4, (viewModel.state.value as TimelineUiState.Loaded).entries.size)
+
+            viewModel.selectFilter(TimelineFilter.NON_COMPLIANCES)
+            val loaded = viewModel.state.value as TimelineUiState.Loaded
+            assertEquals(listOf("B", "C", "D"), loaded.entries.map { it.sample.code })
+            assertEquals(4, loaded.all.size)
+            val digest = loaded.digest!!
+            assertEquals(1, digest.limitsCount)
+            assertEquals(1, digest.referencesOnlyCount)
+            assertEquals(1, digest.conclusionOnlyCount)
+            // Filtering what is on screen asks Hub'Eau nothing.
+            assertEquals(1, history.calls.size)
+
+            viewModel.selectFilter(TimelineFilter.ALL)
+            assertEquals(4, (viewModel.state.value as TimelineUiState.Loaded).entries.size)
+        }
+
+    @Test
+    fun `the filter can keep no sample of a loaded window`() = runTest(main.dispatcher) {
+        history.answers += Result.success(listOf(older))
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        viewModel.selectFilter(TimelineFilter.NON_COMPLIANCES)
+        val loaded = viewModel.state.value as TimelineUiState.Loaded
+        assertTrue(loaded.entries.isEmpty())
+        assertNull(loaded.digest)
+    }
+
+    @Test
+    fun `the filter outlives the death of the process and a change of window`() =
+        runTest(main.dispatcher) {
+            repeat(3) { history.answers += Result.success(listOf(older, newer)) }
+            val savedState = SavedStateHandle()
+            val first = viewModel(savedState = savedState)
+            advanceUntilIdle()
+            first.selectFilter(TimelineFilter.NON_COMPLIANCES)
+            first.selectYears(10)
+            advanceUntilIdle()
+            assertEquals(
+                listOf("B"),
+                (first.state.value as TimelineUiState.Loaded).entries.map { it.sample.code },
+            )
+
+            val restored = viewModel(savedState = savedState)
+            assertEquals(TimelineFilter.NON_COMPLIANCES, restored.filter.value)
+            advanceUntilIdle()
+            val loaded = restored.state.value as TimelineUiState.Loaded
+            assertEquals(TimelineFilter.NON_COMPLIANCES, loaded.filter)
+            assertEquals(listOf("B"), loaded.entries.map { it.sample.code })
+        }
 }

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
@@ -52,6 +53,7 @@ import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PeriodSelector
 import io.github.mgdx.potable.ui.common.ReadableInsetBox
+import io.github.mgdx.potable.ui.common.SegmentedChoices
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.messageRes
 import io.github.mgdx.potable.ui.common.readableWidth
@@ -84,6 +86,7 @@ fun TimelineScreen(
     val years by viewModel.years.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val refreshFailed by viewModel.refreshFailed.collectAsStateWithLifecycle()
+    val filter by viewModel.filter.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -97,6 +100,7 @@ fun TimelineScreen(
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             years?.let { PeriodSelector(it, viewModel::selectYears, Modifier.readableWidth()) }
+            FilterSelector(filter, viewModel::selectFilter, Modifier.readableWidth())
             refreshFailed?.let { RefreshFailedBanner(it) }
             val content = @Composable {
                 when (val current = state) {
@@ -107,7 +111,18 @@ fun TimelineScreen(
                         EmptyState(
                             stringResource(R.string.timeline_empty, formatDay(current.since)),
                         )
-                    is TimelineUiState.Loaded -> TimelineList(current, onOpenSample)
+                    is TimelineUiState.Loaded ->
+                        if (current.entries.isEmpty()) {
+                            // Only a filter can leave a loaded window empty.
+                            EmptyState(
+                                stringResource(
+                                    R.string.timeline_filter_empty,
+                                    formatDay(current.since),
+                                ),
+                            )
+                        } else {
+                            TimelineList(current, onOpenSample)
+                        }
                 }
             }
             // The cache of any unit is refreshed on demand (SPEC §7).
@@ -122,6 +137,33 @@ fun TimelineScreen(
             }
         }
     }
+}
+
+/**
+ * Every sample, or only those with a non-compliance or a restriction
+ * published by the ARS: two segments announced as radio buttons, selected or
+ * not, at least 48dp high.
+ */
+@Composable
+private fun FilterSelector(
+    filter: TimelineFilter,
+    onSelect: (TimelineFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SegmentedChoices(
+        choices = TimelineFilter.entries,
+        selected = filter,
+        label = {
+            stringResource(
+                when (it) {
+                    TimelineFilter.ALL -> R.string.timeline_filter_all
+                    TimelineFilter.NON_COMPLIANCES -> R.string.timeline_filter_non_compliances
+                },
+            )
+        },
+        onSelect = onSelect,
+        modifier = modifier,
+    )
 }
 
 /** The data shown are kept; the failure is said with a text and an icon. */
@@ -168,16 +210,16 @@ private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) 
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     val count = loaded.entries.size
+                    val summary = when (loaded.filter) {
+                        TimelineFilter.ALL -> R.plurals.timeline_summary
+                        TimelineFilter.NON_COMPLIANCES -> R.plurals.timeline_summary_non_compliances
+                    }
                     Text(
-                        text = pluralStringResource(
-                            R.plurals.timeline_summary,
-                            count,
-                            count,
-                            formatDay(loaded.since),
-                        ),
+                        text = pluralStringResource(summary, count, count, formatDay(loaded.since)),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.semantics { heading() },
                     )
+                    loaded.digest?.let { DigestLines(it) }
                     Text(
                         text = stringResource(R.string.sheet_official_wording),
                         style = MaterialTheme.typography.labelSmall,
@@ -194,6 +236,25 @@ private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) 
                 )
             }
         }
+    }
+}
+
+/**
+ * The samples kept by the filter, counted as in the sheet's box: limits and
+ * references told apart (SPEC §5 F3), then those whose conclusion alone
+ * mentions a restriction. Empty categories are left out.
+ */
+@Composable
+private fun DigestLines(digest: UnfavourableDigest) {
+    listOf(
+        R.plurals.sheet_recent_limits to digest.limitsCount,
+        R.plurals.sheet_recent_references_only to digest.referencesOnlyCount,
+        R.plurals.sheet_recent_conclusion_only to digest.conclusionOnlyCount,
+    ).filter { (_, count) -> count > 0 }.forEach { (res, count) ->
+        Text(
+            text = pluralStringResource(res, count, count),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
