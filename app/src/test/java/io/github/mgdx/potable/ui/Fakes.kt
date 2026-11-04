@@ -18,6 +18,7 @@ import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.data.preferences.RememberedUdi
 import io.github.mgdx.potable.data.preferences.withRecentUnit
 import io.github.mgdx.potable.data.preferences.withoutRecentUnit
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -77,13 +78,28 @@ class FakeWaterRepository : WaterRepository {
     override fun cachedLatestSample(communeCode: String, udiCode: String): Flow<CachedSample?> =
         cache
 
+    /** When set, each refresh waits for it before answering. */
+    var refreshGate: CompletableDeferred<Unit>? = null
+
+    /** Bumped by [purge]: a refresh started before writes nothing, as the real cache does. */
+    private var generation = 0
+
+    /** Empties the cache as the settings do. */
+    fun purge() {
+        generation++
+        cache.value = null
+    }
+
     override suspend fun refreshCache(
         communeCode: String,
         udiCode: String,
         force: Boolean,
     ): Boolean {
         refreshCalls += force
+        val started = generation
+        refreshGate?.await()
         (refreshAnswers.removeFirstOrNull() ?: Result.success(Unit)).getOrThrow()
+        if (started != generation) return true
         refreshedCache?.let { cache.value = it }
         return true
     }
