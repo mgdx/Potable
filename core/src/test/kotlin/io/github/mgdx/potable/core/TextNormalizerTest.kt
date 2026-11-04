@@ -1,7 +1,10 @@
 package io.github.mgdx.potable.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.random.Random
 
 class TextNormalizerTest {
     private fun n(text: String) = TextNormalizer.normalize(text)
@@ -65,5 +68,31 @@ class TextNormalizerTest {
         for (text in listOf("L'Isle-d'Espagnac", "St-Jean", "Œuilly", "Paris 15e Arrondissement")) {
             assertEquals(n(text), n(n(text)))
         }
+    }
+
+    @Test
+    fun `the fast path agrees with the reference on every embedded name`() {
+        Fixtures.communes.forEach { commune ->
+            val fast = TextNormalizer.fastWords(commune.name)
+            assertNotNull(commune.name, fast)
+            assertEquals(commune.name, TextNormalizer.slowWords(commune.name), fast)
+        }
+    }
+
+    @Test
+    fun `the fast path agrees with the reference on random text, or steps aside`() {
+        // Characters the fast path handles, its boundaries, and some it leaves to the reference.
+        val alphabet = ('\u0000'..'\u0390') + "’‘ \u00A0\u0085İıΣσςŒœÆæß€😀".toList() +
+            "Saint-Étienne l'Isle  St.Ste".toList()
+        val random = Random(9303)
+        var fast = 0
+        repeat(100_000) {
+            val length = random.nextInt(0, 12)
+            val text = String(CharArray(length) { alphabet[random.nextInt(alphabet.size)] })
+            val words = TextNormalizer.fastWords(text) ?: return@repeat
+            fast++
+            assertEquals(text, TextNormalizer.slowWords(text), words)
+        }
+        assertTrue(fast > 10_000)
     }
 }

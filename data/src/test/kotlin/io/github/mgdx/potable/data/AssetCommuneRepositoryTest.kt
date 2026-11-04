@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.data
 
 import io.github.mgdx.potable.core.model.Commune
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -10,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 class AssetCommuneRepositoryTest {
     private val tsv =
@@ -96,5 +98,27 @@ class AssetCommuneRepositoryTest {
         repository.search("orleans", 20)
 
         assertEquals(1, opens.get())
+    }
+
+    @Test
+    fun lookups_leaveTheCallersThread() = runTest {
+        val dispatches = AtomicInteger()
+        val work =
+            object : CoroutineDispatcher() {
+                override fun dispatch(context: CoroutineContext, block: Runnable) {
+                    dispatches.incrementAndGet()
+                    Dispatchers.Default.dispatch(context, block)
+                }
+            }
+        val repository = AssetCommuneRepository(work) { tsv.byteInputStream(Charsets.UTF_8) }
+        repository.preload()
+
+        dispatches.set(0)
+        repository.search("orleans", 20)
+        assertEquals(1, dispatches.get())
+        repository.nearest(47.9, 1.9)
+        assertEquals(2, dispatches.get())
+        repository.byCode("75056")
+        assertEquals(3, dispatches.get())
     }
 }
