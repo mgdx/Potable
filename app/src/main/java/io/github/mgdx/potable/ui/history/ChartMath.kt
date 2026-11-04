@@ -20,8 +20,17 @@ import kotlin.math.roundToLong
 /**
  * A measure as drawn: [day] is the published date (epoch day), [value] the
  * height it is drawn at, [index] its position in the series's points.
+ * [joinsPrevious] is true when the line comes to it from the previous drawn
+ * point: false for the first, and after a measure that is not drawn, so
+ * that the line never runs across a `<SEUIL` or a qualitative result.
  */
-data class PlotPoint(val index: Int, val day: Long, val value: Double, val censored: Boolean)
+data class PlotPoint(
+    val index: Int,
+    val day: Long,
+    val value: Double,
+    val censored: Boolean,
+    val joinsPrevious: Boolean = true,
+)
 
 /**
  * The height at which [point] is drawn, or null if it cannot be.
@@ -42,14 +51,24 @@ fun plotValue(point: SeriesPoint): Double? {
     return point.value
 }
 
-/** The drawable points of [points], in date order. */
-fun plotPoints(points: List<SeriesPoint>): List<PlotPoint> = points
-    .mapIndexedNotNull { index, point ->
-        plotValue(point)?.let { value ->
-            PlotPoint(index, publishedDate(point.date).toEpochDay(), value, point.censored)
-        }
+/**
+ * The drawable points of [points], in date order, each joined to the
+ * previous one only if no measure that is not drawn lies between them.
+ */
+fun plotPoints(points: List<SeriesPoint>): List<PlotPoint> {
+    val ordered = points.indices.sortedWith(compareBy({ measureDay(points[it]) }, { it }))
+    var previousDrawn = false
+    return ordered.mapNotNull { index ->
+        val point = points[index]
+        val value = plotValue(point)
+        val joins = previousDrawn
+        previousDrawn = value != null
+        value?.let { PlotPoint(index, measureDay(point), it, point.censored, joins) }
     }
-    .sortedWith(compareBy({ it.day }, { it.index }))
+}
+
+/** The published date of [point], in epoch days. */
+fun measureDay(point: SeriesPoint): Long = publishedDate(point.date).toEpochDay()
 
 /** A decimal number as Hub'Eau writes it ("0,01", "12.5", "1 200"), or null. */
 internal fun parseDecimal(text: String): Double? {

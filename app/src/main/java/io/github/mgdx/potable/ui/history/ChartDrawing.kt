@@ -91,8 +91,10 @@ internal fun DrawScope.drawChart(
 
         val series = colors.secondary
         val path = Path()
+        // Broken where a measure is not drawn ([PlotPoint.joinsPrevious]).
         geometry.pointXs.forEachIndexed { i, x ->
-            if (i == 0) path.moveTo(x, geometry.pointYs[i]) else path.lineTo(x, geometry.pointYs[i])
+            val y = geometry.pointYs[i]
+            if (model.points[i].joinsPrevious) path.lineTo(x, y) else path.moveTo(x, y)
         }
         drawPath(path, series, style = Stroke(width = 2.dp.toPx()))
         model.points.forEachIndexed { i, point ->

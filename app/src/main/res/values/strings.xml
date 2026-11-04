@@ -610,6 +610,6 @@
     <string name="sheet_conclusions_sampled_on">Samples from %1$s · %2$s</string>
     <string name="result_below_sum_threshold">Sum below the quantification threshold, published without a figure.</string>
     <string name="history_below_sum_threshold">%1$s: sum below the quantification threshold, published without a figure.</string>
-    <string name="history_legend_below_sum_threshold">Measurements published as %1$s are not drawn, as they have no figure. They appear in the list of values.</string>
+    <string name="history_legend_below_sum_threshold">Measurements published as %1$s are not drawn, as they have no figure, and the line breaks where they are. They appear in the list of values.</string>
     <string name="history_too_few_figures">Too few of these results are figures to draw a chart, so they are listed.</string>
 </resources>

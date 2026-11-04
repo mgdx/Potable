@@ -413,6 +413,6 @@
     <string name="sheet_conclusions_sampled_on">Prélèvements du %1$s · %2$s</string>
     <string name="result_below_sum_threshold">Somme inférieure au seuil de quantification, publiée sans valeur chiffrée.</string>
     <string name="history_below_sum_threshold">%1$s : somme inférieure au seuil de quantification, publiée sans valeur chiffrée.</string>
-    <string name="history_legend_below_sum_threshold">Les mesures publiées %1$s ne sont pas tracées, faute de valeur chiffrée. Elles figurent dans la liste des valeurs.</string>
+    <string name="history_legend_below_sum_threshold">Les mesures publiées %1$s ne sont pas tracées, faute de valeur chiffrée, et la ligne s’interrompt à leur place. Elles figurent dans la liste des valeurs.</string>
     <string name="history_too_few_figures">Trop peu de ces résultats sont chiffrés pour tracer un graphique. Ils sont présentés sous forme de liste.</string>
 </resources>

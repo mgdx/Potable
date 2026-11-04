@@ -4,8 +4,9 @@ import androidx.compose.runtime.Immutable
 import io.github.mgdx.potable.core.model.ParameterSeries
 
 /**
- * What the chart of a series draws: its drawable points, the time span, and
- * the bounds of the quality limit and reference placed against the data.
+ * What the chart of a series draws: its drawable points, the time span of
+ * all its measures (a `<SEUIL` one included, though not drawn), and the
+ * bounds of the quality limit and reference placed against the data.
  * Null from [of] when fewer than two measures can be drawn.
  */
 @Immutable
@@ -30,7 +31,8 @@ data class ChartModel(
             val high = points.maxOf { it.value }
             return ChartModel(
                 points = points,
-                time = timeAxis(points.map { it.day }),
+                // Every measure, drawn or not: the chart reaches the latest.
+                time = timeAxis(series.points.map(::measureDay)),
                 limit = placeThreshold(series.limit, low, high),
                 reference = placeThreshold(series.reference, low, high),
             )

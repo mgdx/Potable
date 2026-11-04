@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.ui.history
 
+import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.core.model.Threshold
 import org.junit.Assert.assertEquals
@@ -47,6 +48,43 @@ class ChartMathTest {
         )
         assertEquals(listOf(1, 0), points.map { it.index })
         assertEquals(LocalDate.of(2026, 1, 1).toEpochDay(), points.first().day)
+    }
+
+    @Test
+    fun `the line is broken where a measure is not drawn`() {
+        val points = plotPoints(
+            listOf(
+                point("2026-04-01", 0.0, "<SEUIL", censored = true),
+                point("2026-01-01", 0.07),
+                point("2026-02-01", 0.02),
+                point("2026-03-01", 0.0, "<SEUIL", censored = true),
+                point("2026-05-01", 0.03),
+                point("2026-06-01", 0.04),
+            ),
+        )
+        assertEquals(listOf(1, 2, 4, 5), points.map { it.index })
+        assertEquals(listOf(false, true, false, true), points.map { it.joinsPrevious })
+    }
+
+    @Test
+    fun `the time axis reaches measures that are not drawn`() {
+        val series = ParameterSeries(
+            parameterCode = "6276",
+            label = "Total des pesticides analysés",
+            unit = "µg/L",
+            points = listOf(
+                point("2025-01-13", 0.032),
+                point("2024-06-10", 0.02),
+                point("2026-08-17", 0.0, "<SEUIL", censored = true),
+            ),
+            limitText = null,
+            referenceText = null,
+            limit = null,
+            reference = null,
+        )
+        val time = ChartModel.of(series)!!.time
+        assertEquals(LocalDate.of(2024, 6, 10).toEpochDay(), time.startDay)
+        assertEquals(LocalDate.of(2026, 8, 17).toEpochDay(), time.endDay)
     }
 
     @Test

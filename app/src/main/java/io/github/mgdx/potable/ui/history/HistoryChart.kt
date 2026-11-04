@@ -48,7 +48,7 @@ import java.util.Locale
 
 /**
  * The line chart of a parameter (SPEC §5 F5): measures joined in date order,
- * censored values as hollow markers, the quality limit as a solid line and
+ * the line broken where a measure is not drawn (`<SEUIL`), censored values as hollow markers, the quality limit as a solid line and
  * the quality reference as a dashed one. Colours come from the theme only and
  * never judge a value (SPEC §14): the series in `secondary` (the brand's
  * light accent), the limit in `onSurface`, the reference in
