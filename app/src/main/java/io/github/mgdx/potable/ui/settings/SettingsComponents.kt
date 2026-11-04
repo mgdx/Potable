@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -26,6 +27,7 @@ import io.github.mgdx.potable.ui.common.SectionCard
 /**
  * A radio group: each whole row is the touch target and is announced as a
  * radio button, selected or not; the button itself takes no click of its own.
+ * While not [enabled], the rows are greyed and take no click.
  */
 @Composable
 internal fun <T> ChoiceGroup(
@@ -33,6 +35,7 @@ internal fun <T> ChoiceGroup(
     selected: T,
     label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
+    enabled: Boolean = true,
 ) {
     Column(modifier = Modifier.selectableGroup()) {
         choices.forEach { choice ->
@@ -43,16 +46,22 @@ internal fun <T> ChoiceGroup(
                     .heightIn(min = 48.dp)
                     .selectable(
                         selected = isSelected,
+                        enabled = enabled,
                         onClick = { onSelect(choice) },
                         role = Role.RadioButton,
                     )
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(selected = isSelected, onClick = null)
+                RadioButton(selected = isSelected, onClick = null, enabled = enabled)
                 Text(
                     text = label(choice),
                     style = MaterialTheme.typography.bodyLarge,
+                    color = if (enabled) {
+                        Color.Unspecified
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
+                    },
                     modifier = Modifier.padding(start = 16.dp),
                 )
             }

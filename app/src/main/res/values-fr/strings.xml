@@ -351,6 +351,7 @@
     <string name="settings_alert_check_nothing_new">Rien de nouveau à signaler.</string>
     <string name="settings_alert_check_failed">Impossible de joindre Hub\'Eau. Réessayez plus tard.</string>
     <string name="settings_alert_period">Vérifier les nouveaux résultats :</string>
+    <string name="settings_alert_period_off">Activez une alerte pour choisir.</string>
     <string name="settings_alert_weekly">Chaque semaine</string>
     <plurals name="settings_alert_weeks">
         <item quantity="one">Toutes les %d semaines</item>
@@ -362,6 +363,7 @@
     <string name="settings_notifications_open">Ouvrir les paramètres de notification</string>
     <string name="settings_backup_title">Sauvegarde</string>
     <string name="settings_backup_description">Enregistrez dans un fichier les communes que vous suivez et vos réglages d’affichage, pour les retrouver sur un autre téléphone. Les alertes ne sont pas sauvegardées : réactivez-les après l’importation.</string>
+    <string name="settings_backup_export_no_follows">Suivez une commune pour pouvoir l’exporter.</string>
     <string name="settings_backup_export">Exporter les communes suivies</string>
     <string name="settings_backup_import">Importer</string>
     <string name="settings_backup_exported">Communes suivies exportées.</string>

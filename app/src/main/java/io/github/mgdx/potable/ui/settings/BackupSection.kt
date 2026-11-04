@@ -28,7 +28,12 @@ import java.time.LocalDate
  * system backup): through the system file picker, without any permission.
  */
 @Composable
-internal fun BackupSection(running: Boolean, onExport: (Uri) -> Unit, onImport: (Uri) -> Unit) {
+internal fun BackupSection(
+    running: Boolean,
+    onExport: (Uri) -> Unit,
+    onImport: (Uri) -> Unit,
+    noFollows: Boolean = false,
+) {
     val exporter =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(JSON)) { uri ->
             uri?.let(onExport)
@@ -39,13 +44,14 @@ internal fun BackupSection(running: Boolean, onExport: (Uri) -> Unit, onImport: 
         }
     SettingsCard(stringResource(R.string.settings_backup_title)) {
         Description(stringResource(R.string.settings_backup_description))
+        if (noFollows) Description(stringResource(R.string.settings_backup_export_no_follows))
         FlowRow(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedButton(
                 onClick = { exporter.launch("potable-${LocalDate.now()}.json") },
-                enabled = !running,
+                enabled = !running && !noFollows,
             ) {
                 Text(stringResource(R.string.settings_backup_export))
             }

@@ -511,6 +511,8 @@
     <string name="settings_alert_check_failed">Could not reach Hub\'Eau. Try again later.</string>
     <!-- Followed by radio buttons: settings_alert_weekly, settings_alert_weeks. -->
     <string name="settings_alert_period">Check for new results:</string>
+    <!-- Under settings_alert_period, while both alerts are off: why the choices below are greyed out. One line. -->
+    <string name="settings_alert_period_off">Turn on an alert to choose.</string>
     <string name="settings_alert_weekly">Every week</string>
     <!-- Radio button. Used for 2 weeks or more only; 1 week is settings_alert_weekly. %d: 2 or 4. -->
     <plurals name="settings_alert_weeks">
@@ -524,6 +526,8 @@
     <!-- Settings section: export and import of the followed communes to a file. -->
     <string name="settings_backup_title">Backup</string>
     <string name="settings_backup_description">Save the communes you follow and your display settings to a file, to find them again on another phone. Alerts are not saved: turn them on again after importing.</string>
+    <!-- Under settings_backup_description, while no commune is followed: why the export button is greyed out. -->
+    <string name="settings_backup_export_no_follows">Follow a commune to export it.</string>
     <!-- Button: opens the system file picker to save the file. -->
     <string name="settings_backup_export">Export followed communes</string>
     <!-- Button: opens the system file picker to choose a file exported by Potable. -->

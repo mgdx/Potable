@@ -153,7 +153,10 @@ internal fun AlertsSection(
         }
     }
     Description(stringResource(R.string.settings_alert_period))
+    val anyOn = alerts.newAnalysis || alerts.unfavourable
+    if (!anyOn) Description(stringResource(R.string.settings_alert_period_off))
     ChoiceGroup(
+        enabled = anyOn,
         choices = weekChoices,
         selected = alerts.periodWeeks,
         label = {

@@ -2,6 +2,7 @@ package io.github.mgdx.potable.ui.settings
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import io.github.mgdx.potable.R
@@ -90,7 +91,7 @@ class SettingsScreenTest {
 
     @Test
     fun `the backup section offers its export and its import`() {
-        show(alertOn = false, followed = false)
+        show(alertOn = false, followed = true)
 
         compose.onNodeWithText(string(R.string.settings_backup_export))
             .assertHasClickAction()
@@ -98,6 +99,31 @@ class SettingsScreenTest {
         compose.onNodeWithText(string(R.string.settings_backup_import))
             .assertHasClickAction()
             .assertIsEnabled()
+    }
+
+    @Test
+    fun `without a followed commune, the export is disabled and says why`() {
+        show(alertOn = false, followed = false)
+
+        compose.onNodeWithText(string(R.string.settings_backup_export)).assertIsNotEnabled()
+        compose.onNodeWithText(string(R.string.settings_backup_export_no_follows)).assertExists()
+        compose.onNodeWithText(string(R.string.settings_backup_import)).assertIsEnabled()
+    }
+
+    @Test
+    fun `the check period is disabled while both alerts are off, and says why`() {
+        show(alertOn = false, followed = true)
+
+        compose.onNodeWithText(string(R.string.settings_alert_weekly)).assertIsNotEnabled()
+        compose.onNodeWithText(string(R.string.settings_alert_period_off)).assertExists()
+    }
+
+    @Test
+    fun `the check period can be chosen while an alert is on`() {
+        show(alertOn = true, followed = true)
+
+        compose.onNodeWithText(string(R.string.settings_alert_weekly)).assertIsEnabled()
+        compose.onNodeWithText(string(R.string.settings_alert_period_off)).assertDoesNotExist()
     }
 
     @Test

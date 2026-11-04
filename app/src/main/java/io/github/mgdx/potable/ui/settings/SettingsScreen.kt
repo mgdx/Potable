@@ -141,6 +141,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
 
             BackupSection(
                 running = backupRunning,
+                noFollows = noFollows,
                 onExport = { uri ->
                     viewModel.exportBackup { context.contentResolver.writeBackup(uri, it) }
                 },
