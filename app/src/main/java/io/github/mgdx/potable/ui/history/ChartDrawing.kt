@@ -8,11 +8,15 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 
 private val LINE_WIDTH = 2.dp
 private val DENSE_LINE_WIDTH = 1.dp
+
+/** Width of the line through the measured values: thinner when [dense] ([ChartModel.dense]). */
+internal fun measureLineWidth(dense: Boolean): Dp = if (dense) DENSE_LINE_WIDTH else LINE_WIDTH
 
 /**
  * Draws [geometry] of [model]: grid and graduations, the quality reference
@@ -104,8 +108,7 @@ internal fun DrawScope.drawChart(
         }
         // Dense, the measured markers would cover the plot: the line alone,
         // thinner, draws them ([ChartModel.dense]).
-        val lineWidth = if (model.dense) DENSE_LINE_WIDTH else LINE_WIDTH
-        drawPath(path, series, style = Stroke(width = lineWidth.toPx()))
+        drawPath(path, series, style = Stroke(width = measureLineWidth(model.dense).toPx()))
         model.points.forEachIndexed { i, point ->
             val center = Offset(geometry.pointXs[i], geometry.pointYs[i])
             if (point.censored) {

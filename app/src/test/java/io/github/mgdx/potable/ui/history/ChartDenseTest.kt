@@ -99,4 +99,13 @@ class ChartDenseTest {
         assertEquals(150.0, dayAt(110f, 10f, 210f, window), 1e-9)
         assertEquals(200.0, dayAt(210f, 10f, 210f, window), 1e-9)
     }
+
+    @Test
+    fun `the legend of a dense chart shows the thin line alone`() {
+        val sparse = ChartModel.of(series((0 until DENSE_POINT_COUNT).map { point(it, 20.0) }))!!
+        assertEquals(LegendMark.MEASURE, measureLegendMark(sparse))
+        val dense = ChartModel.of(series((0..DENSE_POINT_COUNT).map { point(it, 20.0) }))!!
+        assertEquals(LegendMark.DENSE_MEASURE, measureLegendMark(dense))
+        assertTrue(measureLineWidth(dense = true) < measureLineWidth(dense = false))
+    }
 }
