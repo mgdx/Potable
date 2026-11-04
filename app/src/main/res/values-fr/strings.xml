@@ -224,6 +224,11 @@
 
     <string name="udi_loading">Recherche des unités de distribution de cette commune…</string>
     <string name="udi_none">Aucune unité de distribution n’est répertoriée pour cette commune.</string>
+    <string name="udi_none_causes_intro">Hub’Eau n’en donne pas la raison. Causes possibles :</string>
+    <string name="udi_none_cause_neighbour">la commune est desservie par le réseau d’une commune voisine, et ses résultats sont publiés sous le nom de celle-ci ;</string>
+    <string name="udi_none_cause_private">l’eau provient d’un captage privé, ou d’une ressource que le contrôle sanitaire public ne suit pas ;</string>
+    <string name="udi_none_cause_unpublished">les données ne sont pas encore publiées.</string>
+    <string name="udi_none_search_other">Chercher une autre commune</string>
     <string name="udi_choice_title">Choisissez votre unité de distribution</string>
     <string name="udi_explanation">Une unité de distribution est la partie du réseau d’eau qui distribue une eau de même qualité. Plusieurs desservent cette commune : choisissez celle de votre secteur.</string>
     <string name="udi_current_choice">Votre choix actuel</string>

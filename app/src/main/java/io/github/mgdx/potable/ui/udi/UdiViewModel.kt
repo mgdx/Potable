@@ -57,7 +57,8 @@ class UdiViewModel(
     private val water: WaterRepository,
     private val preferences: AppPreferences,
     private val follows: FollowRepository,
-    private val communeCode: String,
+    /** The commune, also read by the screen for its health agency ([UdiUiState.None]). */
+    val communeCode: String,
     private val forceChoice: Boolean = false,
     slowThreshold: Duration = SLOW_LOAD_THRESHOLD,
 ) : ViewModel() {
