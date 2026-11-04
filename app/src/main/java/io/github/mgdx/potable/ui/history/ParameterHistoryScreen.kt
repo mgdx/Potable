@@ -170,7 +170,13 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                 PublishedThresholds(series)
             }
             model == null -> {
-                Paragraph(stringResource(R.string.history_not_numeric))
+                // Figures may be there, too few once the `<SEUIL` sums are left out.
+                val why = if (belowSumThreshold == null) {
+                    R.string.history_not_numeric
+                } else {
+                    R.string.history_too_few_figures
+                }
+                Paragraph(stringResource(why))
                 PublishedThresholds(series)
                 MeasureList(series)
             }
@@ -184,7 +190,7 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                         onSelect = { selected = it },
                         onOpenSample = onOpenSample,
                     )
-                    Legend(series, model)
+                    Legend(series, model, belowSumThreshold)
                     Text(
                         text = stringResource(R.string.history_gesture_hint),
                         style = MaterialTheme.typography.bodySmall,
@@ -240,12 +246,19 @@ private fun LegendText(text: String) {
 private enum class LegendMark { MEASURE, CENSORED, LIMIT, REFERENCE }
 
 @Composable
-private fun Legend(series: ParameterSeries, model: ChartModel) {
+private fun Legend(series: ParameterSeries, model: ChartModel, belowSumThreshold: String?) {
     val locale = currentLocale()
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         LegendRow(LegendMark.MEASURE, stringResource(R.string.history_legend_measure))
         if (model.hasCensored) {
             LegendRow(LegendMark.CENSORED, stringResource(R.string.history_legend_censored))
+        }
+        // `<SEUIL` gives no bound to draw at ([plotValue]): listed only.
+        belowSumThreshold?.let {
+            LegendRow(
+                null,
+                stringResource(R.string.history_legend_below_sum_threshold, bidiWrap(it)),
+            )
         }
         ThresholdLegend(
             text = thresholdText(series.limitText, model.limit, series.unit, locale),

@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.ui.history
 
+import io.github.mgdx.potable.core.Series
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.core.model.Threshold
 import io.github.mgdx.potable.ui.sheet.publishedDate
@@ -27,11 +28,13 @@ data class PlotPoint(val index: Int, val day: Long, val value: Double, val censo
  *
  * A censored value ("<0,01", ">80") is drawn at its published bound, read
  * from the text, or at `resultat_numerique` if the text cannot be read. A
- * qualitative result ("Aspect normal", whose number is a meaningless `0.0`)
- * or a missing one ("N.M.") is not drawn.
+ * qualitative result ("Aspect normal", whose number is a meaningless `0.0`),
+ * a missing one ("N.M.") or a sum published as `<SEUIL` (no bound given, its
+ * number a meaningless `0.0`: [Series.isBelowSumThreshold]) is not drawn.
  */
 fun plotValue(point: SeriesPoint): Double? {
     val text = point.text?.trim().orEmpty()
+    if (Series.isBelowSumThreshold(text)) return null
     if (point.censored) {
         return parseDecimal(text.trimStart('<', '>', '=', '≤', '≥', ' ')) ?: point.value
     }

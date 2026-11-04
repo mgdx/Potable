@@ -31,6 +31,7 @@ class ChartMathTest {
     fun `qualitative and missing results are not drawn`() {
         assertNull(plotValue(point("2026-01-01", 0.0, "Aspect normal")))
         assertNull(plotValue(point("2026-01-01", null, "N.M.")))
+        assertNull(plotValue(point("2026-01-01", 0.0, "<SEUIL", censored = true)))
         assertEquals(12.5, plotValue(point("2026-01-01", 12.5, "12,5"))!!, 1e-12)
         assertEquals(3.0, plotValue(point("2026-01-01", 3.0, null))!!, 1e-12)
     }
