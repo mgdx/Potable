@@ -116,6 +116,15 @@ interface AppPreferences {
 
     suspend fun setLastAlertFailure(at: Instant) {}
 
+    /**
+     * Whether the sheet has once offered to switch the alerts on, as a unit
+     * was followed: offered once in the life of the installation, whatever
+     * the answer. Default false. Not exported with the follows.
+     */
+    val alertsOfferShown: Flow<Boolean> get() = flowOf(false)
+
+    suspend fun setAlertsOfferShown() {}
+
     companion object {
         const val DEFAULT_YEARS = 3
 
@@ -329,11 +338,17 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         store.edit { it[LAST_ALERT_FAILURE] = at.toEpochMilli() }
     }
 
+    override val alertsOfferShown: Flow<Boolean> = flag(ALERTS_OFFER_SHOWN)
+
+    override suspend fun setAlertsOfferShown() {
+        store.edit { it[ALERTS_OFFER_SHOWN] = true }
+    }
+
     private fun instant(key: Preferences.Key<Long>): Flow<Instant?> = data
         .map { prefs -> prefs[key]?.let(Instant::ofEpochMilli) }
         .distinctUntilChanged()
 
-    /** Alerts are off until the user switches them on (SPEC §5 F7). */
+    /** Alerts are off until the user switches them on (SPEC §5 F7); false when absent. */
     private fun flag(key: Preferences.Key<Boolean>): Flow<Boolean> = data
         .map { it[key] ?: false }
         .distinctUntilChanged()
@@ -364,6 +379,7 @@ class DataStoreAppPreferences internal constructor(private val store: DataStore<
         val ALERT_PERIOD_WEEKS = intPreferencesKey("alert_period_weeks")
         val LAST_ALERT_CHECK = longPreferencesKey("last_alert_check")
         val LAST_ALERT_FAILURE = longPreferencesKey("last_alert_failure")
+        val ALERTS_OFFER_SHOWN = booleanPreferencesKey("alerts_offer_shown")
 
         /** One key per commune with several units: only its code and the chosen unit's. */
         fun udiKey(communeCode: String) = stringPreferencesKey("$UDI_PREFIX$communeCode")

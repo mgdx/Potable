@@ -94,6 +94,10 @@
     <string name="sheet_following">Suivie</string>
     <string name="sheet_follow_description">Suivre cette unité de distribution</string>
     <string name="sheet_unfollow_description">Suivie. Appuyez pour ne plus suivre cette unité de distribution</string>
+    <string name="sheet_alerts_offer">Être prévenu des nouvelles analyses ?</string>
+    <string name="sheet_alerts_offer_action">Activer</string>
+    <string name="sheet_alerts_denied">Notifications non autorisées : les alertes restent désactivées.</string>
+    <string name="sheet_alerts_denied_action">Paramètres</string>
     <string name="sheet_change_udi">Changer d’unité de distribution</string>
     <string name="sheet_data_from">Données téléchargées le %1$s</string>
     <string name="sheet_refresh_failed">Impossible d’actualiser — données téléchargées le %1$s</string>

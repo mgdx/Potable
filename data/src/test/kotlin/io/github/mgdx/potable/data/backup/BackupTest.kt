@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -45,6 +46,12 @@ class BackupTest {
         override suspend fun acceptDisclaimer() = Unit
 
         override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+        override val alertsOfferShown = MutableStateFlow(false)
+
+        override suspend fun setAlertsOfferShown() {
+            alertsOfferShown.value = true
+        }
+
         override val historyYears = MutableStateFlow(AppPreferences.DEFAULT_YEARS)
         override val retentionYears = MutableStateFlow(AppPreferences.DEFAULT_YEARS)
         val udis = MutableStateFlow<Map<String, RememberedUdi>>(emptyMap())
@@ -215,5 +222,16 @@ class BackupTest {
             BackupRead.Invalid(BackupError.TOO_LARGE),
             BackupCodec.read(ByteArrayInputStream(padded.toByteArray())),
         )
+    }
+
+    @Test
+    fun `the alerts offer made on this phone is neither exported nor imported`() = runBlocking {
+        val preferences = FakePreferences().apply { setAlertsOfferShown() }
+        val text = BackupCodec.encode(backup(FakeFollows(listOf(orleans)), preferences).export())
+        assertFalse(text.contains("offer", ignoreCase = true))
+
+        val target = FakePreferences()
+        backup(FakeFollows(), target).import(valid(text).backup)
+        assertFalse(target.alertsOfferShown.value)
     }
 }

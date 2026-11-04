@@ -24,6 +24,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -88,6 +90,8 @@ fun SheetScreen(
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
     val recentUnfavourable by viewModel.recentUnfavourable.collectAsStateWithLifecycle()
     val watched by viewModel.watched.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    AlertOfferSnackbar(viewModel, snackbar)
     val largeFont = LocalDensity.current.fontScale > PINNED_NOTICE_MAX_FONT_SCALE
     // Loading, error and empty states have room to spare: the notice stays pinned.
     val pinnedNotice = !largeFont || state !is SheetUiState.Loaded
@@ -131,6 +135,7 @@ fun SheetScreen(
                 )
             },
             bottomBar = { if (pinnedNotice) SourceNotice(pinned = true, contentMaxWidth) },
+            snackbarHost = { SnackbarHost(snackbar) },
         ) { innerPadding ->
             Column(modifier = Modifier.padding(innerPadding)) {
                 freshness?.let { FreshnessBanner(it, contentMaxWidth) }

@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
+import io.github.mgdx.potable.alert.AlertActivation
 import io.github.mgdx.potable.alert.NotificationAccess
+import io.github.mgdx.potable.alert.activation
 import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.backup.BackupCodec
@@ -258,17 +260,18 @@ class SettingsViewModel(
             store(kind, false)
             return
         }
-        canPost.value = notifications.canPost()
-        when {
-            canPost.value -> {
+        val activation = notifications.activation()
+        canPost.value = activation == AlertActivation.ALLOWED
+        when (activation) {
+            AlertActivation.ALLOWED -> {
                 denied.value = false
                 store(kind, true)
             }
-            notifications.canRequest -> {
+            AlertActivation.REQUEST -> {
                 pending = kind
                 _permissionRequest.value = true
             }
-            else -> denied.value = true
+            AlertActivation.DENIED -> denied.value = true
         }
     }
 

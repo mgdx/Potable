@@ -146,6 +146,14 @@
     <string name="sheet_follow_description">Follow this distribution unit</string>
     <!-- Screen reader label of sheet_following. -->
     <string name="sheet_unfollow_description">Following. Tap to stop following this distribution unit</string>
+    <!-- Snackbar shown once in the life of the app, just after the user follows a unit, while no alert is on. Short question. -->
+    <string name="sheet_alerts_offer">Get notified of new analyses?</string>
+    <!-- Action of sheet_alerts_offer: switches the "new analyses" alert on, as in the settings. Very short, like a button. -->
+    <string name="sheet_alerts_offer_action">Turn on</string>
+    <!-- Snackbar after sheet_alerts_offer_action when the user refused the notification permission, or the system cannot ask for it. -->
+    <string name="sheet_alerts_denied">Notifications are not allowed: alerts stay off.</string>
+    <!-- Action of sheet_alerts_denied: opens the app's notification settings in the system. Very short, like a button. -->
+    <string name="sheet_alerts_denied_action">Settings</string>
     <!-- Text button under the top bar, when the commune has several units. -->
     <string name="sheet_change_udi">Change distribution unit</string>
     <!-- Banner of the sheet, and line of a commune in the settings. %1$s: date the data were last downloaded from Hub'Eau, formatted for the language. Not the date of a sample: say "downloaded", so that it cannot be read as one. -->

@@ -39,18 +39,36 @@ import java.util.Locale
 @Composable
 internal fun NotificationPermissionRequest(viewModel: SettingsViewModel) {
     val request by viewModel.permissionRequest.collectAsStateWithLifecycle()
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel.onPermissionResult(it)
-    }
-    LaunchedEffect(request) {
-        if (request && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            viewModel.onPermissionRequested()
-            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
+    NotificationPermissionRequest(
+        request,
+        viewModel::onPermissionRequested,
+        viewModel::onPermissionResult,
+    )
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshNotificationAccess()
         onPauseOrDispose {}
+    }
+}
+
+/**
+ * Asks for `POST_NOTIFICATIONS` while [request] is true (Android 13+), after
+ * calling [onRequested] so that it is asked once per tap; the answer goes to
+ * [onResult]. Shared by the settings and the sheet's offer of the alerts.
+ */
+@Composable
+internal fun NotificationPermissionRequest(
+    request: Boolean,
+    onRequested: () -> Unit,
+    onResult: (Boolean) -> Unit,
+) {
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        onResult(it)
+    }
+    LaunchedEffect(request) {
+        if (request && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onRequested()
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 }
 
