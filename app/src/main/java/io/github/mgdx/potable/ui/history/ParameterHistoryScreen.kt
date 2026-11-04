@@ -55,6 +55,7 @@ import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.common.spokenAs
 import io.github.mgdx.potable.ui.common.spokenResult
 import io.github.mgdx.potable.ui.common.spokenThreshold
+import io.github.mgdx.potable.ui.common.spokenUnit
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.publishedDate
 import java.util.Locale
@@ -87,6 +88,7 @@ fun ParameterHistoryScreen(
                 title = series?.label ?: label,
                 titleIsData = true,
                 subtitle = displayUnit(series?.unit)?.let { bidiWrap(it) },
+                subtitleSpoken = spokenUnit(series?.unit),
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = viewModel::refresh) {

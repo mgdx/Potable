@@ -58,6 +58,7 @@ import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.parameterExplanationRes
 import io.github.mgdx.potable.ui.common.spokenAs
 import io.github.mgdx.potable.ui.common.spokenThreshold
+import io.github.mgdx.potable.ui.history.MetaboliteRelevanceExplanation
 import io.github.mgdx.potable.ui.sheet.formatSampleDate
 import io.github.mgdx.potable.ui.sheet.formatSampleTime
 import io.github.mgdx.potable.ui.sheet.justified
@@ -296,13 +297,7 @@ private fun PesticideCountHeader(count: PesticideCount, classifiedShown: Boolean
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (classifiedShown) {
-            Text(
-                text = stringResource(R.string.metabolite_relevance_explanation),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        if (classifiedShown) MetaboliteRelevanceExplanation()
     }
 }
 

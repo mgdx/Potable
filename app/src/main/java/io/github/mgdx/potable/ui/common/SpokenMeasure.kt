@@ -59,6 +59,9 @@ private const val NO_UNIT = "SANS OBJET"
 
 private const val MAX_FRACTION_DIGITS = 6
 
+/** A count whose plural is that of a unit named alone, in English and French ("other"). */
+private const val UNIT_ALONE_COUNT = 2
+
 private val PLAIN_NUMBER = Regex("""[+-]?\d+(?:[.,]\d+)?""")
 private val UPPER_INCLUSIVE = Regex("<=|=<|≤")
 private val LOWER_INCLUSIVE = Regex(">=|=>|≥")
@@ -82,6 +85,35 @@ internal fun spokenQuantity(
     val shown = shownUnit(unit) ?: return formatted
     val id = SPOKEN_UNITS[shown] ?: return "$formatted $shown"
     return resources.getQuantityString(id, pluralCount(number, locale), formatted)
+}
+
+/**
+ * [unit] alone in words ("milligrams per litre"): the plural of
+ * [SPOKEN_UNITS] without its number. Null when the unit is not in the table,
+ * or there is none: it is then read as published.
+ */
+internal fun spokenUnit(resources: Resources, unit: String?): String? {
+    val id = SPOKEN_UNITS[shownUnit(unit) ?: return null] ?: return null
+    // Every form starts with its number: without it, the unit in words.
+    return resources.getQuantityString(id, UNIT_ALONE_COUNT, "").trim()
+}
+
+/** [spokenUnit] in the language of the current configuration. */
+@Composable
+fun spokenUnit(unit: String?): String? {
+    val resources = LocalResources.current
+    val locale = currentLocale()
+    return remember(unit, resources, locale) { spokenUnit(resources, unit) }
+}
+
+/** [spokenQuantity] in the language of the current configuration. */
+@Composable
+fun spokenQuantity(number: Double, unit: String?): String {
+    val resources = LocalResources.current
+    val locale = currentLocale()
+    return remember(number, unit, resources, locale) {
+        spokenQuantity(resources, number, unit, locale)
+    }
 }
 
 /** [spokenQuantity] with [number] formatted for [locale]. */
