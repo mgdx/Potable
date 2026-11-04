@@ -18,11 +18,12 @@
   <a href="https://liberapay.com/mgdx"><img alt="Faire un don sur Liberapay" src="https://img.shields.io/badge/don-Liberapay-2350B5?style=flat-square&logo=liberapay&logoColor=white"></a>
 </p>
 
-<!-- À décommenter à la publication (Potable n'est encore publié ni sur F-Droid ni sur Google Play).
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=io.github.mgdx.potable"><img alt="Disponible sur Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png" height="100"></a>
   <a href="https://f-droid.org/packages/io.github.mgdx.potable/"><img alt="Disponible sur F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on-fr.png" height="100"></a>
 </p>
+
+<!-- Badge Google Play, à ajouter dans le bloc ci-dessus à la publication sur Google Play.
+  <a href="https://play.google.com/store/apps/details?id=io.github.mgdx.potable"><img alt="Disponible sur Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png" height="100"></a>
 -->
 
 ## Description
@@ -151,9 +152,14 @@ chaque permission — est dans la
 Chaque version est publiée sur la
 [page des versions](https://github.com/mgdx/Potable/releases/latest) de ce
 dépôt : un APK signé, son empreinte SHA-256 et celle du certificat de
-signature. La publication sur [F-Droid](https://f-droid.org/) est en
-préparation, celle sur Google Play viendra ensuite ; Potable se compile aussi
-depuis les sources.
+signature. Potable est aussi sur
+[F-Droid](https://f-droid.org/packages/io.github.mgdx.potable/), qui le
+recompile à partir de ces sources et le met à jour avec le reste du catalogue ;
+Google Play viendra ensuite. Il se compile aussi depuis les sources.
+
+<p align="center">
+  <a href="https://f-droid.org/packages/io.github.mgdx.potable/"><img alt="Disponible sur F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on-fr.png" height="100"></a>
+</p>
 
 <!-- À décommenter à la publication.
 Depuis [F-Droid](https://f-droid.org/packages/io.github.mgdx.potable/), qui
