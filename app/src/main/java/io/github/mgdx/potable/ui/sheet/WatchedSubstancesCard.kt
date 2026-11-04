@@ -35,6 +35,9 @@ import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.messageRes
 import io.github.mgdx.potable.ui.common.nameRes
+import io.github.mgdx.potable.ui.common.spokenAs
+import io.github.mgdx.potable.ui.common.spokenResult
+import io.github.mgdx.potable.ui.common.spokenThreshold
 import io.github.mgdx.potable.ui.history.pointValueText
 import io.github.mgdx.potable.ui.sample.SumThresholdNote
 import io.github.mgdx.potable.ui.sample.currentLocale
@@ -126,6 +129,9 @@ private fun WatchedMeasureRow(
                     textDirection = TextDirection.Ltr,
                 ),
                 fontStyle = if (value == null) FontStyle.Italic else null,
+                modifier = Modifier.spokenAs(
+                    spokenResult(measure.point.text, measure.point.value, measure.unit),
+                ),
             )
             SumThresholdNote(measure.point.text)
             measure.limitText?.let {
@@ -133,6 +139,9 @@ private fun WatchedMeasureRow(
                     text = stringResource(R.string.quality_limit, bidiWrap(it)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.spokenAs(
+                        stringResource(R.string.quality_limit, spokenThreshold(it)),
+                    ),
                 )
             }
             Text(

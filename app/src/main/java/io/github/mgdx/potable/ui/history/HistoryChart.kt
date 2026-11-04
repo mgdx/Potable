@@ -38,7 +38,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.ParameterSeries
+import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.spokenResult
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.localizedDateFormatter
 import io.github.mgdx.potable.ui.sheet.publishedDate
@@ -98,8 +100,11 @@ fun HistoryChart(
         model.points.getOrNull(it)
     }?.let { series.points[it.index] }
     val selectedDate = selectedPoint?.let { mediumDate(publishedDate(it.date), locale) }
+    // Read by screen readers only: in words ("12 milligrams per litre").
     val selectedValue = selectedPoint?.let {
-        pointValueText(it, series.unit, locale) ?: stringResource(R.string.sample_no_value)
+        spokenResult(it.text, it.value, series.unit)
+            ?: pointValueText(it, series.unit, locale)
+            ?: stringResource(R.string.sample_no_value)
     }
     val selectedState = if (selectedDate != null && selectedValue != null) {
         stringResource(R.string.history_selected_point, selectedDate, bidiWrap(selectedValue))
@@ -234,6 +239,11 @@ fun HistoryChart(
 fun mediumDate(date: LocalDate, locale: Locale): String =
     localizedDateFormatter(FormatStyle.MEDIUM, locale).format(date)
 
+/** [point] in words ([spokenResult]), or as published when it has no spoken form. */
+@Composable
+private fun spokenValue(point: SeriesPoint, unit: String?, locale: Locale): String? =
+    spokenResult(point.text, point.value, unit) ?: pointValueText(point, unit, locale)
+
 /** What a screen reader says of the whole chart: count, period, lowest and highest. */
 @Composable
 private fun chartDescription(series: ParameterSeries, model: ChartModel, locale: Locale): String {
@@ -248,7 +258,7 @@ private fun chartDescription(series: ParameterSeries, model: ChartModel, locale:
         model.points.size,
         mediumDate(LocalDate.ofEpochDay(first.day), locale),
         mediumDate(LocalDate.ofEpochDay(last.day), locale),
-        bidiWrap(pointValueText(lowest, series.unit, locale) ?: noValue),
-        bidiWrap(pointValueText(highest, series.unit, locale) ?: noValue),
+        bidiWrap(spokenValue(lowest, series.unit, locale) ?: noValue),
+        bidiWrap(spokenValue(highest, series.unit, locale) ?: noValue),
     )
 }

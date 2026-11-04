@@ -14,18 +14,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameters
+import io.github.mgdx.potable.core.Hardness
+import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.nameRes
+import io.github.mgdx.potable.ui.common.spokenAs
+import io.github.mgdx.potable.ui.common.spokenQuantity
+import io.github.mgdx.potable.ui.common.spokenThreshold
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.SumThresholdNote
+import io.github.mgdx.potable.ui.sample.currentLocale
+import java.text.NumberFormat
 
 /**
  * The featured parameters of [samples] (SPEC §4.3), newest first: the samples
@@ -67,12 +75,25 @@ internal fun KeyParametersCard(
                             style = MaterialTheme.typography.titleMedium,
                             selectable = false,
                         )
+                        HardnessEquivalentsText(result)
                         SumThresholdNote(result.resultText)
                         result.qualityLimit?.takeIf { it.isNotBlank() }?.let {
-                            ThresholdText(stringResource(R.string.quality_limit, bidiWrap(it)))
+                            ThresholdText(
+                                text = stringResource(R.string.quality_limit, bidiWrap(it)),
+                                spoken = stringResource(
+                                    R.string.quality_limit,
+                                    spokenThreshold(it),
+                                ),
+                            )
                         }
                         result.qualityReference?.takeIf { it.isNotBlank() }?.let {
-                            ThresholdText(stringResource(R.string.quality_reference, bidiWrap(it)))
+                            ThresholdText(
+                                text = stringResource(R.string.quality_reference, bidiWrap(it)),
+                                spoken = stringResource(
+                                    R.string.quality_reference,
+                                    spokenThreshold(it),
+                                ),
+                            )
                         }
                         Text(
                             text = stringResource(parameter.explanationRes()),
@@ -91,11 +112,41 @@ internal fun KeyParametersCard(
     }
 }
 
+/**
+ * Under a hardness published as a plain number in °f, the same measure in
+ * °dH and mmol/L ([Hardness.equivalentsOf]), one decimal in the format of the
+ * language. Nothing for any other result. A conversion, not a category.
+ */
 @Composable
-private fun ThresholdText(text: String) {
+private fun HardnessEquivalentsText(result: AnalysisResult) {
+    val equivalents = remember(result) { Hardness.equivalentsOf(result) } ?: return
+    val locale = currentLocale()
+    val format = remember(locale) {
+        NumberFormat.getNumberInstance(locale).apply {
+            minimumFractionDigits = 1
+            maximumFractionDigits = 1
+        }
+    }
+    val germanDegrees = format.format(equivalents.germanDegrees)
+    val millimoles = format.format(equivalents.millimolesPerLitre)
+    val resources = LocalResources.current
+    ThresholdText(
+        text = stringResource(R.string.hardness_equivalents, germanDegrees, millimoles),
+        spoken = stringResource(
+            R.string.hardness_equivalents_spoken,
+            spokenQuantity(resources, equivalents.germanDegrees, germanDegrees, "°dH", locale),
+            spokenQuantity(resources, equivalents.millimolesPerLitre, millimoles, "mmol/L", locale),
+        ),
+    )
+}
+
+/** A secondary line; screen readers say [spoken] instead ([spokenAs]). */
+@Composable
+private fun ThresholdText(text: String, spoken: String?) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.spokenAs(spoken),
     )
 }

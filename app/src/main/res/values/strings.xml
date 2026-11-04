@@ -67,6 +67,127 @@
     <string name="result_measured_on_site">Measured on site</string>
     <!-- In place of the value of a result Hub'Eau published without one. -->
     <string name="sample_no_value">No value published</string>
+    <!-- Read by screen readers instead of the values, units and thresholds as published, which stay shown unchanged. %1$s: the number, formatted for the language. Each comment gives the published unit. -->
+    <!-- mg/L -->
+    <plurals name="spoken_unit_mg_per_l">
+        <item quantity="one">%1$s milligram per litre</item>
+        <item quantity="other">%1$s milligrams per litre</item>
+    </plurals>
+    <!-- µg/L -->
+    <plurals name="spoken_unit_ug_per_l">
+        <item quantity="one">%1$s microgram per litre</item>
+        <item quantity="other">%1$s micrograms per litre</item>
+    </plurals>
+    <!-- ng/L -->
+    <plurals name="spoken_unit_ng_per_l">
+        <item quantity="one">%1$s nanogram per litre</item>
+        <item quantity="other">%1$s nanograms per litre</item>
+    </plurals>
+    <!-- mg(Cl2)/L -->
+    <plurals name="spoken_unit_mg_cl2_per_l">
+        <item quantity="one">%1$s milligram of chlorine per litre</item>
+        <item quantity="other">%1$s milligrams of chlorine per litre</item>
+    </plurals>
+    <!-- mg(Cu)/L -->
+    <plurals name="spoken_unit_mg_cu_per_l">
+        <item quantity="one">%1$s milligram of copper per litre</item>
+        <item quantity="other">%1$s milligrams of copper per litre</item>
+    </plurals>
+    <!-- mg(C)/L -->
+    <plurals name="spoken_unit_mg_c_per_l">
+        <item quantity="one">%1$s milligram of carbon per litre</item>
+        <item quantity="other">%1$s milligrams of carbon per litre</item>
+    </plurals>
+    <!-- mg(Pt)/L, colour on the platinum-cobalt scale -->
+    <plurals name="spoken_unit_mg_pt_per_l">
+        <item quantity="one">%1$s milligram of platinum per litre</item>
+        <item quantity="other">%1$s milligrams of platinum per litre</item>
+    </plurals>
+    <!-- µg(Se)/L -->
+    <plurals name="spoken_unit_ug_se_per_l">
+        <item quantity="one">%1$s microgram of selenium per litre</item>
+        <item quantity="other">%1$s micrograms of selenium per litre</item>
+    </plurals>
+    <!-- µg(CN)/L -->
+    <plurals name="spoken_unit_ug_cn_per_l">
+        <item quantity="one">%1$s microgram of cyanide per litre</item>
+        <item quantity="other">%1$s micrograms of cyanide per litre</item>
+    </plurals>
+    <!-- n/(100mL), bacteria counted -->
+    <plurals name="spoken_unit_count_per_100_ml">
+        <item quantity="one">%1$s bacterium per 100 millilitres</item>
+        <item quantity="other">%1$s bacteria per 100 millilitres</item>
+    </plurals>
+    <!-- n/mL, bacteria counted -->
+    <plurals name="spoken_unit_count_per_ml">
+        <item quantity="one">%1$s bacterium per millilitre</item>
+        <item quantity="other">%1$s bacteria per millilitre</item>
+    </plurals>
+    <!-- NPP/100mL, bacteria estimated by the most probable number method -->
+    <plurals name="spoken_unit_mpn_per_100_ml">
+        <item quantity="one">%1$s per 100 millilitres, most probable number</item>
+        <item quantity="other">%1$s per 100 millilitres, most probable number</item>
+    </plurals>
+    <!-- °f, hardness -->
+    <plurals name="spoken_unit_french_degrees">
+        <item quantity="one">%1$s French degree</item>
+        <item quantity="other">%1$s French degrees</item>
+    </plurals>
+    <!-- °dH, hardness -->
+    <plurals name="spoken_unit_german_degrees">
+        <item quantity="one">%1$s German degree</item>
+        <item quantity="other">%1$s German degrees</item>
+    </plurals>
+    <!-- mmol/L -->
+    <plurals name="spoken_unit_mmol_per_l">
+        <item quantity="one">%1$s millimole per litre</item>
+        <item quantity="other">%1$s millimoles per litre</item>
+    </plurals>
+    <!-- unité pH -->
+    <plurals name="spoken_unit_ph">
+        <item quantity="one">%1$s pH unit</item>
+        <item quantity="other">%1$s pH units</item>
+    </plurals>
+    <!-- µS/cm, conductivity -->
+    <plurals name="spoken_unit_us_per_cm">
+        <item quantity="one">%1$s microsiemens per centimetre</item>
+        <item quantity="other">%1$s microsiemens per centimetre</item>
+    </plurals>
+    <!-- NFU, turbidity -->
+    <plurals name="spoken_unit_nfu">
+        <item quantity="one">%1$s nephelometric turbidity unit</item>
+        <item quantity="other">%1$s nephelometric turbidity units</item>
+    </plurals>
+    <!-- °C -->
+    <plurals name="spoken_unit_celsius">
+        <item quantity="one">%1$s degree Celsius</item>
+        <item quantity="other">%1$s degrees Celsius</item>
+    </plurals>
+    <!-- mSv/a, radioactivity dose -->
+    <plurals name="spoken_unit_msv_per_year">
+        <item quantity="one">%1$s millisievert per year</item>
+        <item quantity="other">%1$s millisieverts per year</item>
+    </plurals>
+    <!-- Bq/L -->
+    <plurals name="spoken_unit_bq_per_l">
+        <item quantity="one">%1$s becquerel per litre</item>
+        <item quantity="other">%1$s becquerels per litre</item>
+    </plurals>
+    <!-- Comparisons of a threshold or a bounded value, read by screen readers. %1$s: the number and its unit in words (spoken_unit_…). -->
+    <!-- "<=" in a threshold or a value -->
+    <string name="spoken_less_than_or_equal_to">less than or equal to %1$s</string>
+    <!-- "<" in a quality limit or reference -->
+    <string name="spoken_less_than">less than %1$s</string>
+    <!-- "<" before a result, such as "<0,02": the value is below the detection or quantification threshold of the laboratory -->
+    <string name="spoken_below_threshold_of">below the threshold of %1$s</string>
+    <!-- ">=" -->
+    <string name="spoken_greater_than_or_equal_to">greater than or equal to %1$s</string>
+    <!-- ">" -->
+    <string name="spoken_greater_than">greater than %1$s</string>
+    <!-- "=" -->
+    <string name="spoken_equal_to">equal to %1$s</string>
+    <!-- Both bounds of a range, such as ">=6,5 et <=9 unité pH". %1$s: the lower bound, %2$s: the upper bound (spoken_greater_than…, spoken_less_than…). -->
+    <string name="spoken_both_bounds">%1$s and %2$s</string>
     <!-- Small caption under a sanitary conclusion shown as published, in French. -->
     <string name="sheet_official_wording">Official wording, in French</string>
     <!-- Caption above the parameter labels published by Hub'Eau, in French. -->
@@ -196,6 +317,10 @@
     <string name="featured_nitrates_explanation">Nitrates, mostly from farming and wastewater, are among the most closely followed parameters.</string>
     <string name="featured_hardness">Hardness</string>
     <string name="featured_hardness_explanation">Hardness, useful to set a dishwasher or a water softener.</string>
+    <!-- Under the hardness published in French degrees (°f): the same measure in German degrees (°dH) and millimoles per litre, converted by the app (1 °f = 0.56 °dH = 0.1 mmol/L). Not a category such as soft or hard. %1$s, %2$s: numbers with one decimal, formatted for the language. Keep the unit symbols. -->
+    <string name="hardness_equivalents">i.e. %1$s °dH · %2$s mmol/L</string>
+    <!-- Read by screen readers instead of hardness_equivalents. %1$s: the German degrees in words ("20.4 German degrees", spoken_unit_german_degrees); %2$s: the millimoles per litre in words (spoken_unit_mmol_per_l). -->
+    <string name="hardness_equivalents_spoken">i.e. %1$s, %2$s</string>
     <string name="featured_ph">pH</string>
     <string name="featured_ph_explanation">pH tells how acidic or alkaline the water is.</string>
     <string name="featured_free_chlorine">Free chlorine</string>
