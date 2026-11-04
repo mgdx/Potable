@@ -9,15 +9,24 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +100,8 @@ internal fun AlertsSection(
     onPeriod: (Int) -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onSearch: () -> Unit,
+    checkNow: CheckNowUi = CheckNowUi(),
+    onCheckNow: () -> Unit = {},
 ) = SettingsCard(stringResource(R.string.settings_alerts_title)) {
     Description(stringResource(R.string.settings_alerts_description))
     if (noFollows) {
@@ -123,6 +134,7 @@ internal fun AlertsSection(
         onChange = { onAlert(AlertKind.UNFAVOURABLE, it) },
     )
     lastCheck?.let { LastCheckLines(it) }
+    if (checkNow.visible) CheckNowRow(checkNow, onCheckNow)
     if (notice != NotificationNotice.NONE) {
         Description(
             stringResource(
@@ -153,6 +165,40 @@ internal fun AlertsSection(
         },
         onSelect = onPeriod,
     )
+}
+
+/**
+ * "Check now", disabled while no commune is followed or notifications are
+ * not allowed (the section says why), and while a check waits or runs,
+ * with an indicator and what it is doing, read by screen readers.
+ */
+@Composable
+private fun CheckNowRow(checkNow: CheckNowUi, onCheckNow: () -> Unit) {
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        OutlinedButton(onClick = onCheckNow, enabled = checkNow.enabled) {
+            Text(stringResource(R.string.settings_alert_check_now))
+        }
+        if (checkNow.progress != CheckNowProgress.IDLE) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            Text(
+                text = stringResource(
+                    if (checkNow.progress == CheckNowProgress.WAITING) {
+                        R.string.settings_alert_check_waiting
+                    } else {
+                        R.string.settings_alert_checking
+                    },
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
+    }
 }
 
 /** When the alerts last checked, and last failed to if that came after. */

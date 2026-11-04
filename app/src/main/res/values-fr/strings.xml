@@ -345,6 +345,11 @@
     <string name="settings_alert_last_check">Dernière vérification : %1$s</string>
     <string name="settings_alert_last_check_none">Dernière vérification : pas encore effectuée</string>
     <string name="settings_alert_last_failure">La dernière tentative, le %1$s, n’a pas pu interroger Hub\'Eau pour toutes les communes. Elle sera renouvelée à la prochaine vérification.</string>
+    <string name="settings_alert_check_now">Vérifier maintenant</string>
+    <string name="settings_alert_check_waiting">En attente d’une connexion réseau…</string>
+    <string name="settings_alert_checking">Vérification…</string>
+    <string name="settings_alert_check_nothing_new">Rien de nouveau à signaler.</string>
+    <string name="settings_alert_check_failed">Impossible de joindre Hub\'Eau. Réessayez plus tard.</string>
     <string name="settings_alert_period">Vérifier les nouveaux résultats :</string>
     <string name="settings_alert_weekly">Chaque semaine</string>
     <plurals name="settings_alert_weeks">

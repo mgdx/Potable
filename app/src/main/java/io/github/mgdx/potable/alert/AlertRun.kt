@@ -20,8 +20,20 @@ class AlertRun(
     private val poster: AlertPoster,
     private val clock: Clock = Clock.systemUTC(),
 ) {
-    /** What the run did, for the tests and the debug tools. */
-    enum class Outcome { ALERTS_OFF, CANNOT_NOTIFY, CHECKED }
+    /** What the run did, for the tests, the debug tools and "Check now". */
+    enum class Outcome {
+        ALERTS_OFF,
+        CANNOT_NOTIFY,
+
+        /** At least one notification was posted. */
+        NOTIFIED,
+
+        /** Hub'Eau answered for every followed unit, with nothing to notify. */
+        NOTHING_NEW,
+
+        /** Nothing to notify, but Hub'Eau did not answer for every followed unit. */
+        FAILED,
+    }
 
     suspend fun run(): Outcome {
         val switches = AlertSwitches(
@@ -31,13 +43,18 @@ class AlertRun(
         if (!switches.anyEnabled) return Outcome.ALERTS_OFF
         if (!poster.canPost()) return Outcome.CANNOT_NOTIFY
         val check = checker().checkFollows()
-        poster.post(notifiable(check.events, switches))
+        val events = notifiable(check.events, switches)
+        poster.post(events)
         val now = clock.instant()
         if (check.complete) {
             preferences.setLastAlertCheck(now)
         } else {
             preferences.setLastAlertFailure(now)
         }
-        return Outcome.CHECKED
+        return when {
+            events.isNotEmpty() -> Outcome.NOTIFIED
+            check.complete -> Outcome.NOTHING_NEW
+            else -> Outcome.FAILED
+        }
     }
 }

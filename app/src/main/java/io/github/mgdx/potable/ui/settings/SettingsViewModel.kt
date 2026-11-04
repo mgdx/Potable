@@ -7,6 +7,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
 import io.github.mgdx.potable.alert.AlertActivation
+import io.github.mgdx.potable.alert.AlertCheckNow
+import io.github.mgdx.potable.alert.AlertRun
+import io.github.mgdx.potable.alert.CheckNowState
 import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.alert.activation
 import io.github.mgdx.potable.data.CommuneRepository
@@ -108,6 +111,30 @@ enum class NotificationNotice {
     BLOCKED,
 }
 
+/** Where "Check now" stands, as the alerts section shows it. */
+enum class CheckNowProgress {
+    IDLE,
+
+    /** Asked for, waiting for a network connection. */
+    WAITING,
+
+    RUNNING,
+}
+
+/**
+ * "Check now": shown while an alert is on ([visible]); [enabled] unless no
+ * commune is followed or notifications are not allowed (the section says
+ * why), nor while a check waits or runs ([progress]).
+ */
+data class CheckNowUi(
+    val visible: Boolean = false,
+    val enabled: Boolean = false,
+    val progress: CheckNowProgress = CheckNowProgress.IDLE,
+)
+
+/** What "Check now" has to say once it ended; nothing when notifications went out. */
+enum class CheckNowMessage { NOTHING_NEW, FAILED }
+
 /**
  * Settings (SPEC §5 F8): theme, default history window, cache retention and
  * purge (whole, or one commune), alerts. [follows] is only read to say that
@@ -120,6 +147,7 @@ class SettingsViewModel(
     private val communes: CommuneRepository,
     follows: FollowRepository? = null,
     private val backup: FollowsBackup? = null,
+    private val checkNow: AlertCheckNow? = null,
 ) : ViewModel() {
     /** Null until the preferences are read, so that no wrong choice shows first. */
     val settings: StateFlow<Settings?> = combine(
@@ -302,6 +330,79 @@ class SettingsViewModel(
         viewModelScope.launch { preferences.setAlertPeriodWeeks(weeks) }
     }
 
+    private val checkProgress = MutableStateFlow(CheckNowProgress.IDLE)
+
+    /** "Check now", from the alerts, the follows, the notifications and the request. */
+    val checkNowUi: StateFlow<CheckNowUi> =
+        combine(settings, noFollows, notice, checkProgress) { current, none, notice, progress ->
+            val anyOn = current?.alerts?.let { it.newAnalysis || it.unfavourable } ?: false
+            CheckNowUi(
+                visible = anyOn && checkNow != null,
+                enabled = !none &&
+                    notice == NotificationNotice.NONE &&
+                    progress == CheckNowProgress.IDLE,
+                progress = progress,
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CheckNowUi())
+
+    private val _checkNowMessage = MutableStateFlow<CheckNowMessage?>(null)
+
+    /** The end of a check seen waiting or running here, due once. */
+    val checkNowMessage: StateFlow<CheckNowMessage?> = _checkNowMessage.asStateFlow()
+
+    /** A check was asked for or seen running: its end is to be told. */
+    private var awaitingCheck = false
+
+    /** The check already ended when [checkAlertsNow] was tapped: not this one. */
+    private var finishedBefore: CheckNowState.Finished? = null
+
+    private var lastCheckState: CheckNowState = CheckNowState.Idle
+
+    init {
+        checkNow?.let { work ->
+            viewModelScope.launch {
+                work.state.catch { emit(CheckNowState.Idle) }.collect(::onCheckState)
+            }
+        }
+    }
+
+    /** Runs one alert check now, by the periodic check's worker. */
+    fun checkAlertsNow() {
+        val work = checkNow ?: return
+        if (!checkNowUi.value.enabled) return
+        awaitingCheck = true
+        finishedBefore = lastCheckState as? CheckNowState.Finished
+        work.start()
+    }
+
+    /** The message of [checkNowMessage] was shown. */
+    fun onCheckNowMessageShown() {
+        _checkNowMessage.value = null
+    }
+
+    private fun onCheckState(state: CheckNowState) {
+        lastCheckState = state
+        checkProgress.value = when (state) {
+            CheckNowState.Waiting -> CheckNowProgress.WAITING
+            CheckNowState.Running -> CheckNowProgress.RUNNING
+            else -> CheckNowProgress.IDLE
+        }
+        when (state) {
+            // Also a check started before the screen was opened again.
+            CheckNowState.Waiting, CheckNowState.Running -> awaitingCheck = true
+            is CheckNowState.Finished -> if (awaitingCheck && state != finishedBefore) {
+                awaitingCheck = false
+                _checkNowMessage.value = when (state.outcome) {
+                    AlertRun.Outcome.NOTHING_NEW -> CheckNowMessage.NOTHING_NEW
+                    AlertRun.Outcome.FAILED, null -> CheckNowMessage.FAILED
+                    // Notifications went out, or nothing was checked: nothing to add.
+                    else -> null
+                }
+            }
+            CheckNowState.Idle -> Unit
+        }
+    }
+
     private fun store(kind: AlertKind, enabled: Boolean) {
         viewModelScope.launch {
             when (kind) {
@@ -444,6 +545,7 @@ class SettingsViewModel(
                     container.communes,
                     container.follows,
                     container.backup,
+                    container.alertCheckNow,
                 )
             }
         }

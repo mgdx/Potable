@@ -47,6 +47,22 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
     NotificationPermissionRequest(viewModel)
+    val checkNow by viewModel.checkNowUi.collectAsStateWithLifecycle()
+    val checkNowMessage by viewModel.checkNowMessage.collectAsStateWithLifecycle()
+    checkNowMessage?.let { message ->
+        val text = stringResource(
+            if (message == CheckNowMessage.NOTHING_NEW) {
+                R.string.settings_alert_check_nothing_new
+            } else {
+                R.string.settings_alert_check_failed
+            },
+        )
+        LaunchedEffect(message) {
+            // Same as the purges: acknowledged first, shown once.
+            viewModel.onCheckNowMessageShown()
+            scope.launch { snackbarHostState.showSnackbar(text) }
+        }
+    }
     backupMessage?.let { message ->
         val text = backupMessageText(message)
         LaunchedEffect(message) {
@@ -119,6 +135,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onSearch: (
                 onPeriod = viewModel::setAlertPeriodWeeks,
                 onOpenNotificationSettings = { openNotificationSettings(context) },
                 onSearch = onSearch,
+                checkNow = checkNow,
+                onCheckNow = viewModel::checkAlertsNow,
             )
 
             BackupSection(

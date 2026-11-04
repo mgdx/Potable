@@ -1,11 +1,13 @@
 package io.github.mgdx.potable
 
 import android.content.Context
+import io.github.mgdx.potable.alert.AlertCheckNow
 import io.github.mgdx.potable.alert.AlertNotifier
 import io.github.mgdx.potable.alert.AlertRun
 import io.github.mgdx.potable.alert.AlertScheduler
 import io.github.mgdx.potable.alert.NotificationAccess
 import io.github.mgdx.potable.alert.SystemNotificationAccess
+import io.github.mgdx.potable.alert.WorkManagerAlertCheckNow
 import io.github.mgdx.potable.alert.WorkManagerAlertWork
 import io.github.mgdx.potable.data.AssetCommuneRepository
 import io.github.mgdx.potable.data.CacheJanitor
@@ -64,6 +66,9 @@ class AppContainer(context: Context) {
 
     /** One alert check (SPEC §5 F7); [alertChecker] is only built when a check needs it. */
     val alertRun: AlertRun by lazy { AlertRun(preferences, { alertChecker }, alertNotifier) }
+
+    /** One alert check on demand, by the same worker (Settings → Alerts). */
+    val alertCheckNow: AlertCheckNow by lazy { WorkManagerAlertCheckNow(appContext) }
 
     /** Plans or cancels the periodic alert check as the settings change. */
     val alertScheduler: AlertScheduler by lazy {

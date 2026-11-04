@@ -44,7 +44,7 @@ class AlertRunTest {
     @Test
     fun `new analyses post every event`() = runTest {
         val outcome = AlertRun(AlertPreferences(newAnalysis = true), { checker }, poster).run()
-        assertEquals(AlertRun.Outcome.CHECKED, outcome)
+        assertEquals(AlertRun.Outcome.NOTIFIED, outcome)
         assertEquals(listOf(listOf(compliant, unfavourable)), poster.posted)
     }
 
@@ -75,6 +75,22 @@ class AlertRunTest {
         AlertRun(preferences, { checker }, poster, clock).run()
         assertEquals(before, preferences.lastAlertCheck.value)
         assertEquals(now, preferences.lastAlertFailure.value)
+    }
+
+    @Test
+    fun `a check with nothing to notify says whether it was complete`() = runTest {
+        // Unfavourable only: the compliant sample is not notified.
+        checker.events = listOf(compliant)
+        val preferences = AlertPreferences(unfavourable = true)
+        assertEquals(
+            AlertRun.Outcome.NOTHING_NEW,
+            AlertRun(preferences, { checker }, poster, clock).run(),
+        )
+        checker.complete = false
+        assertEquals(
+            AlertRun.Outcome.FAILED,
+            AlertRun(preferences, { checker }, poster, clock).run(),
+        )
     }
 
     @Test
