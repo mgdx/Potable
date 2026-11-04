@@ -327,6 +327,27 @@ radioactivité, 3 autres.
   dans la même commune (17 communes) : la donnée est imprécise, l'appli
   la restitue sans la corriger.
 
+## Valeur `<SEUIL` (mesure du 2026-11-04)
+
+`resultat_alphanumerique` vaut `<SEUIL` (avec `resultat_numerique` à `0.0`)
+sur des sommes et des totaux, jamais sur une substance seule, qui porte une
+borne chiffrée (`<0,020`). Redon (35236), prélèvement `03500180762` du
+2026-08-17 (382 lignes) : « Total des pesticides analysés » (6276), « Somme
+de 20 substances perfluoroalkylées (PFAS) » (8847), « Somme de 4 substances
+perfluoroalkylées » (9268), « Endosulfan total » (1743), « HCH
+alpha+beta+delta+gamma » (5537), « Heptachlore époxyde » (1198, somme des
+formes cis et trans), « Tétrachloroéthylèn+Trichloroéthylène » (2963),
+« Dichloropropylène-1,3 total » (1487), « Hydrocarbures polycycliques
+aromatiques (4 substances) » (2033).
+
+Hub'Eau ne documente pas cette valeur. Elle ne veut pas dire qu'aucune
+substance additionnée n'a été quantifiée : le même prélèvement publie
+`<SEUIL` pour le total des pesticides et 0,046 µg/L de « Chlorothalonil
+R471811 » (8865), un métabolite qui n'entre vraisemblablement pas dans ce
+total. L'appli affiche la valeur telle quelle et l'explique sans plus :
+« somme inférieure au seuil de quantification, publiée sans valeur chiffrée »
+(`Series.isBelowSumThreshold`).
+
 ## Seuils : `limite_qualite_parametre` et `reference_qualite_parametre`
 
 Relevé du 2026-10-25 : 20 000 lignes les plus récentes (ou toutes, pour une

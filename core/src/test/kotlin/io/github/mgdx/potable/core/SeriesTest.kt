@@ -271,4 +271,14 @@ class SeriesTest {
         assertEquals(Compliance.NON_COMPLIANT, timeline[1].bacteriologicalLimits)
         assertEquals(Compliance.UNKNOWN, timeline[1].physicochemicalLimits)
     }
+
+    @Test
+    fun `the sum threshold is recognised as published`() {
+        assertTrue(Series.isBelowSumThreshold("<SEUIL"))
+        assertTrue(Series.isBelowSumThreshold(" < seuil "))
+        assertTrue(Series.isCensored("<SEUIL"))
+        assertFalse(Series.isBelowSumThreshold("<0,020"))
+        assertFalse(Series.isBelowSumThreshold("SEUIL"))
+        assertFalse(Series.isBelowSumThreshold(null))
+    }
 }

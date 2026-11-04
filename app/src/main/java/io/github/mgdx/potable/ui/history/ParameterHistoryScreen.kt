@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.mgdx.potable.R
+import io.github.mgdx.potable.core.Series
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.ui.common.BackTopBar
@@ -153,6 +154,15 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
             parameterCode = series.parameterCode,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
+        // The measures are far from this note in the list: it names the value.
+        val belowSumThreshold = remember(series) {
+            series.points.firstNotNullOfOrNull { point ->
+                point.text?.trim()?.takeIf { Series.isBelowSumThreshold(it) }
+            }
+        }
+        belowSumThreshold?.let {
+            LegendText(stringResource(R.string.history_below_sum_threshold, bidiWrap(it)))
+        }
         when {
             series.points.size == 1 -> {
                 Paragraph(stringResource(R.string.history_single))

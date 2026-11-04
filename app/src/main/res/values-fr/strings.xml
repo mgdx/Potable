@@ -411,4 +411,6 @@
     <string name="about_open_link_failed">Aucune application ne permet d’ouvrir ce lien.</string>
     <string name="sheet_conclusion_sampled_on">Prélevé le %1$s · %2$s</string>
     <string name="sheet_conclusions_sampled_on">Prélèvements du %1$s · %2$s</string>
+    <string name="result_below_sum_threshold">Somme inférieure au seuil de quantification, publiée sans valeur chiffrée.</string>
+    <string name="history_below_sum_threshold">%1$s : somme inférieure au seuil de quantification, publiée sans valeur chiffrée.</string>
 </resources>

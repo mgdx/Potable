@@ -36,6 +36,7 @@ import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.messageRes
 import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.history.pointValueText
+import io.github.mgdx.potable.ui.sample.SumThresholdNote
 import io.github.mgdx.potable.ui.sample.currentLocale
 import java.time.Clock
 import java.time.LocalDate
@@ -126,6 +127,7 @@ private fun WatchedMeasureRow(
                 ),
                 fontStyle = if (value == null) FontStyle.Italic else null,
             )
+            SumThresholdNote(measure.point.text)
             measure.limitText?.let {
                 Text(
                     text = stringResource(R.string.quality_limit, bidiWrap(it)),

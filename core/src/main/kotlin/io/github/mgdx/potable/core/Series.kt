@@ -98,6 +98,22 @@ object Series {
         return first == '<' || first == '>' || first == '≤' || first == '≥'
     }
 
+    /**
+     * True when the published text is `<SEUIL`, which Hub'Eau gives instead
+     * of a figure for sums and totals ("Total des pesticides analysés",
+     * "Somme de 20 substances perfluoroalkylées (PFAS)", "Endosulfan total")
+     * below the quantification threshold. It does not mean that none of the
+     * summed substances was quantified: Redon (35236), sample 03500180762
+     * of 2026-08-17, publishes `<SEUIL` for the total of pesticides and
+     * 0,046 µg/L of "Chlorothalonil R471811" (`docs/hubeau-api.md`).
+     */
+    fun isBelowSumThreshold(text: String?): Boolean {
+        val compact = text?.filterNot(Char::isWhitespace) ?: return false
+        return compact.equals(BELOW_SUM_THRESHOLD, ignoreCase = true)
+    }
+
+    private const val BELOW_SUM_THRESHOLD = "<SEUIL"
+
     private data class Dated(val row: ResultRow, val date: Instant)
 
     private fun ResultRow.isLaboratory() = codeLieuAnalyse == LABORATORY

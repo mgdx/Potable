@@ -25,6 +25,7 @@ import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.sample.ResultValue
+import io.github.mgdx.potable.ui.sample.SumThresholdNote
 
 /**
  * The featured parameters of [samples] (SPEC §4.3), newest first: the samples
@@ -66,6 +67,7 @@ internal fun KeyParametersCard(
                             style = MaterialTheme.typography.titleMedium,
                             selectable = false,
                         )
+                        SumThresholdNote(result.resultText)
                         result.qualityLimit?.takeIf { it.isNotBlank() }?.let {
                             ThresholdText(stringResource(R.string.quality_limit, bidiWrap(it)))
                         }

@@ -349,6 +349,7 @@ private fun ResultText(result: AnalysisResult, communeCode: String, modifier: Mo
             style = MaterialTheme.typography.bodyLarge.asApiText(),
         )
         ResultValue(result, style = MaterialTheme.typography.titleMedium, selectable = false)
+        SumThresholdNote(result.resultText)
         if (result.isOnSite) {
             Text(
                 text = stringResource(R.string.result_measured_on_site),
