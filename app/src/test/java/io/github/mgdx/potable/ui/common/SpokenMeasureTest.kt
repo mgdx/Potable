@@ -2,13 +2,16 @@ package io.github.mgdx.potable.ui.common
 
 import android.content.Context
 import android.content.res.Resources
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.ui.ComposeHostRegistration
+import io.github.mgdx.potable.ui.history.MetaboliteRelevanceExplanation
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.theme.PotableTheme
 import org.junit.Assert.assertEquals
@@ -142,5 +145,54 @@ class SpokenMeasureTest {
         compose.onNodeWithText("12,5 mg/L", substring = true)
             .assertTextEquals("12,5 mg/L")
             .assertContentDescriptionEquals("12.5 milligrams per litre")
+    }
+
+    @Test
+    fun `a unit alone is spoken in words`() {
+        assertEquals("milligrams per litre", spokenUnit(resources, "mg/L"))
+        assertEquals("bacteria per 100 millilitres", spokenUnit(resources, "n/(100mL)"))
+        assertNull(spokenUnit(resources, "SANS OBJET"))
+        assertNull(spokenUnit(resources, "unité inconnue"))
+        for (unit in SPOKEN_UNITS.keys) {
+            val spoken = spokenUnit(resources, unit)!!
+            assert(spoken.isNotBlank() && spoken == spoken.trim()) { "$unit: '$spoken'" }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun `a unit alone is spoken in French`() {
+        assertEquals("microgrammes par litre", spokenUnit(resources, "µg/L"))
+    }
+
+    /** The unit under the title of a parameter's history. */
+    @Test
+    fun `the subtitle of the top bar is shown as published and described in words`() {
+        compose.setContent {
+            PotableTheme {
+                BackTopBar(
+                    title = "Nitrates (en NO3)",
+                    onBack = {},
+                    subtitle = "mg/L",
+                    subtitleSpoken = spokenUnit("mg/L"),
+                )
+            }
+        }
+        compose.onNodeWithText("mg/L")
+            .assertTextEquals("mg/L")
+            .assertContentDescriptionEquals("milligrams per litre")
+    }
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun `the values of the metabolite note are shown as published and described in words`() {
+        compose.setContent { PotableTheme { MetaboliteRelevanceExplanation() } }
+        val node = compose.onNodeWithText("limite de qualité de 0,1\u00A0µg/L", substring = true)
+        node.assertTextContains("valeur indicative de 0,9\u00A0µg/L", substring = true)
+        val spoken = node.fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
+            .single()
+        assert("limite de qualité de 0,1 microgramme par litre" in spoken) { spoken }
+        assert("valeur indicative de 0,9 microgramme par litre" in spoken) { spoken }
+        assert("µg/L" !in spoken) { spoken }
     }
 }

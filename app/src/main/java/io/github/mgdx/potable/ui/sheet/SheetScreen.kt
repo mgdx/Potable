@@ -19,10 +19,10 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -279,7 +279,9 @@ private fun SampleContent(
     val sample = samples.first()
     val conclusion = @Composable {
         if (samples.size == 1) {
-            ConclusionCard(sample, age)
+            // The results of the sample under its conclusion, as with several samples.
+            val showAll = if (sample.results.isEmpty()) null else ({ onShowAllResults(sample) })
+            ConclusionCard(sample, age, onShowAllResults = showAll)
         } else {
             SameDayConclusionsCard(samples, age, onShowAllResults)
             Text(
@@ -296,20 +298,12 @@ private fun SampleContent(
     val sampleDetails = @Composable {
         SampleInfoCard(sample, age)
         ComplianceSection(sample)
-        // With several samples, each has its own button in the conclusions.
-        if (samples.size == 1 && sample.results.isNotEmpty()) {
-            FilledTonalButton(
-                onClick = { onShowAllResults(sample) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.sheet_show_all_results))
-            }
-        }
     }
     val unit = @Composable {
         // Just above the history it opens.
         recentUnfavourable?.let { RecentUnfavourableCard(it) }
-        FilledTonalButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
+        // Outlined: the results of the sample, by its conclusion, are the main action.
+        OutlinedButton(onClick = onShowHistory, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Filled.DateRange,
                 contentDescription = null,
@@ -319,7 +313,7 @@ private fun SampleContent(
             Text(stringResource(R.string.timeline_title))
         }
         // Right under the history: a search of the same history by name (SPEC §3).
-        FilledTonalButton(onClick = onSearchSubstance, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = onSearchSubstance, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Filled.Search,
                 contentDescription = null,

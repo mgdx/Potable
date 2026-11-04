@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -113,13 +112,8 @@ private fun SingleSample(sample: Sample, label: String, onShowAllResults: (Sampl
     )
     ConclusionText(sample.conclusion)
     if (sample.results.isNotEmpty()) {
-        // As the button of a single sample, under the sheet's cards.
-        FilledTonalButton(
-            onClick = { onShowAllResults(sample) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.sheet_show_all_results))
-        }
+        // As under the conclusion of a single sample (ConclusionCard).
+        ShowAllResultsButton { onShowAllResults(sample) }
     }
 }
 

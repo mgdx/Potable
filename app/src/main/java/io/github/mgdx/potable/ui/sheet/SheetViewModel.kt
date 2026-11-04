@@ -404,6 +404,10 @@ class SheetViewModel(
             _state.value = SheetUiState.Loading
             _freshness.value = null
             refreshError = null
+            // A refresh started before the purge writes nothing once it
+            // returns (CachingWaterRepository), so it would leave the
+            // loading state for good: a new one replaces it.
+            refreshJob?.cancel()
             refresh(force = false)
         } else {
             publishCache()

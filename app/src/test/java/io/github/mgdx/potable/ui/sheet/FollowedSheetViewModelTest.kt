@@ -12,6 +12,7 @@ import io.github.mgdx.potable.ui.follow
 import io.github.mgdx.potable.ui.sample
 import io.github.mgdx.potable.ui.sample.SampleDetailUiState
 import io.github.mgdx.potable.ui.sample.SampleDetailViewModel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -155,6 +156,27 @@ class FollowedSheetViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf(false, false), water.refreshCalls)
         assertEquals(loaded, viewModel.state.value)
+    }
+
+    @Test
+    fun `a cache purged during a refresh is loaded again`() = runTest(main.dispatcher) {
+        water.cache.value = CachedSample(latest, fetchedAt)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        val gate = CompletableDeferred<Unit>()
+        water.refreshGate = gate
+        water.refreshedCache = CachedSample(latest, Instant.parse("2026-10-25T09:59:00Z"))
+        viewModel.pullToRefresh()
+        advanceUntilIdle()
+        // Emptied in the settings while Hub'Eau has not answered.
+        water.purge()
+        advanceUntilIdle()
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(loaded, viewModel.state.value)
+        assertFalse(viewModel.isRefreshing.value)
     }
 
     @Test

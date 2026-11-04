@@ -37,7 +37,8 @@ import io.github.mgdx.potable.R
  * heading for screen readers; the bar grows with the font size
  * ([topBarHeight]) instead of cutting the title and subtitle. With
  * [onSubtitleClick], the subtitle is a button (changing the distribution
- * unit) marked by a drop-down arrow.
+ * unit) marked by a drop-down arrow. Screen readers say [subtitleSpoken]
+ * instead of the subtitle shown, when given ([spokenAs]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,7 @@ fun BackTopBar(
     titleIsData: Boolean = false,
     subtitleIsData: Boolean = false,
     onSubtitleClick: (() -> Unit)? = null,
+    subtitleSpoken: String? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
@@ -81,7 +83,7 @@ fun BackTopBar(
                             style = if (subtitleIsData) style.asApiText() else style,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
+                            modifier = Modifier.weight(1f, fill = false).spokenAs(subtitleSpoken),
                         )
                         if (onSubtitleClick != null) {
                             Icon(
