@@ -57,7 +57,8 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   communes déléguées, les arrondissements de Paris, Lyon et Marseille et les
   anciens codes des communes fusionnées. La recherche par nom ou par code
   postal ne sort pas du téléphone et ignore les accents et la casse :
-  « orleans » trouve Orléans.
+  « orleans » trouve Orléans. Chaque résultat indique son département, pour
+  distinguer les homonymes.
   - **« Autour de moi »**, en option : la permission de localisation n’est
     demandée qu’au moment où vous touchez le bouton, jamais au lancement.
     La refuser ne bloque rien, la saisie reste possible.
@@ -67,7 +68,10 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   distribuent chacune une eau de même qualité, souvent un quartier. Quand il
   n’y en a qu’une, Potable la choisit sans rien demander ; quand il y en a
   plusieurs, il les liste avec leur nom de quartier, explique en une phrase ce
-  qu’est une unité de distribution, et retient votre choix.
+  qu’est une unité de distribution, et retient votre choix. Quand Hub’Eau
+  n’en répertorie aucune, Potable donne les causes possibles (réseau d’une
+  commune voisine, captage privé, données pas encore publiées) et les
+  coordonnées de l’agence régionale de santé.
 
 - 💧 **La fiche « mon eau ».** La conclusion sanitaire du dernier prélèvement,
   **telle que l’ARS l’a publiée**, en évidence ; la date du prélèvement et son
@@ -75,8 +79,10 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   conformités bactériologique et physico-chimique, limites et références de
   qualité distinguées ; et quelques paramètres clés expliqués en une phrase —
   dureté, nitrates, pH, chlore libre —, avec leur limite ou référence de
-  qualité quand elle est publiée. Une conclusion défavorable est signalée par
-  un texte et une icône, jamais par la seule couleur.
+  qualité quand elle est publiée ; la dureté, publiée en °f, est aussi donnée
+  en °dH et en mmol/L. Quand plusieurs prélèvements du même jour ont la même
+  conclusion, elle n’est affichée qu’une fois. Une conclusion défavorable est
+  signalée par un texte et une icône, jamais par la seule couleur.
   - **Les 12 derniers mois** : un encart compte les prélèvements publiés non
     conformes aux limites de qualité, ou aux seules références de qualité,
     et rappelle la conclusion du plus récent.
@@ -92,6 +98,9 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   substance jamais analysée sur cette période est dite « non analysée
   depuis… » : sans analyse, on ne sait rien de sa présence. La carte indique
   aussi combien de pesticides ont été recherchés et combien quantifiés.
+  - **Chercher une substance** dans tout l’historique de l’unité de
+    distribution, par un mot entier du libellé publié par Hub’Eau :
+    « atrazine » trouve « Atrazine déséthyl ».
 
 - 🧪 **Le détail du prélèvement.** Tous les paramètres analysés, regroupés par
   famille (bactériologie, physico-chimie, pesticides, métaux…), avec leur
@@ -109,7 +118,8 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
 
 - 🗓️ **La frise des conclusions.** Les prélèvements successifs de votre unité
   de distribution et la conclusion de chacun, pour voir d’un coup d’œil si une
-  non-conformité est un épisode isolé ou une habitude.
+  non-conformité est un épisode isolé ou une habitude. Un filtre
+  « Non-conformités » ne garde que les prélèvements concernés.
 
 - 🔖 **Plusieurs communes suivies, consultables hors ligne.** Le domicile, une
   résidence secondaire, la famille : un signet sur la fiche, et chaque commune
@@ -123,11 +133,16 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   y a une nouvelle analyse pour vos communes suivies, et vous prévient soit à
   chaque nouvelle analyse, soit seulement en cas de conclusion défavorable.
   Une requête légère par commune, aucun service au premier plan, aucun réveil
-  exact, aucune exemption d’optimisation de batterie.
+  exact, aucune exemption d’optimisation de batterie. Un bouton « Vérifier
+  maintenant » lance la vérification sans attendre.
 
 - 🌍 **En anglais et en français.** Les libellés officiels (paramètres,
   unités, conclusions) restent en français dans les deux langues : ce sont des
   données, pas de l’interface.
+
+- ♿ **Lisible avec TalkBack.** Les valeurs, les unités et les seuils sont lus
+  en toutes lettres : « <=50 mg/L » devient « inférieur ou égal à 50
+  milligrammes par litre », pas une suite de symboles.
 
 - 🌗 **Thème clair, sombre ou celui du système.**
 
