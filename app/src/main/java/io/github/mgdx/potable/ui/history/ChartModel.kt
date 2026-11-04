@@ -29,6 +29,15 @@ data class ChartModel(
     /** True when a censored value is drawn at its bound, on the value scale. */
     val hasCensored: Boolean get() = scaled.any { it.censored }
 
+    /**
+     * True when there are too many points for a marker each
+     * ([DENSE_POINT_COUNT]): the measured values are drawn by the line alone.
+     */
+    val dense: Boolean get() = points.size > DENSE_POINT_COUNT
+
+    /** Whether each point gets its marker ([markersShown]); computed once. */
+    val markers: List<Boolean> by lazy { markersShown(points, dense) }
+
     /** The points of the row of bounds, under the time axis. */
     val boundRow: List<PlotPoint> get() = points.filter { it.inBoundRow }
 

@@ -105,6 +105,59 @@ fun plotPoints(points: List<SeriesPoint>): List<PlotPoint> {
     }
 }
 
+/**
+ * Above this many drawn points, the markers of the measured values are left
+ * out and the line thinned: Paris draws 5 675 nitrate measures over 10 years,
+ * whose markers make a solid band. Every measure stays drawn, none averaged.
+ */
+const val DENSE_POINT_COUNT = 300
+
+/**
+ * Whether each of [points] gets its marker: always a censored one (a bound
+ * is no point of the line), and all when not [dense]; dense, only a measured
+ * point the line does not reach, which would be invisible otherwise.
+ */
+fun markersShown(points: List<PlotPoint>, dense: Boolean): List<Boolean> {
+    if (!dense) return points.map { true }
+    val shown = MutableList(points.size) { points[it].censored }
+    // The next measured point joins its previous one: walk backwards.
+    var nextJoins = false
+    for (i in points.indices.reversed()) {
+        val point = points[i]
+        if (point.censored) continue
+        shown[i] = !point.joinsPrevious && !nextJoins
+        nextJoins = point.joinsPrevious
+    }
+    return shown
+}
+
+/**
+ * The index in [points] (in date order) of the point nearest in date to
+ * [day] among those of [window]; on a tie, the earlier one. Null when none
+ * is in the window.
+ */
+fun nearestDayIndex(points: List<PlotPoint>, day: Double, window: ChartWindow): Int? {
+    var best: Int? = null
+    var bestDistance = Double.MAX_VALUE
+    points.forEachIndexed { index, point ->
+        if (point.day !in window) return@forEachIndexed
+        val distance = abs(point.day - day)
+        if (distance < bestDistance) {
+            best = index
+            bestDistance = distance
+        }
+    }
+    return best
+}
+
+/** The day under [x] on a plot from [plotLeft] to [plotRight] showing [window]. */
+fun dayAt(x: Float, plotLeft: Float, plotRight: Float, window: ChartWindow): Double =
+    if (plotRight > plotLeft) {
+        window.start + (x - plotLeft).toDouble() / (plotRight - plotLeft) * window.span
+    } else {
+        window.start
+    }
+
 /** The published date of [point], in epoch days. */
 fun measureDay(point: SeriesPoint): Long = publishedDate(point.date).toEpochDay()
 
