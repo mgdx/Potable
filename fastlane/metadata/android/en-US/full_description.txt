@@ -33,7 +33,7 @@ These results are established by the regional health agencies (ARS) and publishe
 
 <b>Sources</b>
 
-Hub'Eau “Qualité de l'eau potable” API: data from the French Ministry of Health and the ARS. Communes: geo.api.gouv.fr and Code officiel géographique (INSEE), Licence Ouverte Etalab 2.0. Metabolites: ANSES table.
+Hub'Eau “Qualité de l'eau potable” API: data from the French Ministry of Health and the ARS. Communes: Découpage administratif communal (geo.api.gouv.fr) and Code officiel géographique (INSEE), under the Licence Ouverte Etalab 2.0. Metabolites: ANSES table.
 
 Potable is an independent application, not affiliated with Hub'Eau, the Ministry or the ARS.
 
