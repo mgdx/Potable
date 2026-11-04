@@ -251,6 +251,11 @@
     </plurals>
     <string name="sheet_sample_taken_at">Prélèvement effectué à %1$s</string>
     <string name="sheet_sample_number">Prélèvement %1$d sur %2$d</string>
+    <plurals name="sheet_same_conclusion">
+        <item quantity="one">Même conclusion pour le %d prélèvement de ce jour</item>
+        <item quantity="many">Même conclusion pour les %d prélèvements de ce jour</item>
+        <item quantity="other">Même conclusion pour les %d prélèvements de ce jour</item>
+    </plurals>
     <string name="sheet_details_of_latest">Chaque paramètre clé ci-dessous est sa mesure la plus récente de ce jour-là. La conformité est celle du prélèvement le plus récent.</string>
     <string name="sheet_recent_unfavourable_title">Sur les 12 derniers mois</string>
     <plurals name="sheet_recent_limits">
@@ -320,6 +325,7 @@
     <string name="watched_perchlorate">Perchlorate</string>
     <string name="watched_perchlorate_explanation">Le perchlorate provient surtout d’activités industrielles et militaires, comme les munitions de la Première Guerre mondiale.</string>
     <string name="sheet_sampled_on">Prélevé le %1$s</string>
+    <string name="sample_sampled_on_at">Prélevé le %1$s à %2$s</string>
     <string name="age_today">Aujourd’hui</string>
     <plurals name="age_days">
         <item quantity="one">Il y a %d jour</item>

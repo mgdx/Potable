@@ -289,6 +289,11 @@
     <string name="sheet_sample_taken_at">Sample taken at %1$s</string>
     <!-- Subheading of one of these samples when their times are not published. %1$d: its position, the most recent being 1. %2$d: number of samples. -->
     <string name="sheet_sample_number">Sample %1$d of %2$d</string>
+    <!-- Subheading over a conclusion published identically, character for character, for several samples of that day; the conclusion follows once, then one line per sample (sheet_sample_taken_at or sheet_sample_number) that opens its results. %d: number of these samples, 2 or more. -->
+    <plurals name="sheet_same_conclusion">
+        <item quantity="one">Same conclusion for the %d sample of that day</item>
+        <item quantity="other">Same conclusion for the %d samples of that day</item>
+    </plurals>
     <!-- Under the card of several samples. -->
     <string name="sheet_details_of_latest">Each key parameter below is its most recent measure of that day. The compliance is that of the most recent sample.</string>
     <!-- Heading of a small box on the sheet, shown only when samples of the last 12 months have an unfavourable published result (non-compliance, consumption advised against or forbidden). It sits just above the sample history button. -->
@@ -374,6 +379,8 @@
     <string name="watched_perchlorate_explanation">Perchlorate comes mainly from industrial and military activities, such as First World War munitions.</string>
     <!-- %1$s: the sample date, formatted for the language ("26 August 2026"). Also the subtitle of the sample detail. -->
     <string name="sheet_sampled_on">Sampled on %1$s</string>
+    <!-- Subtitle of the sample detail and report when the published time tells the sample apart from the others of its day (as sheet_sample_taken_at). %1$s: the sample date, formatted for the language ("30 June 2026"); %2$s: its time, formatted for the language ("09:12"). -->
+    <string name="sample_sampled_on_at">Sampled on %1$s at %2$s</string>
     <!-- Age of the sample, under its date. -->
     <string name="age_today">Today</string>
     <!-- %d: number of days, 1 to 6. -->

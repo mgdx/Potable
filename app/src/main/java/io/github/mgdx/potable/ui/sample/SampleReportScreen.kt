@@ -35,7 +35,6 @@ import io.github.mgdx.potable.ui.sheet.ConclusionCard
 import io.github.mgdx.potable.ui.sheet.KeyParametersCard
 import io.github.mgdx.potable.ui.sheet.RelativeAge
 import io.github.mgdx.potable.ui.sheet.SampleInfoCard
-import io.github.mgdx.potable.ui.sheet.formatSampleDate
 import java.time.Clock
 
 /**
@@ -60,12 +59,7 @@ fun SampleReportScreen(
         topBar = {
             BackTopBar(
                 title = stringResource(R.string.sample_report_title),
-                subtitle = loaded?.let {
-                    stringResource(
-                        R.string.sheet_sampled_on,
-                        formatSampleDate(it.sample.date, currentLocale()),
-                    )
-                },
+                subtitle = loaded?.let { sampledOnSubtitle(it) },
                 onBack = onBack,
             )
         },
