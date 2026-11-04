@@ -56,6 +56,8 @@ import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.parameterExplanationRes
+import io.github.mgdx.potable.ui.common.spokenAs
+import io.github.mgdx.potable.ui.common.spokenThreshold
 import io.github.mgdx.potable.ui.sheet.formatSampleDate
 import io.github.mgdx.potable.ui.sheet.justified
 
@@ -362,6 +364,9 @@ private fun ResultText(result: AnalysisResult, communeCode: String, modifier: Mo
                 text = stringResource(R.string.quality_limit, bidiWrap(it)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.spokenAs(
+                    stringResource(R.string.quality_limit, spokenThreshold(it)),
+                ),
             )
         }
         result.qualityReference?.takeIf { it.isNotBlank() }?.let {
@@ -369,6 +374,9 @@ private fun ResultText(result: AnalysisResult, communeCode: String, modifier: Mo
                 text = stringResource(R.string.quality_reference, bidiWrap(it)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.spokenAs(
+                    stringResource(R.string.quality_reference, spokenThreshold(it)),
+                ),
             )
         }
         // A fact of the ANSES table, read with the result (the row merges

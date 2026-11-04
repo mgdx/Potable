@@ -52,6 +52,9 @@ import io.github.mgdx.potable.ui.common.PeriodSelector
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.readableWidth
+import io.github.mgdx.potable.ui.common.spokenAs
+import io.github.mgdx.potable.ui.common.spokenResult
+import io.github.mgdx.potable.ui.common.spokenThreshold
 import io.github.mgdx.potable.ui.sample.currentLocale
 import io.github.mgdx.potable.ui.sheet.publishedDate
 import java.util.Locale
@@ -225,20 +228,27 @@ private fun Paragraph(text: String) {
 @Composable
 private fun PublishedThresholds(series: ParameterSeries) {
     series.limitText?.takeIf { it.isNotBlank() }?.let {
-        LegendText(stringResource(R.string.quality_limit, bidiWrap(it)))
+        LegendText(
+            text = stringResource(R.string.quality_limit, bidiWrap(it)),
+            spoken = stringResource(R.string.quality_limit, spokenThreshold(it)),
+        )
     }
     series.referenceText?.takeIf { it.isNotBlank() }?.let {
-        LegendText(stringResource(R.string.quality_reference, bidiWrap(it)))
+        LegendText(
+            text = stringResource(R.string.quality_reference, bidiWrap(it)),
+            spoken = stringResource(R.string.quality_reference, spokenThreshold(it)),
+        )
     }
 }
 
+/** A line of the legend; screen readers say [spoken] instead, when given ([spokenAs]). */
 @Composable
-private fun LegendText(text: String) {
+private fun LegendText(text: String, spoken: String? = null) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp).spokenAs(spoken),
     )
 }
 
@@ -322,17 +332,24 @@ private fun ThresholdLegend(
 ) {
     if (text == null) return
     val value = bidiWrap(text)
-    when (thresholdPlacement(bounds)) {
-        null -> LegendRow(null, stringResource(strings.notDrawn, value))
-        ThresholdPlacement.DRAWN -> LegendRow(mark, stringResource(strings.drawn, value))
-        ThresholdPlacement.PARTLY_OUTSIDE -> LegendRow(mark, stringResource(strings.partly, value))
-        ThresholdPlacement.ABOVE -> LegendRow(null, stringResource(strings.above, value))
-        ThresholdPlacement.BELOW -> LegendRow(null, stringResource(strings.below, value))
+    // The published text in words; the bounds written out are read as shown.
+    val spoken = spokenThreshold(text).takeIf { it != text }
+    val (shownMark, id) = when (thresholdPlacement(bounds)) {
+        null -> null to strings.notDrawn
+        ThresholdPlacement.DRAWN -> mark to strings.drawn
+        ThresholdPlacement.PARTLY_OUTSIDE -> mark to strings.partly
+        ThresholdPlacement.ABOVE -> null to strings.above
+        ThresholdPlacement.BELOW -> null to strings.below
     }
+    LegendRow(
+        mark = shownMark,
+        text = stringResource(id, value),
+        spoken = spoken?.let { stringResource(id, it) },
+    )
 }
 
 @Composable
-private fun LegendRow(mark: LegendMark?, text: String) {
+private fun LegendRow(mark: LegendMark?, text: String, spoken: String? = null) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -342,7 +359,7 @@ private fun LegendRow(mark: LegendMark?, text: String) {
             text = text,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).spokenAs(spoken),
         )
     }
 }
@@ -417,6 +434,7 @@ private fun MeasureRow(point: SeriesPoint, unit: String?) {
                 pointValueText(point, unit, locale) ?: stringResource(R.string.sample_no_value),
             ),
             style = MaterialTheme.typography.bodyLarge.copy(textDirection = TextDirection.Ltr),
+            modifier = Modifier.spokenAs(spokenResult(point.text, point.value, unit)),
         )
     }
 }

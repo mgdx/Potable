@@ -1,7 +1,9 @@
 package io.github.mgdx.potable.ui.sheet
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.ComposeHostRegistration
@@ -46,6 +48,8 @@ class KeyParametersCardTest {
         show(sample().copy(results = listOf(hardness("36,4", 36.4))))
         assertEquals(1, count("36,4 °f"))
         assertEquals(1, count("i.e. 20.4 °dH · 3.6 mmol/L"))
+        compose.onNodeWithText("i.e. 20.4 °dH", substring = true, useUnmergedTree = true)
+            .assertContentDescriptionEquals("i.e. 20.4 German degrees, 3.6 millimoles per litre")
     }
 
     @Test
