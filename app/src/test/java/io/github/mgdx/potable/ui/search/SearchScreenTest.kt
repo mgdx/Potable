@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Commune
+import io.github.mgdx.potable.data.preferences.RecentUnit
 import io.github.mgdx.potable.location.LocationOutcome
 import io.github.mgdx.potable.location.Locator
 import io.github.mgdx.potable.ui.ComposeHostRegistration
@@ -68,5 +69,47 @@ class SearchScreenTest {
         compose.onNodeWithText(orleans.name).performClick()
         // No unit known for the commune: the unit is to be chosen (UdiScreen).
         assertEquals(listOf(orleans to false), selected)
+    }
+
+    @Test
+    fun `homonyms are told apart by their department`() {
+        val tarn = Commune("81202", "Parisot", listOf("81310"), 43.8, 1.8, population = 900)
+        val tarnEtGaronne = Commune("82137", "Parisot", listOf("82160"), 44.3, 1.8)
+        // A former commune of Corsica: no postal code, the department alone.
+        val corsica = Commune("2A999", "Parisotta", emptyList(), 41.9, 8.7, hubEauCode = "2A004")
+        val preferences = FakeAppPreferences()
+        preferences.recent.value =
+            listOf(RecentUnit("97411", "Saint-Denis", "974000123", "SAINT-DENIS"))
+        val viewModel = SearchViewModel(
+            FakeCommuneRepository(listOf(tarn, tarnEtGaronne, corsica)),
+            Locator { LocationOutcome.Unavailable },
+            FakeFollowRepository(),
+            preferences,
+        )
+        setContent(viewModel)
+
+        // While nothing is typed, the recent units say their department too.
+        compose.waitForText("La Réunion (974)")
+
+        compose.onNode(hasSetTextAction()).performTextInput("parisot")
+        compose.waitForText("81310 · Tarn (81)")
+        compose.onNodeWithText("82160 · Tarn-et-Garonne (82)").assertExists()
+        compose.onNodeWithText("Corse-du-Sud (2A)").assertExists()
+    }
+
+    private fun setContent(viewModel: SearchViewModel) {
+        compose.setContent {
+            PotableTheme {
+                SearchScreen(
+                    viewModel = viewModel,
+                    onCommuneSelected = { _, _ -> },
+                    onKnownUdiSelected = { _, _, _ -> },
+                    onRecentSelected = {},
+                    onMyCommunes = {},
+                    onSettings = {},
+                    onAbout = {},
+                )
+            }
+        }
     }
 }
