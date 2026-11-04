@@ -33,7 +33,7 @@ Ces résultats sont établis par les agences régionales de santé (ARS) et publ
 
 <b>Sources</b>
 
-Hub'Eau, API « Qualité de l’eau potable » : données du ministère de la Santé et des ARS. Communes : geo.api.gouv.fr et Code officiel géographique (INSEE), Licence Ouverte Etalab 2.0. Métabolites : tableau de l’ANSES.
+Hub'Eau, API « Qualité de l’eau potable » : données du ministère de la Santé et des ARS. Communes : Découpage administratif communal (geo.api.gouv.fr) et Code officiel géographique (INSEE), sous Licence Ouverte Etalab 2.0. Métabolites : tableau de l’ANSES.
 
 Potable est une application indépendante, sans lien avec Hub'Eau, le ministère ou les ARS.
 

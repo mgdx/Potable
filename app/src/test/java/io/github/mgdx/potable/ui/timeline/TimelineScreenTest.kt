@@ -6,6 +6,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -13,14 +14,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.ui.ComposeHostRegistration
 import io.github.mgdx.potable.ui.FakeAppPreferences
 import io.github.mgdx.potable.ui.FakeHistoryRepository
+import io.github.mgdx.potable.ui.string
 import io.github.mgdx.potable.ui.theme.PotableTheme
 import io.github.mgdx.potable.ui.waitForText
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -115,6 +119,7 @@ class TimelineScreenTest {
         compose.onNode(hasText("All") and radio).assertIsSelected()
         val nonCompliances = compose.onNode(hasText("Non-compliances") and radio)
         nonCompliances.assertIsNotSelected().assertHeightIsAtLeast(48.dp)
+        assertOfficialAboveList("Conclusion du 15 septembre.")
 
         nonCompliances.performClick()
 
@@ -126,6 +131,14 @@ class TimelineScreenTest {
         compose.onNodeWithText(
             "1 sample not compliant with the quality references only",
         ).assertExists()
+        // Below the counts, which are not published labels, above the list.
+        assertOfficialAboveList("Conclusion du 15 septembre.")
+        val counts = compose.onNodeWithText(
+            "1 sample not compliant with the quality references only",
+        ).getUnclippedBoundsInRoot()
+        val note = compose.onNodeWithText(string(R.string.sample_official_labels))
+            .getUnclippedBoundsInRoot()
+        assertTrue(counts.bottom < note.top)
         compose.onNodeWithText("Conclusion du 15 septembre.").assertExists()
         compose.onNodeWithText("Conclusion du 2 juin.").assertDoesNotExist()
 
@@ -137,5 +150,14 @@ class TimelineScreenTest {
             "No sample with a published non-compliance or restriction since",
             substring = true,
         )
+    }
+
+    /** The note on the official labels, once, just above the first entry. */
+    private fun assertOfficialAboveList(firstConclusion: String) {
+        val note = compose.onNodeWithText(string(R.string.sample_official_labels))
+            .getUnclippedBoundsInRoot()
+        val first = compose.onNodeWithText(firstConclusion).getUnclippedBoundsInRoot()
+        assertTrue(note.bottom <= first.top)
+        compose.onNodeWithText(string(R.string.sheet_official_wording)).assertDoesNotExist()
     }
 }

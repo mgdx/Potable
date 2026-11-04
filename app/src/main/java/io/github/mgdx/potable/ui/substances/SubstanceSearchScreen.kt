@@ -26,10 +26,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,7 +71,8 @@ import java.time.format.FormatStyle
  * gives the label, the latest value and unit as published (a censored
  * "<0,05" stays as is) with its date, and how many samples measured it; no
  * comparison, no verdict (SPEC §14). Touching a result opens its history
- * ([onOpenHistory]).
+ * ([onOpenHistory]). The field takes the focus, and the keyboard, the first
+ * time the screen opens only: not back from a history, nor after a rotation.
  */
 @Composable
 fun SubstanceSearchScreen(
@@ -78,6 +84,8 @@ fun SubstanceSearchScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isSlow by viewModel.isSlow.collectAsStateWithLifecycle()
+    val field = remember { FocusRequester() }
+    var focusGiven by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -96,7 +104,15 @@ fun SubstanceSearchScreen(
                     onValueChange = viewModel::onQueryChange,
                     label = stringResource(R.string.substance_search_field),
                     onSearch = viewModel::submit,
+                    focusRequester = field,
                 )
+                // Here, not above the Scaffold: its content is composed later.
+                LaunchedEffect(Unit) {
+                    if (!focusGiven) {
+                        focusGiven = true
+                        field.requestFocus()
+                    }
+                }
             }
             Box(
                 modifier = Modifier

@@ -255,14 +255,21 @@ private fun LegendText(text: String, spoken: String? = null) {
     )
 }
 
-/** What the marks of the chart stand for, in the layout of the interface. */
-private enum class LegendMark { MEASURE, CENSORED, LIMIT, REFERENCE }
+/**
+ * What the marks of the chart stand for, in the layout of the interface;
+ * [DENSE_MEASURE] is the thin line alone of a dense chart ([ChartModel.dense]).
+ */
+internal enum class LegendMark { MEASURE, DENSE_MEASURE, CENSORED, LIMIT, REFERENCE }
+
+/** The legend mark of the measured values, as the chart draws them. */
+internal fun measureLegendMark(model: ChartModel): LegendMark =
+    if (model.dense) LegendMark.DENSE_MEASURE else LegendMark.MEASURE
 
 @Composable
 private fun Legend(series: ParameterSeries, model: ChartModel, belowSumThreshold: String?) {
     val locale = currentLocale()
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        LegendRow(LegendMark.MEASURE, stringResource(R.string.history_legend_measure))
+        LegendRow(measureLegendMark(model), stringResource(R.string.history_legend_measure))
         if (model.hasCensored) {
             LegendRow(LegendMark.CENSORED, stringResource(R.string.history_legend_censored))
         }
@@ -374,18 +381,30 @@ private fun LegendRow(mark: LegendMark?, text: String, spoken: String? = null) {
 @Composable
 private fun LegendSwatch(mark: LegendMark) {
     val colors = MaterialTheme.colorScheme
+    val measure = measureColor(colors)
     Canvas(modifier = Modifier.size(24.dp, 16.dp)) {
         val y = size.height / 2
         val radius = 4.dp.toPx()
         val center = Offset(size.width / 2, y)
         when (mark) {
             LegendMark.MEASURE -> {
-                drawLine(colors.primary, Offset(0f, y), Offset(size.width, y), 2.dp.toPx())
-                drawCircle(colors.primary, radius, center)
+                drawLine(
+                    measure,
+                    Offset(0f, y),
+                    Offset(size.width, y),
+                    measureLineWidth(dense = false).toPx(),
+                )
+                drawCircle(measure, radius, center)
             }
+            LegendMark.DENSE_MEASURE -> drawLine(
+                measure,
+                Offset(0f, y),
+                Offset(size.width, y),
+                measureLineWidth(dense = true).toPx(),
+            )
             LegendMark.CENSORED -> {
                 drawCircle(colors.surface, radius, center)
-                drawCircle(colors.primary, radius, center, style = Stroke(width = 1.5.dp.toPx()))
+                drawCircle(measure, radius, center, style = Stroke(width = 1.5.dp.toPx()))
             }
             LegendMark.LIMIT ->
                 drawLine(colors.onSurface, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx())

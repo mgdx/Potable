@@ -220,13 +220,17 @@ private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) 
                         modifier = Modifier.semantics { heading() },
                     )
                     loaded.digest?.let { DigestLines(it) }
-                    Text(
-                        text = stringResource(R.string.sheet_official_wording),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
                 HorizontalDivider()
+            }
+            // Past the divider, apart from the counts: it is about the conclusions below.
+            item(key = "official") {
+                Text(
+                    text = stringResource(R.string.sample_official_labels),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                )
             }
             itemsIndexed(loaded.entries, key = { _, entry -> entry.sample.code }) { index, entry ->
                 TimelineRow(

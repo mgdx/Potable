@@ -18,6 +18,8 @@ import io.github.mgdx.potable.ui.settings.openNotificationSettings
  * (SPEC §5 F7), in [snackbar]; then, if notifications are not allowed, a
  * message with a way to the system settings, as the settings say it. A
  * snackbar cut by a rotation shows again; once dismissed or answered, never.
+ * The offer stays until answered or closed; the message after a refusal
+ * goes after a while.
  */
 @Composable
 internal fun AlertOfferSnackbar(viewModel: SheetViewModel, snackbar: SnackbarHostState) {
@@ -40,7 +42,8 @@ internal fun AlertOfferSnackbar(viewModel: SheetViewModel, snackbar: SnackbarHos
             message = if (denied) deniedText else offerText,
             actionLabel = if (denied) deniedAction else offerAction,
             withDismissAction = true,
-            duration = SnackbarDuration.Long,
+            // Made once per install: the offer waits for an answer or the close button.
+            duration = if (denied) SnackbarDuration.Long else SnackbarDuration.Indefinite,
         )
         viewModel.onAlertOfferShown(current)
         if (result == SnackbarResult.ActionPerformed) {
