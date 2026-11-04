@@ -120,6 +120,7 @@ class SheetScreenTest {
                     onBack = {},
                     onShowAllResults = { shownResults += it },
                     onShowHistory = {},
+                    onSearchSubstance = {},
                     onParameterHistory = { _, _ -> },
                     onMyCommunes = null,
                     onSettings = {},

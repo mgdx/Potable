@@ -76,6 +76,7 @@ fun SheetScreen(
     onBack: (() -> Unit)?,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
+    onSearchSubstance: () -> Unit,
     onParameterHistory: (codes: Set<String>, label: String) -> Unit,
     onMyCommunes: (() -> Unit)?,
     onSettings: () -> Unit,
@@ -155,6 +156,7 @@ fun SheetScreen(
                             onRetryWatched = viewModel::retryWatched,
                             onShowAllResults = onShowAllResults,
                             onShowHistory = onShowHistory,
+                            onSearchSubstance = onSearchSubstance,
                             onParameterHistory = onParameterHistory,
                             showSourceNotice = !pinnedNotice,
                             twoPane = twoPane,
@@ -268,6 +270,7 @@ private fun SampleContent(
     onRetryWatched: () -> Unit,
     onShowAllResults: (Sample) -> Unit,
     onShowHistory: () -> Unit,
+    onSearchSubstance: () -> Unit,
     onParameterHistory: (Set<String>, String) -> Unit,
     showSourceNotice: Boolean,
     twoPane: Boolean,
@@ -314,6 +317,16 @@ private fun SampleContent(
             )
             Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
             Text(stringResource(R.string.timeline_title))
+        }
+        // Right under the history: a search of the same history by name (SPEC §3).
+        FilledTonalButton(onClick = onSearchSubstance, modifier = Modifier.fillMaxWidth()) {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = null,
+                modifier = Modifier.size(ButtonDefaults.IconSize),
+            )
+            Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+            Text(stringResource(R.string.substance_search_title))
         }
         // Below the last 12 months and the history they open.
         HealthAgencyCard(sample.communeCode, sample.distributor)

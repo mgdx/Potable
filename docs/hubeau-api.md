@@ -125,6 +125,48 @@ Le client refuse lui-même (`IllegalArgumentException`) toute URL de plus de
   pages suivies tant qu'elles sont pleines (borne : 20 pages, 100 000 lignes).
 - Frise des conclusions : même requête sur `code_parametre=1302,1382,1449` et
   les seuls champs d'en-tête du prélèvement.
+- Recherche d'une substance (`RemoteSubstanceSearchRepository`, détail dans
+  « Recherche par libellé ») :
+  `resultats_dis?code_commune=…&code_reseau=…&libelle_parametre=<mots>&date_min_prelevement=<début>&date_max_prelevement=<lendemain à Paris>&fields=…&sort=desc&page=N&size=5000`,
+  pages suivies tant qu'elles sont pleines (borne : 2 pages, 10 000 lignes ;
+  au-delà, résultat partiel annoncé).
+
+## Recherche par libellé (mesures du 2026-11-04)
+
+Le filtre `libelle_parametre` de `resultats_dis` n'est **pas** une recherche
+de sous-chaîne : il cherche des **mots entiers**, sans casse ni accents, avec
+un rapprochement singulier/pluriel ; plusieurs mots doivent se suivre dans le
+libellé. Orléans, `045000474`, 3 ans :
+
+| `libelle_parametre` | Lignes | Lecture |
+|---|---|---|
+| `atrazine`, `ATRAZINE` | 161 | « Atrazine », « Atrazine déséthyl », « Atrazine déisopropyl-2-hydroxy »… |
+| `trazine`, `atr`, `atra` | **0** | ni sous-chaîne, ni début de mot |
+| `desethyl`, `déséthyl` | 138 | accents ignorés |
+| `ethyl` | 23 | « Pyrimiphos éthyl », pas « déséthyl » (un autre mot) |
+| `nitrate` / `nitrates` | 208 / 208 | pluriel rapproché ; « Nitrates (en NO3) », « Nitrates/50 + Nitrites/3 » |
+| `atrazine déséthyl` | 69 | mots consécutifs |
+| `total pesticides`, `temperature eau` | **0** | « Total **des** pesticides », « Température **de l'**eau » : mots non consécutifs |
+| `pesticide` | 46 | « Total des pesticides analysés », « Anthraquinone (pesticide) » |
+| `eau` | 443 | « Température de l'eau » |
+| `ph`, `pH` | 527 | |
+| `e`, `ea`, `az` | 0 | |
+
+Volumes et durées (`fields` réduits, page de 5 000) : Orléans 3 ans, `nitrate`
+0,5 s, `eau` 2,6 s (121 Ko), `atrazine` 4,4 s (45 Ko) ; Paris CENTRE
+(`075000221`) 10 ans, `eau` 5 792 lignes (page 1 : `206`, 1,4 Mo, 4,4 s),
+`chlore` 11 594 lignes.
+
+Requête du client : `code_commune` et `code_reseau` de l'unité, fenêtre de
+l'historique bornée des deux côtés (comme une série), tri décroissant,
+`fields=code_prelevement,code_commune,date_prelevement,code_parametre,libelle_parametre,code_lieu_analyse,resultat_alphanumerique,resultat_numerique,libelle_unite`
+(pas de seuils : l'historique ouvert les lit). Pages de 5 000 lignes, **deux au
+plus** : un mot très répandu (`chlore` à Paris sur 10 ans) s'arrête à 10 000
+lignes, les plus récentes ; l'écran le dit (nombre de lignes lues sur le
+`count` publié), car les nombres de mesures sont alors incomplets et un
+paramètre mesuré seulement plus tôt peut manquer. Requête à partir de
+3 caractères, après 600 ms sans frappe ou à la touche « Rechercher » du
+clavier ; la précédente est annulée. Pas de cache.
 
 ## Paramètres mis en avant
 
