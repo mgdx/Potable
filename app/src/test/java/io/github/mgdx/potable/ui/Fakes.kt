@@ -111,6 +111,9 @@ class FakeHistoryRepository : HistoryRepository {
     /** The codes and `since` of each [parameterSeries]. */
     val seriesCalls = mutableListOf<Pair<Set<String>, LocalDate>>()
 
+    /** The `force` argument of each [parameterSeries]. */
+    val seriesForced = mutableListOf<Boolean>()
+
     override suspend fun parameterSeries(
         communeCode: String,
         udiCode: String,
@@ -119,6 +122,7 @@ class FakeHistoryRepository : HistoryRepository {
         force: Boolean,
     ): ParameterSeries? {
         seriesCalls += parameterCodes to since
+        seriesForced += force
         return series[parameterCodes]?.getOrThrow()
     }
 

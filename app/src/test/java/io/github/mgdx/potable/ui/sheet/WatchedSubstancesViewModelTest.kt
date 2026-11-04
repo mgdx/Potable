@@ -125,10 +125,45 @@ class WatchedSubstancesViewModelTest {
                 mainland.map { it.codes to LocalDate.parse("2023-10-25") },
                 history.seriesCalls,
             )
-            // Once per sample shown.
+            // Once per sample shown, from today's cache when it is fresh.
+            assertTrue(history.seriesForced.none { it })
+            viewModel.retryWatched()
+            advanceUntilIdle()
+            assertEquals(2 * mainland.size, history.seriesCalls.size)
+            assertTrue(history.seriesForced.none { it })
+        }
+
+    @Test
+    fun `a pull-to-refresh asks Hub'Eau again for every substance`() = runTest(main.dispatcher) {
+        water.cache.value = CachedSample(sample(), fetchedAt)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        assertEquals(mainland.size, history.seriesCalls.size)
+
+        viewModel.pullToRefresh()
+        advanceUntilIdle()
+        assertEquals(listOf(false, true), water.refreshCalls)
+        assertEquals(2 * mainland.size, history.seriesCalls.size)
+        assertEquals(List(mainland.size) { true }, history.seriesForced.drop(mainland.size))
+
+        // Served: the next read uses the cache again.
+        viewModel.retryWatched()
+        advanceUntilIdle()
+        assertTrue(history.seriesForced.drop(2 * mainland.size).none { it })
+    }
+
+    @Test
+    fun `a pull-to-refresh that fails leaves the substances to the cache`() =
+        runTest(main.dispatcher) {
+            water.cache.value = CachedSample(sample(), fetchedAt)
+            val viewModel = viewModel()
+            advanceUntilIdle()
+
+            water.refreshAnswers += Result.failure(DataError.Network(IOException()))
             viewModel.pullToRefresh()
             advanceUntilIdle()
             assertEquals(mainland.size, history.seriesCalls.size)
+            assertTrue(history.seriesForced.none { it })
         }
 
     @Test

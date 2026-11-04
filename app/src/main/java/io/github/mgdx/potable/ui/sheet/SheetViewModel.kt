@@ -192,6 +192,12 @@ class SheetViewModel(
     private var watchedFor: String? = null
     private var watchedYears: Int? = null
 
+    /**
+     * Set by a pull-to-refresh that reached Hub'Eau: the next reads of the
+     * watched substances skip today's cache, until one reads them all.
+     */
+    private var forceWatched = false
+
     /** The newest sample [recentJob] was started for: read again only when it changes. */
     private var recentFor: String? = null
     private var cached: CachedSample? = null
@@ -262,7 +268,7 @@ class SheetViewModel(
     /** Pull-to-refresh: asks Hub'Eau again, even if the cache is from today. */
     fun pullToRefresh() {
         // Nothing cached is shown: the loading state is the indicator.
-        if (cached == null) retry() else refresh(force = true)
+        if (cached == null) retry() else refresh(force = true, watchedToo = true)
     }
 
     fun toggleFollow() {
@@ -306,7 +312,7 @@ class SheetViewModel(
         }
     }
 
-    private fun refresh(force: Boolean) {
+    private fun refresh(force: Boolean, watchedToo: Boolean = false) {
         if (refreshJob?.isActive == true) return
         // Without a cache the loading state shows: no second indicator.
         if (force && cached != null) _isRefreshing.value = true
@@ -325,6 +331,13 @@ class SheetViewModel(
                 _isRefreshing.value = false
             }
             publishCache()
+            // A pull-to-refresh that reached Hub'Eau also asks again for the
+            // watched substances, even if read today. Not after a failure:
+            // offline, the cache keeps answering for them.
+            if (watchedToo && refreshError == null) {
+                forceWatched = true
+                cached?.sample?.let { loadWatched(it.code, again = true) }
+            }
         }
     }
 
@@ -376,14 +389,16 @@ class SheetViewModel(
      * [WatchedSubstance] over the history window, from the history cache
      * when it is fresh, and keeps the latest measure of each
      * ([WatchedSubstances.latest]). Only once per newest sample [sampleCode]
-     * unless [again]. A substance that cannot be read is left out; if none
-     * can, the card shows an error.
+     * unless [again]. While [forceWatched], Hub'Eau is asked even for a
+     * series read today. A substance that cannot be read is left out; if
+     * none can, the card shows an error.
      */
     private fun loadWatched(sampleCode: String, again: Boolean = false) {
         if (!again && watchedFor == sampleCode) return
         watchedFor = sampleCode
         watchedJob?.cancel()
         if (_watched.value !is WatchedUiState.Loaded) _watched.value = WatchedUiState.Loading
+        val force = forceWatched
         watchedJob = viewModelScope.launch {
             val years = historyYears.filterNotNull().first()
             watchedYears = years
@@ -404,6 +419,7 @@ class SheetViewModel(
                                     udiCode,
                                     substance.codes,
                                     since,
+                                    force,
                                 ),
                             )
                         } catch (e: CancellationException) {
@@ -432,6 +448,8 @@ class SheetViewModel(
                 else -> WatchedUiState.Loaded(measures, since, years, error, notAnalysed)
             }
             _watched.value = state
+            // Every substance asked again: the pull-to-refresh is served.
+            if (force && error == null) forceWatched = false
             if (state is WatchedUiState.Loaded) countPesticides(state)
         }
     }
