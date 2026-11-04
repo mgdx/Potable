@@ -73,14 +73,33 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   **telle que l’ARS l’a publiée**, en évidence ; la date du prélèvement et son
   ancienneté ; le distributeur et la collectivité responsable ; les
   conformités bactériologique et physico-chimique, limites et références de
-  qualité distinguées ; et quelques paramètres clés expliqués en une phrase :
-  dureté, nitrates, pH, chlore libre. Une conclusion défavorable est signalée
-  par un texte et une icône, jamais par la seule couleur.
+  qualité distinguées ; et quelques paramètres clés expliqués en une phrase —
+  dureté, nitrates, pH, chlore libre —, avec leur limite ou référence de
+  qualité quand elle est publiée. Une conclusion défavorable est signalée par
+  un texte et une icône, jamais par la seule couleur.
+  - **Les 12 derniers mois** : un encart compte les prélèvements publiés non
+    conformes aux limites de qualité, ou aux seules références de qualité,
+    et rappelle la conclusion du plus récent.
+  - **« Vos questions sur cette eau »** : l’agence régionale de santé, pour
+    une question de santé, avec un lien vers son site ; le distributeur, pour
+    une question de facture, de coupure ou de travaux.
+
+- 🔬 **Les substances surveillées.** PFAS (somme de 20), total des
+  pesticides, TFA, chlorure de vinyle, plomb, arsenic, perchlorate, et
+  chlordécone en outre-mer : ces substances ne sont pas analysées à chaque
+  prélèvement, alors la fiche montre la dernière mesure connue de chacune sur
+  la période d’historique choisie, avec sa date et sa limite de qualité. Une
+  substance jamais analysée sur cette période est dite « non analysée
+  depuis… » : sans analyse, on ne sait rien de sa présence. La carte indique
+  aussi combien de pesticides ont été recherchés et combien quantifiés.
 
 - 🧪 **Le détail du prélèvement.** Tous les paramètres analysés, regroupés par
   famille (bactériologie, physico-chimie, pesticides, métaux…), avec leur
-  valeur, leur unité et la limite de qualité quand elle est publiée, et une
-  recherche dans la liste.
+  valeur, leur unité et la limite ou référence de qualité quand elle est
+  publiée, et une recherche dans la liste. La famille des pesticides donne le
+  nombre de substances recherchées et quantifiées, et chaque métabolite classé
+  par l’ANSES est marqué « pertinent » ou « non pertinent », avec ce que cela
+  change : limite de qualité de 0,1 µg/L ou valeur indicative de 0,9 µg/L.
 
 - 📈 **L’historique d’un paramètre.** Sa courbe sur 1, 3, 5 ou 10 ans, avec la
   limite réglementaire tracée quand elle existe ; une valeur publiée sous un
@@ -92,10 +111,12 @@ demande aucun compte, et ne parle qu’à un seul serveur : celui de Hub’Eau.
   de distribution et la conclusion de chacun, pour voir d’un coup d’œil si une
   non-conformité est un épisode isolé ou une habitude.
 
-- ⭐ **Plusieurs communes suivies, consultables hors ligne.** Le domicile, une
-  résidence secondaire, la famille : chaque commune suivie garde sa dernière
-  analyse et son historique sur le téléphone, s’affiche en mode avion avec la
-  date de ses données.
+- 🔖 **Plusieurs communes suivies, consultables hors ligne.** Le domicile, une
+  résidence secondaire, la famille : un signet sur la fiche, et chaque commune
+  suivie garde sa dernière analyse et son historique sur le téléphone,
+  s’affiche en mode avion avec la date de ses données. La liste s’exporte
+  dans un fichier JSON, avec les réglages d’affichage, et se réimporte sur un
+  autre téléphone, sans compte ni serveur.
 
 - 🔔 **Des alertes sobres.** Désactivées par défaut. Si vous les activez,
   Potable vérifie chaque semaine (ou toutes les deux ou quatre semaines) s’il
