@@ -19,17 +19,26 @@ import kotlin.math.roundToLong
 
 /**
  * A measure as drawn: [day] is the published date (epoch day), [value] the
- * height it is drawn at, [index] its position in the series's points.
- * [joinsPrevious] is true when the line comes to it from the previous drawn
- * point: false for the first, and after a measure that is not drawn, so
- * that the line never runs across a `<SEUIL` or a qualitative result.
+ * height it is drawn at (for a censored one, its published bound), [index]
+ * its position in the series's points.
+ *
+ * [joinsPrevious] is true when the line comes to it from the previous
+ * measured point: false for the first, for a censored one (a bound is not a
+ * measure: the line never runs to it), and when a measure off the line
+ * (`<SEUIL`, a qualitative result, a bound) lies on a day between them.
+ *
+ * [inBoundRow] is true for a value published below a bound ("<0,500") higher
+ * than every measured value: drawn at that bound, it would make a peak, often
+ * on the quality limit, that no measure reached. It is drawn in a row of its
+ * own under the time axis instead, and never sets the value scale.
  */
 data class PlotPoint(
     val index: Int,
     val day: Long,
     val value: Double,
     val censored: Boolean,
-    val joinsPrevious: Boolean = true,
+    val joinsPrevious: Boolean,
+    val inBoundRow: Boolean = false,
 )
 
 /**
@@ -51,19 +60,48 @@ fun plotValue(point: SeriesPoint): Double? {
     return point.value
 }
 
+/** True when [point] is published below a bound ("<0,01", "≤5"): its value is at most that. */
+fun isBelowBound(point: SeriesPoint): Boolean {
+    val text = point.text?.trim().orEmpty()
+    return point.censored && (text.startsWith('<') || text.startsWith('≤'))
+}
+
 /**
- * The drawable points of [points], in date order, each joined to the
- * previous one only if no measure that is not drawn lies between them.
+ * The drawable points of [points], in date order. A measured point is joined
+ * to the previous measured one unless a measure off the line lies on a day
+ * strictly between theirs (so that the order of the measures of one day does
+ * not matter). A value below a bound higher than every measured value (any
+ * bound, when nothing is measured) goes to the row of bounds.
  */
 fun plotPoints(points: List<SeriesPoint>): List<PlotPoint> {
     val ordered = points.indices.sortedWith(compareBy({ measureDay(points[it]) }, { it }))
-    var previousDrawn = false
+    val highestMeasured = points.filterNot { it.censored }.mapNotNull(::plotValue).maxOrNull()
+    var lastMeasuredDay: Long? = null
+    // The first day after the last measured point with a measure off the line.
+    var breakDay: Long? = null
     return ordered.mapNotNull { index ->
         val point = points[index]
+        val day = measureDay(point)
         val value = plotValue(point)
-        val joins = previousDrawn
-        previousDrawn = value != null
-        value?.let { PlotPoint(index, measureDay(point), it, point.censored, joins) }
+        if (value == null || point.censored) {
+            val last = lastMeasuredDay
+            if (breakDay == null && last != null && day > last) breakDay = day
+            return@mapNotNull value?.let {
+                val inRow = isBelowBound(point) && (highestMeasured == null || it > highestMeasured)
+                PlotPoint(
+                    index,
+                    day,
+                    it,
+                    censored = true,
+                    joinsPrevious = false,
+                    inBoundRow = inRow,
+                )
+            }
+        }
+        val joins = lastMeasuredDay != null && breakDay.let { it == null || it >= day }
+        lastMeasuredDay = day
+        breakDay = null
+        PlotPoint(index, day, value, censored = false, joinsPrevious = joins)
     }
 }
 

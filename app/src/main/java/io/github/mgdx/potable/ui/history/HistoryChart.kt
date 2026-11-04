@@ -239,9 +239,21 @@ fun mediumDate(date: LocalDate, locale: Locale): String =
 private fun chartDescription(series: ParameterSeries, model: ChartModel, locale: Locale): String {
     val first = model.points.first()
     val last = model.points.last()
-    val lowest = series.points[model.points.minBy { it.value }.index]
-    val highest = series.points[model.points.maxBy { it.value }.index]
+    // A bound is no measure: never the lowest nor the highest ([ChartModel.extremes]).
+    val lowest = series.points[model.extremes.first.index]
+    val highest = series.points[model.extremes.second.index]
     val noValue = stringResource(R.string.sample_no_value)
+    val row = model.boundRow
+    val rowText = row.maxByOrNull { it.value }?.let { top ->
+        val bound = pointValueText(series.points[top.index], series.unit, locale) ?: noValue
+        " " +
+            pluralStringResource(
+                R.plurals.history_chart_bound_row,
+                row.size,
+                row.size,
+                bidiWrap(bound),
+            )
+    }.orEmpty()
     return pluralStringResource(
         R.plurals.history_chart_description,
         model.points.size,
@@ -250,5 +262,5 @@ private fun chartDescription(series: ParameterSeries, model: ChartModel, locale:
         mediumDate(LocalDate.ofEpochDay(last.day), locale),
         bidiWrap(pointValueText(lowest, series.unit, locale) ?: noValue),
         bidiWrap(pointValueText(highest, series.unit, locale) ?: noValue),
-    )
+    ) + rowText
 }
