@@ -21,15 +21,17 @@ import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameters
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.SectionCard
+import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.sample.ResultValue
 
 /**
  * The featured parameters of the sample (SPEC §4.3), each with its translated
- * name, its value as published and what it is useful for. Absent when the
- * sample has none of them. No value is compared with anything. Each one
- * opens the history of that parameter.
+ * name, its value as published, the quality limit and reference as published
+ * when there are some, and what it is useful for. Absent when the sample has
+ * none of them. Value and thresholds are only shown side by side, never
+ * compared (SPEC §14). Each one opens the history of that parameter.
  */
 @Composable
 internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>, String) -> Unit) {
@@ -60,6 +62,12 @@ internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>,
                             style = MaterialTheme.typography.titleMedium,
                             selectable = false,
                         )
+                        result.qualityLimit?.takeIf { it.isNotBlank() }?.let {
+                            ThresholdText(stringResource(R.string.quality_limit, bidiWrap(it)))
+                        }
+                        result.qualityReference?.takeIf { it.isNotBlank() }?.let {
+                            ThresholdText(stringResource(R.string.quality_reference, bidiWrap(it)))
+                        }
                         Text(
                             text = stringResource(parameter.explanationRes()),
                             style = MaterialTheme.typography.bodySmall.justified(),
@@ -75,4 +83,13 @@ internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>,
             }
         }
     }
+}
+
+@Composable
+private fun ThresholdText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
