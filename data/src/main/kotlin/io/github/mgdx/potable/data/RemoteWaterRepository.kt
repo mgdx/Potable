@@ -5,8 +5,15 @@ import io.github.mgdx.potable.core.UdiSelection
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.core.model.UdiChoice
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository {
+/** Rows are grouped on [computeDispatcher], never on the caller's thread. */
+class RemoteWaterRepository(
+    private val client: HubEauClient,
+    private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) : WaterRepository {
     override suspend fun udis(communeCode: String): UdiChoice =
         UdiSelection.choose(client.communesUdi(communeCode))
 
@@ -42,7 +49,7 @@ class RemoteWaterRepository(private val client: HubEauClient) : WaterRepository 
                 break
             }
         }
-        return Samples.latestDay(Samples.group(rows))
+        return withContext(computeDispatcher) { Samples.latestDay(Samples.group(rows)) }
     }
 
     companion object {

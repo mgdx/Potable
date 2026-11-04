@@ -4,6 +4,9 @@ import io.github.mgdx.potable.core.Samples
 import io.github.mgdx.potable.core.hubeau.HubEauFormatException
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.model.Sample
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Every result of one given sample, whatever its age (SPEC §5 F4, opened from the history). */
 interface SampleRepository {
@@ -19,9 +22,13 @@ interface SampleRepository {
 /**
  * [SampleRepository] straight from Hub'Eau, never cached: `resultats_dis`
  * filtered on `code_prelevement`, with the fields of the latest sample
- * ([RemoteWaterRepository.RESULT_FIELDS]), page after page.
+ * ([RemoteWaterRepository.RESULT_FIELDS]), page after page. Rows are
+ * grouped on [computeDispatcher], never on the caller's thread.
  */
-class RemoteSampleRepository(private val client: HubEauClient) : SampleRepository {
+class RemoteSampleRepository(
+    private val client: HubEauClient,
+    private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) : SampleRepository {
     override suspend fun sample(communeCode: String, udiCode: String, sampleCode: String): Sample? {
         val rows = mutableListOf<ResultRow>()
         for (page in 1..MAX_PAGES) {
@@ -38,10 +45,12 @@ class RemoteSampleRepository(private val client: HubEauClient) : SampleRepositor
             rows += result.data
             if (result.next == null || result.data.size < PAGE_SIZE) break
         }
-        return try {
-            Samples.group(rows).firstOrNull { it.code == sampleCode }
-        } catch (e: HubEauFormatException) {
-            throw DataError.Format(e)
+        return withContext(computeDispatcher) {
+            try {
+                Samples.group(rows).firstOrNull { it.code == sampleCode }
+            } catch (e: HubEauFormatException) {
+                throw DataError.Format(e)
+            }
         }
     }
 

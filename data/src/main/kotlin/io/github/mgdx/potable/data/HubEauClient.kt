@@ -5,6 +5,7 @@ import io.github.mgdx.potable.core.hubeau.HubEauParser
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.hubeau.UdiRow
 import io.github.mgdx.potable.core.model.Page
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -37,6 +38,8 @@ import java.util.concurrent.TimeUnit
  * the API would refuse (URL too long, page out of range). Redirections are
  * never followed, whatever the [OkHttpClient] it is given. A body larger than
  * [maxBodyBytes] is refused as [DataError.Format] before it fills the memory.
+ * The body is decoded on [parseDispatcher] ([Dispatchers.Default] by
+ * default), never on the caller's thread: a page weighs up to a few MB.
  *
  * Hub'Eau sometimes holds a request without answering, then a retry of the
  * same request answers at once (`docs/hubeau-api.md`, "Blocages"). So a small
@@ -52,6 +55,7 @@ class HubEauClient(
     readTimeout: Duration = Duration.ofSeconds(READ_TIMEOUT_SECONDS),
     private val maxBodyBytes: Long = MAX_BODY_BYTES,
     quickReadTimeout: Duration = Duration.ofSeconds(QUICK_READ_TIMEOUT_SECONDS),
+    private val parseDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     // The API is genuinely slow on large queries: longer than OkHttp's 10 s.
     private val http: OkHttpClient =
@@ -217,11 +221,14 @@ class HubEauClient(
 
     private fun tooLarge() = DataError.Format(IOException("body larger than $maxBodyBytes bytes"))
 
-    private fun <T> parse(json: String, parser: (String) -> Page<T>): Page<T> = try {
-        parser(json)
-    } catch (e: HubEauFormatException) {
-        throw DataError.Format(e)
-    }
+    private suspend fun <T> parse(json: String, parser: (String) -> Page<T>): Page<T> =
+        withContext(parseDispatcher) {
+            try {
+                parser(json)
+            } catch (e: HubEauFormatException) {
+                throw DataError.Format(e)
+            }
+        }
 
     companion object {
         val DEFAULT_BASE_URL: HttpUrl =

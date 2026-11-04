@@ -394,6 +394,24 @@ class HubEauClientTest {
     }
 
     @Test
+    fun body_isDecodedOnTheParseDispatcher() = runTest {
+        val row = resultRow("P1", "2026-01-01T00:00:00Z", "1302")
+        server.enqueue(response(page(1, null, listOf(row))))
+        server.enqueue(response("{\"count\": "))
+        val parsing = RecordingDispatcher()
+        val client = HubEauClient(
+            OkHttpClient(),
+            server.url("/api/v1/qualite_eau_potable/"),
+            parseDispatcher = parsing,
+        )
+
+        assertEquals(1, client.resultats("45234", null, 1, 1, null).data.size)
+        assertEquals(1, parsing.dispatches)
+        assertThrows<DataError.Format> { client.resultats("45234", null, 1, 1, null) }
+        assertEquals(2, parsing.dispatches)
+    }
+
+    @Test
     fun tooLongUrl_isRefusedBeforeAnyRequest() = runTest {
         val fields = List(200) { "field_number_$it" }
 

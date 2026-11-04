@@ -186,4 +186,25 @@ class RemoteHistoryRepositoryTest {
             assertEquals(500, e.code)
         }
     }
+
+    @Test
+    fun `rows are grouped on the compute dispatcher`() = runTest {
+        server.enqueue(
+            response(page(1, null, listOf(resultRow("P1", "2025-01-02T10:00:00Z", "1302")))),
+        )
+        server.enqueue(
+            response(page(1, null, listOf(resultRow("P1", "2025-01-02T10:00:00Z", "1340")))),
+        )
+        val computing = RecordingDispatcher()
+        val repository = RemoteHistoryRepository(
+            HubEauClient(OkHttpClient(), server.url("/api/v1/qualite_eau_potable/")),
+            clock,
+            computing,
+        )
+
+        assertEquals(1, repository.sampleTimeline("45234", "045000474", since).size)
+        assertEquals(1, computing.dispatches)
+        repository.parameterSeries("45234", "045000474", setOf("1340"), since)
+        assertEquals(2, computing.dispatches)
+    }
 }
