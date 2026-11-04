@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,13 +79,16 @@ internal fun SampledOnLine(textRes: Int, date: Instant, age: RelativeAge) {
 
 /**
  * The ARS conclusion, verbatim: never translated, summarised or scored (SPEC
- * §14), under [titleRes] (the sheet's latest sample by default).
+ * §14), under [titleRes] (the sheet's latest sample by default). With
+ * [onShowAllResults], ends with the access to all the results of the sample,
+ * as each sample of [SameDayConclusionsCard] does.
  */
 @Composable
 internal fun ConclusionCard(
     sample: Sample,
     age: RelativeAge,
     titleRes: Int = R.string.sheet_conclusion_title,
+    onShowAllResults: (() -> Unit)? = null,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -105,7 +109,19 @@ internal fun ConclusionCard(
             )
             SampledOnLine(R.string.sheet_conclusion_sampled_on, sample.date, age)
             ConclusionText(sample.conclusion)
+            onShowAllResults?.let { ShowAllResultsButton(it) }
         }
+    }
+}
+
+/**
+ * The access to all the results of one sample, under its conclusion: the
+ * main action of the sheet, tonal, the other buttons being outlined.
+ */
+@Composable
+internal fun ShowAllResultsButton(onClick: () -> Unit) {
+    FilledTonalButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.sheet_show_all_results))
     }
 }
 

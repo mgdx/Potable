@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -30,6 +31,7 @@ import io.github.mgdx.potable.ui.theme.PotableTheme
 import io.github.mgdx.potable.ui.waitForText
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -145,6 +147,20 @@ class SheetScreenTest {
             .performScrollTo()
             .performClick()
         assertEquals(listOf(demo), shownResults)
+    }
+
+    @Test
+    fun `the full list of a single sample opens from its conclusion, before the measures`() {
+        show(demo)
+        gate.complete(Unit)
+
+        val button = compose.onNodeWithText(string(R.string.sheet_show_all_results))
+            .getUnclippedBoundsInRoot()
+        val conclusion = compose.onNodeWithText(demo.conclusion!!).getUnclippedBoundsInRoot()
+        val measures = compose.onNodeWithText(string(R.string.sheet_key_parameters_title))
+            .getUnclippedBoundsInRoot()
+        assertTrue(conclusion.bottom < button.top)
+        assertTrue(button.bottom < measures.top)
     }
 
     @Test
