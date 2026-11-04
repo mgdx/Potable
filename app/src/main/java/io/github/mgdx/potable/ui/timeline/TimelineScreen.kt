@@ -219,19 +219,18 @@ private fun TimelineList(loaded: TimelineUiState.Loaded, onOpenSample: (String) 
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.semantics { heading() },
                     )
-                    val digest = loaded.digest
-                    if (digest != null) {
-                        // Counts, not published labels: no "official wording" under them.
-                        DigestLines(digest)
-                    } else {
-                        Text(
-                            text = stringResource(R.string.sheet_official_wording),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    loaded.digest?.let { DigestLines(it) }
                 }
                 HorizontalDivider()
+            }
+            // Past the divider, apart from the counts: it is about the conclusions below.
+            item(key = "official") {
+                Text(
+                    text = stringResource(R.string.sample_official_labels),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                )
             }
             itemsIndexed(loaded.entries, key = { _, entry -> entry.sample.code }) { index, entry ->
                 TimelineRow(
