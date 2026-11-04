@@ -27,15 +27,19 @@ import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.sample.ResultValue
 
 /**
- * The featured parameters of the sample (SPEC §4.3), each with its translated
+ * The featured parameters of [samples] (SPEC §4.3), newest first: the samples
+ * of one day, each parameter taken from the newest that measured it. Each has its translated
  * name, its value as published, the quality limit and reference as published
- * when there are some, and what it is useful for. Absent when the sample has
- * none of them. Value and thresholds are only shown side by side, never
+ * when there are some, and what it is useful for. Absent when the samples
+ * have none of them. Value and thresholds are only shown side by side, never
  * compared (SPEC §14). Each one opens the history of that parameter.
  */
 @Composable
-internal fun KeyParametersCard(sample: Sample, onParameterHistory: (Set<String>, String) -> Unit) {
-    val present = remember(sample) { FeaturedParameters.present(sample.results) }
+internal fun KeyParametersCard(
+    samples: List<Sample>,
+    onParameterHistory: (Set<String>, String) -> Unit,
+) {
+    val present = remember(samples) { FeaturedParameters.presentIn(samples) }
     if (present.isEmpty()) return
     SectionCard(title = stringResource(R.string.sheet_key_parameters_title)) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

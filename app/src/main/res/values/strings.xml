@@ -169,7 +169,7 @@
     <!-- Subheading of one of these samples when their times are not published. %1$d: its position, the most recent being 1. %2$d: number of samples. -->
     <string name="sheet_sample_number">Sample %1$d of %2$d</string>
     <!-- Under the card of several samples. -->
-    <string name="sheet_details_of_latest">The key parameters and compliance below are those of the most recent sample.</string>
+    <string name="sheet_details_of_latest">Each key parameter below is its most recent measure of that day. The compliance is that of the most recent sample.</string>
     <!-- Heading of a small box on the sheet, shown only when samples of the last 12 months have an unfavourable published result (non-compliance, consumption advised against or forbidden). It sits just above the sample history button. -->
     <string name="sheet_recent_unfavourable_title">Over the last 12 months</string>
     <!-- Line of the box. %d: samples of the last 12 months published non-compliant with a quality limit (bacteriological or physico-chemical). -->

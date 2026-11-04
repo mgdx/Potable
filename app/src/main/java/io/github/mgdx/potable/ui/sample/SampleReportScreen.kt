@@ -125,11 +125,11 @@ private fun ReportContent(
                         ComplianceSection(sample)
                         showAllResults()
                     },
-                    end = { KeyParametersCard(sample, onParameterHistory) },
+                    end = { KeyParametersCard(listOf(sample), onParameterHistory) },
                 )
             } else {
                 ConclusionCard(sample, age, R.string.sample_report_conclusion_title)
-                KeyParametersCard(sample, onParameterHistory)
+                KeyParametersCard(listOf(sample), onParameterHistory)
                 SampleInfoCard(sample, age)
                 ComplianceSection(sample)
                 showAllResults()

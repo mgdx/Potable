@@ -2,10 +2,13 @@ package io.github.mgdx.potable.core
 
 import io.github.mgdx.potable.core.hubeau.HubEauParser
 import io.github.mgdx.potable.core.model.AnalysisResult
+import io.github.mgdx.potable.core.model.Compliance
+import io.github.mgdx.potable.core.model.Sample
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 
 class FeaturedParametersTest {
     private val latest = Samples.group(
@@ -73,5 +76,44 @@ class FeaturedParametersTest {
     @Test
     fun `no featured parameter gives an empty list`() {
         assertTrue(FeaturedParameters.present(listOf(result("1347", "12"))).isEmpty())
+    }
+
+    private fun sample(code: String, vararg results: AnalysisResult) = Sample(
+        code = code,
+        communeCode = "35236",
+        networkCode = "035000220",
+        date = Instant.parse("2026-08-17T11:47:00Z"),
+        conclusion = null,
+        bacteriologicalLimits = Compliance.UNKNOWN,
+        physicochemicalLimits = Compliance.UNKNOWN,
+        bacteriologicalReferences = Compliance.UNKNOWN,
+        physicochemicalReferences = Compliance.UNKNOWN,
+        distributor = null,
+        owner = null,
+        results = results.toList(),
+        upstreamFacility = null,
+    )
+
+    @Test
+    fun `a short newest sample of the day does not hide the full analysis`() {
+        // Redon, 2026-08-17: two micropollutants at 11:47, the full analysis at 11:43.
+        val short = sample("03500180764", result("5397", "<1"), result("1958", "<0,100"))
+        val full = sample("03500180762", result("1340", "0,7"), result("1302", "7,6"))
+        val present = FeaturedParameters.presentIn(listOf(short, full))
+        assertEquals(
+            listOf(FeaturedParameter.NITRATES, FeaturedParameter.PH),
+            present.map {
+                it.first
+            },
+        )
+        assertEquals(listOf("0,7", "7,6"), present.map { it.second.resultText })
+    }
+
+    @Test
+    fun `each parameter is taken from the newest sample that measured it`() {
+        val newer = sample("2", result("1302", "7,4"))
+        val older = sample("1", result("1302", "7,6"), result("1340", "0,7"))
+        val present = FeaturedParameters.presentIn(listOf(newer, older))
+        assertEquals(listOf("0,7", "7,4"), present.map { it.second.resultText })
     }
 }

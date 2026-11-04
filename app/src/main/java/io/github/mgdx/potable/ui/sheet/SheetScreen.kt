@@ -251,7 +251,8 @@ private fun FreshnessBanner(freshness: Freshness, maxWidth: Dp) {
 /**
  * The latest sample, or the latest [samples] when several were taken the
  * same day (newest first): each conclusion is shown, with its own access to
- * its results; the rest of the sheet is about the most recent one.
+ * its results. Each key parameter is the newest measure of the day; the rest
+ * of the sheet is about the most recent sample.
  */
 @Composable
 private fun SampleContent(
@@ -281,7 +282,7 @@ private fun SampleContent(
         }
     }
     val measures = @Composable {
-        KeyParametersCard(sample, onParameterHistory)
+        KeyParametersCard(samples, onParameterHistory)
         watched?.let { WatchedSubstancesCard(it, onRetryWatched, onParameterHistory) }
     }
     val sampleDetails = @Composable {

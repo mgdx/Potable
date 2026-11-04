@@ -1,6 +1,7 @@
 package io.github.mgdx.potable.core
 
 import io.github.mgdx.potable.core.model.AnalysisResult
+import io.github.mgdx.potable.core.model.Sample
 
 /**
  * The editorial table of the most consulted parameters (SPEC §4.3): they are
@@ -57,6 +58,27 @@ object FeaturedParameters {
             val current = found[parameter]
             if (current == null || (current.isOnSite && !result.isOnSite)) {
                 found[parameter] = result
+            }
+        }
+        return FeaturedParameter.entries.mapNotNull { parameter ->
+            found[parameter]?.let { parameter to it }
+        }
+    }
+
+    /**
+     * The featured parameters measured by [samples], newest first (the
+     * samples of one day, as the sheet shows them), in the order of
+     * [FeaturedParameter], each taken from the newest sample that measured
+     * it, as [present] picks it there. Hub'Eau may publish the full analysis
+     * and a short one (a few micropollutants) the same day, the short one
+     * last (Redon, 35236, 2026-08-17): the newest sample alone would then
+     * feature nothing.
+     */
+    fun presentIn(samples: List<Sample>): List<Pair<FeaturedParameter, AnalysisResult>> {
+        val found = HashMap<FeaturedParameter, AnalysisResult>()
+        for (sample in samples) {
+            present(sample.results).forEach { (parameter, result) ->
+                found.putIfAbsent(parameter, result)
             }
         }
         return FeaturedParameter.entries.mapNotNull { parameter ->
