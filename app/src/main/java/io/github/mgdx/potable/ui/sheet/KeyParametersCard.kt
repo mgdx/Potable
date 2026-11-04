@@ -19,6 +19,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.FeaturedParameters
+import io.github.mgdx.potable.core.Hardness
+import io.github.mgdx.potable.core.model.AnalysisResult
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
@@ -26,6 +28,8 @@ import io.github.mgdx.potable.ui.common.explanationRes
 import io.github.mgdx.potable.ui.common.nameRes
 import io.github.mgdx.potable.ui.sample.ResultValue
 import io.github.mgdx.potable.ui.sample.SumThresholdNote
+import io.github.mgdx.potable.ui.sample.currentLocale
+import java.text.NumberFormat
 
 /**
  * The featured parameters of [samples] (SPEC §4.3), newest first: the samples
@@ -67,6 +71,7 @@ internal fun KeyParametersCard(
                             style = MaterialTheme.typography.titleMedium,
                             selectable = false,
                         )
+                        HardnessEquivalentsText(result)
                         SumThresholdNote(result.resultText)
                         result.qualityLimit?.takeIf { it.isNotBlank() }?.let {
                             ThresholdText(stringResource(R.string.quality_limit, bidiWrap(it)))
@@ -89,6 +94,30 @@ internal fun KeyParametersCard(
             }
         }
     }
+}
+
+/**
+ * Under a hardness published as a plain number in °f, the same measure in
+ * °dH and mmol/L ([Hardness.equivalentsOf]), one decimal in the format of the
+ * language. Nothing for any other result. A conversion, not a category.
+ */
+@Composable
+private fun HardnessEquivalentsText(result: AnalysisResult) {
+    val equivalents = remember(result) { Hardness.equivalentsOf(result) } ?: return
+    val locale = currentLocale()
+    val format = remember(locale) {
+        NumberFormat.getNumberInstance(locale).apply {
+            minimumFractionDigits = 1
+            maximumFractionDigits = 1
+        }
+    }
+    ThresholdText(
+        stringResource(
+            R.string.hardness_equivalents,
+            format.format(equivalents.germanDegrees),
+            format.format(equivalents.millimolesPerLitre),
+        ),
+    )
 }
 
 @Composable

@@ -132,6 +132,8 @@
     <string name="featured_nitrates_explanation">Les nitrates, issus surtout de l’agriculture et des eaux usées, comptent parmi les paramètres les plus surveillés.</string>
     <string name="featured_hardness">Dureté</string>
     <string name="featured_hardness_explanation">La dureté, utile pour régler un lave-vaisselle ou un adoucisseur d’eau.</string>
+    <!-- Under the hardness published in French degrees (°f): the same measure in German degrees (°dH) and millimoles per litre, converted by the app (1 °f = 0.56 °dH = 0.1 mmol/L). Not a category such as soft or hard. %1$s, %2$s: numbers with one decimal, formatted for the language. Keep the unit symbols. -->
+    <string name="hardness_equivalents">soit %1$s °dH · %2$s mmol/L</string>
     <string name="featured_ph">pH</string>
     <string name="featured_ph_explanation">Le pH indique le degré d’acidité ou d’alcalinité de l’eau.</string>
     <string name="featured_free_chlorine">Chlore libre</string>

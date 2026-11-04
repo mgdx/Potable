@@ -196,6 +196,8 @@
     <string name="featured_nitrates_explanation">Nitrates, mostly from farming and wastewater, are among the most closely followed parameters.</string>
     <string name="featured_hardness">Hardness</string>
     <string name="featured_hardness_explanation">Hardness, useful to set a dishwasher or a water softener.</string>
+    <!-- Under the hardness published in French degrees (°f): the same measure in German degrees (°dH) and millimoles per litre, converted by the app (1 °f = 0.56 °dH = 0.1 mmol/L). Not a category such as soft or hard. %1$s, %2$s: numbers with one decimal, formatted for the language. Keep the unit symbols. -->
+    <string name="hardness_equivalents">i.e. %1$s °dH · %2$s mmol/L</string>
     <string name="featured_ph">pH</string>
     <string name="featured_ph_explanation">pH tells how acidic or alkaline the water is.</string>
     <string name="featured_free_chlorine">Free chlorine</string>
