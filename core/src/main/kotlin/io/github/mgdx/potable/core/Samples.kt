@@ -62,6 +62,24 @@ object Samples {
         return samples.filter { publishedDay(it.date) == day }
     }
 
+    /**
+     * [samples] grouped by published conclusion, to show a conclusion shared
+     * by several samples of a day once. Two conclusions are the same only if
+     * they are equal character for character once leading and trailing
+     * spaces are trimmed: nothing else is normalised or interpreted (SPEC
+     * §14), so conclusions one word apart stay apart. A sample without a
+     * conclusion (null or blank) is always alone. Groups come in the order
+     * of their first sample, and keep the order of [samples] inside.
+     */
+    fun byConclusion(samples: List<Sample>): List<List<Sample>> {
+        val groups = LinkedHashMap<Any, MutableList<Sample>>()
+        for (sample in samples) {
+            val key: Any = sample.conclusion?.trim()?.takeIf { it.isNotEmpty() } ?: Any()
+            groups.getOrPut(key) { mutableListOf() }.add(sample)
+        }
+        return groups.values.toList()
+    }
+
     private fun toSample(code: String, date: Instant, group: List<ResultRow>): Sample {
         val head = group.first()
         val seen = HashSet<ResultKey>()

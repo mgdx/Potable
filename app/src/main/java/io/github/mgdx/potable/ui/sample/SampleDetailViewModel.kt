@@ -10,12 +10,14 @@ import io.github.mgdx.potable.core.PesticideCounts
 import io.github.mgdx.potable.core.model.Sample
 import io.github.mgdx.potable.ui.common.LoadError
 import io.github.mgdx.potable.ui.sheet.SheetUiState
+import io.github.mgdx.potable.ui.sheet.distinctSampleTimes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalTime
 
 sealed interface SampleDetailUiState {
     /** The sheet is (re)loading its sample, after a retry or a process death. */
@@ -29,9 +31,15 @@ sealed interface SampleDetailUiState {
 
     /**
      * [groups] are the results of [sample] that match the query, by family:
-     * empty with results in [sample] means that nothing matches.
+     * empty with results in [sample] means that nothing matches. [time] is its
+     * published time when it tells it apart from the other samples of its day
+     * shown with it ([distinctSampleTimes]), null otherwise.
      */
-    data class Loaded(val sample: Sample, val groups: List<FamilyGroup>) : SampleDetailUiState {
+    data class Loaded(
+        val sample: Sample,
+        val groups: List<FamilyGroup>,
+        val time: LocalTime? = distinctSampleTimes(listOf(sample.date)).single(),
+    ) : SampleDetailUiState {
         /** The pesticides of the whole sample, whatever the query; null without any. */
         val pesticides: PesticideCount? = PesticideCounts.of(sample.results)
     }
@@ -64,12 +72,19 @@ class SampleDetailViewModel(private val sampleCode: String, sheetState: StateFlo
         is SheetUiState.Error -> SampleDetailUiState.Error(sheet.error)
         SheetUiState.NoSample -> SampleDetailUiState.Unavailable
         // Any of the samples of the day shown on the sheet, found by its code.
-        is SheetUiState.Loaded -> sheet.samples.firstOrNull { it.code == sampleCode }?.let {
-            SampleDetailUiState.Loaded(
-                sample = it,
-                groups = groupByFamily(filterResults(it.results, query)),
-            )
-        } ?: SampleDetailUiState.Unavailable
+        is SheetUiState.Loaded -> {
+            val index = sheet.samples.indexOfFirst { it.code == sampleCode }
+            if (index < 0) {
+                SampleDetailUiState.Unavailable
+            } else {
+                val sample = sheet.samples[index]
+                SampleDetailUiState.Loaded(
+                    sample = sample,
+                    groups = groupByFamily(filterResults(sample.results, query)),
+                    time = distinctSampleTimes(sheet.samples.map { it.date })[index],
+                )
+            }
+        }
     }
 
     companion object {

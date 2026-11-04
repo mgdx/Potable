@@ -59,6 +59,7 @@ import io.github.mgdx.potable.ui.common.parameterExplanationRes
 import io.github.mgdx.potable.ui.common.spokenAs
 import io.github.mgdx.potable.ui.common.spokenThreshold
 import io.github.mgdx.potable.ui.sheet.formatSampleDate
+import io.github.mgdx.potable.ui.sheet.formatSampleTime
 import io.github.mgdx.potable.ui.sheet.justified
 
 /** Language of the Hub'Eau labels (SPEC §11.2). */
@@ -134,12 +135,7 @@ fun SampleDetailContent(
         topBar = {
             BackTopBar(
                 title = stringResource(R.string.sample_detail_title),
-                subtitle = loaded?.let {
-                    stringResource(
-                        R.string.sheet_sampled_on,
-                        formatSampleDate(it.sample.date, currentLocale()),
-                    )
-                },
+                subtitle = loaded?.let { sampledOnSubtitle(it) },
                 onBack = onBack,
             )
         },
@@ -416,4 +412,20 @@ private fun ParameterFamily.titleRes(): Int = when (this) {
     ParameterFamily.ORGANIC_COMPOUNDS -> R.string.family_organic_compounds
     ParameterFamily.RADIOACTIVITY -> R.string.family_radioactivity
     ParameterFamily.OTHER -> R.string.family_other
+}
+
+/**
+ * "Sampled on 30 June 2026", with "at 09:12" when the published time tells
+ * the sample apart from the others of its day ([SampleDetailUiState.Loaded.time]).
+ */
+@Composable
+internal fun sampledOnSubtitle(loaded: SampleDetailUiState.Loaded): String {
+    val locale = currentLocale()
+    val date = formatSampleDate(loaded.sample.date, locale)
+    val time = loaded.time
+    return if (time != null) {
+        stringResource(R.string.sample_sampled_on_at, date, formatSampleTime(time, locale))
+    } else {
+        stringResource(R.string.sheet_sampled_on, date)
+    }
 }

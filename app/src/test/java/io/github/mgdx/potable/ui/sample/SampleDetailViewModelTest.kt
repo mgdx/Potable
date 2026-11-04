@@ -13,6 +13,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SampleDetailViewModelTest {
@@ -86,8 +88,23 @@ class SampleDetailViewModelTest {
                 SampleDetailUiState.Loaded(
                     morning,
                     listOf(FamilyGroup(ParameterFamily.PHYSICOCHEMISTRY, listOf(nitrates))),
+                    // Both published at the same time: it does not tell them apart.
+                    time = null,
                 ),
                 viewModel.state.value,
+            )
+        }
+
+    @Test
+    fun `the time is given when it tells the sample apart from the others of its day`() =
+        runTest(main.dispatcher) {
+            val morning = loaded.copy(code = "00122", date = Instant.parse("2026-10-01T06:12:00Z"))
+            sheet.value = SheetUiState.Loaded(listOf(loaded, morning), RelativeAge.Today)
+            val viewModel = SampleDetailViewModel(morning.code, sheet)
+            advanceUntilIdle()
+            assertEquals(
+                LocalTime.of(6, 12),
+                (viewModel.state.value as SampleDetailUiState.Loaded).time,
             )
         }
 
