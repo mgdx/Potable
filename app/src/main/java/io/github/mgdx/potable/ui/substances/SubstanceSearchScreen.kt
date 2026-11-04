@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -37,8 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -50,13 +53,14 @@ import io.github.mgdx.potable.core.SubstanceMatch
 import io.github.mgdx.potable.ui.common.BackTopBar
 import io.github.mgdx.potable.ui.common.CenteredColumn
 import io.github.mgdx.potable.ui.common.LoadError
-import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PillSearchField
 import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.asApiText
 import io.github.mgdx.potable.ui.common.bidiWrap
 import io.github.mgdx.potable.ui.common.messageRes
 import io.github.mgdx.potable.ui.common.readableWidth
+import io.github.mgdx.potable.ui.common.spokenAs
+import io.github.mgdx.potable.ui.common.spokenResult
 import io.github.mgdx.potable.ui.history.pointValueText
 import io.github.mgdx.potable.ui.sample.SumThresholdNote
 import io.github.mgdx.potable.ui.sample.currentLocale
@@ -121,15 +125,51 @@ fun SubstanceSearchScreen(
             ) {
                 when (val current = state) {
                     SubstanceSearchUiState.Idle -> Hint()
-                    is SubstanceSearchUiState.Loading ->
-                        LoadingState(
-                            stringResource(R.string.substance_search_loading),
-                            slow = isSlow,
-                        )
+                    is SubstanceSearchUiState.Loading -> SearchProgress(slow = isSlow)
                     is SubstanceSearchUiState.Error -> SearchError(current.error, viewModel::retry)
                     is SubstanceSearchUiState.Empty -> NoMatch(current.query, current.since)
                     is SubstanceSearchUiState.Loaded -> Matches(current, onOpenHistory)
                 }
+            }
+        }
+    }
+}
+
+/**
+ * A search running: a bar across the top of the results, right under the
+ * field, and what it does, so that both stay in view with the keyboard open
+ * (a broad search can take half a minute). When [slow] ([isSlow]), a second
+ * sentence says that Hub'Eau is slow to answer, as `LoadingState` does.
+ */
+@Composable
+private fun SearchProgress(slow: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        LinearProgressIndicator(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.secondary,
+        )
+        Column(
+            modifier = Modifier
+                .readableWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.substance_search_loading),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            if (slow) {
+                Text(
+                    text = stringResource(R.string.loading_slow),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
         }
     }
@@ -314,6 +354,9 @@ private fun MatchRow(match: SubstanceMatch, since: String, onClick: () -> Unit) 
                     textDirection = TextDirection.Ltr,
                 ),
                 fontStyle = if (value == null) FontStyle.Italic else null,
+                modifier = Modifier.spokenAs(
+                    spokenResult(match.latest.text, match.latest.value, match.unit),
+                ),
             )
             SumThresholdNote(match.latest.text)
             Text(
