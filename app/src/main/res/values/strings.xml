@@ -356,6 +356,17 @@
     <string name="timeline_open_report">Open the report</string>
     <!-- %1$s: why the refresh failed, one of the error_… messages (a full sentence). -->
     <string name="timeline_refresh_failed">The history could not be updated. %1$s</string>
+    <!-- Segments of the filter of the list, under the period. All: every sample of the period. -->
+    <string name="timeline_filter_all">All</string>
+    <!-- Segment of the filter: only the samples with a compliance code published "not compliant" (limits or references), or whose published conclusion mentions a restriction or a consumption advised against. Short: two segments share one line. -->
+    <string name="timeline_filter_non_compliances">Non-compliances</string>
+    <!-- Heading of the filtered list, followed by the sheet_recent_… lines. %1$d: samples kept; %2$s: start of the period, a date formatted for the language. A plain count, no judgement. -->
+    <plurals name="timeline_summary_non_compliances">
+        <item quantity="one">%1$d sample with a published non-compliance or restriction since %2$s</item>
+        <item quantity="other">%1$d samples with a published non-compliance or restriction since %2$s</item>
+    </plurals>
+    <!-- When the filter keeps no sample. %1$s: start of the period, a date formatted for the language. A fact, nothing reassuring (SPEC §14). -->
+    <string name="timeline_filter_empty">No sample with a published non-compliance or restriction since %1$s.</string>
 
     <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
 

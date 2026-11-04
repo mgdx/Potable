@@ -1,9 +1,17 @@
 package io.github.mgdx.potable.ui.timeline
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
@@ -76,5 +84,58 @@ class TimelineScreenTest {
         compose.onNode(hasText("Conclusion du 2 juin.") and hasClickAction()).performClick()
 
         assertEquals(listOf("00123"), opened)
+    }
+
+    @Test
+    fun `the filter keeps the published non-compliances, or says none is left`() {
+        val history = FakeHistoryRepository().apply {
+            timeline = Result.success(
+                listOf(
+                    summary("00456", "2026-09-15T08:00:00Z", "Conclusion du 15 septembre.")
+                        .copy(physicochemicalReferences = Compliance.NON_COMPLIANT),
+                    summary("00123", "2026-06-02T08:00:00Z", "Conclusion du 2 juin."),
+                ),
+            )
+        }
+        val viewModel = TimelineViewModel(
+            history,
+            FakeAppPreferences(),
+            "45234",
+            "045000123",
+            Clock.fixed(Instant.parse("2026-10-25T10:00:00Z"), ZoneOffset.UTC),
+            SavedStateHandle(),
+        )
+        compose.setContent {
+            PotableTheme {
+                TimelineScreen(viewModel, communeName = "Orléans", onBack = {}, onOpenSample = {})
+            }
+        }
+        compose.waitForText("Conclusion du 2 juin.")
+        val radio = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
+        compose.onNode(hasText("All") and radio).assertIsSelected()
+        val nonCompliances = compose.onNode(hasText("Non-compliances") and radio)
+        nonCompliances.assertIsNotSelected().assertHeightIsAtLeast(48.dp)
+
+        nonCompliances.performClick()
+
+        nonCompliances.assertIsSelected()
+        compose.onNodeWithText(
+            "1 sample with a published non-compliance or restriction since",
+            substring = true,
+        ).assertExists()
+        compose.onNodeWithText(
+            "1 sample not compliant with the quality references only",
+        ).assertExists()
+        compose.onNodeWithText("Conclusion du 15 septembre.").assertExists()
+        compose.onNodeWithText("Conclusion du 2 juin.").assertDoesNotExist()
+
+        history.timeline = Result.success(
+            listOf(summary("00123", "2026-06-02T08:00:00Z", "Conclusion du 2 juin.")),
+        )
+        compose.runOnIdle { viewModel.selectYears(1) }
+        compose.waitForText(
+            "No sample with a published non-compliance or restriction since",
+            substring = true,
+        )
     }
 }

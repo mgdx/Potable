@@ -252,6 +252,16 @@
     <string name="timeline_non_compliance">%1$s : %2$s</string>
     <string name="timeline_open_report">Ouvrir le rapport</string>
     <string name="timeline_refresh_failed">Impossible de mettre à jour l’historique. %1$s</string>
+    <!-- Filtre de la liste : tous les prélèvements, ou ceux dont un code de conformité est publié non conforme ou dont la conclusion mentionne une restriction. -->
+    <string name="timeline_filter_all">Tous</string>
+    <string name="timeline_filter_non_compliances">Non-conformités</string>
+    <plurals name="timeline_summary_non_compliances">
+        <item quantity="one">%1$d prélèvement avec une non-conformité ou une restriction publiée depuis le %2$s</item>
+        <item quantity="many">%1$d prélèvements avec une non-conformité ou une restriction publiée depuis le %2$s</item>
+        <item quantity="other">%1$d prélèvements avec une non-conformité ou une restriction publiée depuis le %2$s</item>
+    </plurals>
+    <!-- Aucun prélèvement retenu par le filtre : un fait, rien de rassurant (SPEC §14). -->
+    <string name="timeline_filter_empty">Aucun prélèvement avec une non-conformité ou une restriction publiée depuis le %1$s.</string>
 
     <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
 

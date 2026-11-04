@@ -9,6 +9,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.toRoute
 import io.github.mgdx.potable.AppContainer
+import io.github.mgdx.potable.core.Unfavourable
+import io.github.mgdx.potable.core.UnfavourableDigest
 import io.github.mgdx.potable.core.model.Compliance
 import io.github.mgdx.potable.core.model.SampleSummary
 import io.github.mgdx.potable.data.DataError
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
@@ -43,8 +46,14 @@ enum class ComplianceKind {
  * A sample of the timeline, with the compliances published as
  * [Compliance.NON_COMPLIANT] for it, in a fixed order. Nothing is inferred:
  * the list only restitutes the published codes (SPEC §14).
+ * [unfavourable] is [Unfavourable.isUnfavourable], the definition of the
+ * sheet's box on the last 12 months and of the alerts.
  */
-data class TimelineEntry(val sample: SampleSummary, val nonCompliances: List<ComplianceKind>) {
+data class TimelineEntry(
+    val sample: SampleSummary,
+    val nonCompliances: List<ComplianceKind>,
+    val unfavourable: Boolean = Unfavourable.isUnfavourable(sample),
+) {
     companion object {
         fun of(sample: SampleSummary): TimelineEntry {
             val compliances = listOf(
@@ -69,8 +78,49 @@ sealed interface TimelineUiState {
     /** Hub'Eau has no sample for this unit since [since]. */
     data class Empty(val since: LocalDate) : TimelineUiState
 
-    /** The samples since [since], newest first. */
-    data class Loaded(val since: LocalDate, val entries: List<TimelineEntry>) : TimelineUiState
+    /**
+     * The samples since [since], newest first: [all] of them, and the
+     * [entries] kept by [filter].
+     */
+    data class Loaded(
+        val since: LocalDate,
+        val all: List<TimelineEntry>,
+        val filter: TimelineFilter = TimelineFilter.ALL,
+    ) : TimelineUiState {
+        val entries: List<TimelineEntry> =
+            when (filter) {
+                TimelineFilter.ALL -> all
+                TimelineFilter.NON_COMPLIANCES -> all.filter { it.unfavourable }
+            }
+
+        /**
+         * The [entries] counted by what was published, limits and references
+         * told apart as in the sheet's box; null when [filter] keeps every
+         * sample, or none.
+         */
+        val digest: UnfavourableDigest? =
+            if (filter ==
+                TimelineFilter.ALL
+            ) {
+                null
+            } else {
+                UnfavourableDigest.of(entries.map { it.sample })
+            }
+    }
+}
+
+/** Which samples of the window the timeline lists. */
+enum class TimelineFilter {
+    /** Every sample. */
+    ALL,
+
+    /**
+     * Only the samples whose published outcome is unfavourable
+     * ([Unfavourable]): a compliance code published non-compliant, limits or
+     * references, or a conclusion that states a restriction or a consumption
+     * advised against. Nothing of the application's own (SPEC §14).
+     */
+    NON_COMPLIANCES,
 }
 
 /**
@@ -107,6 +157,16 @@ class TimelineViewModel(
 
     /** The window, in years; null until the setting is read. */
     val years: StateFlow<Int?> = _years.asStateFlow()
+
+    // Like the window, the filter outlives the death of the process.
+    private val _filter = MutableStateFlow(
+        savedState.get<String>(FILTER_KEY)
+            ?.let { name -> TimelineFilter.entries.firstOrNull { it.name == name } }
+            ?: TimelineFilter.ALL,
+    )
+
+    /** Which samples of the window are listed. */
+    val filter: StateFlow<TimelineFilter> = _filter.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
 
@@ -150,6 +210,15 @@ class TimelineViewModel(
         _years.value = years
         savedState[YEARS_KEY] = years
         load(force = false)
+    }
+
+    /** Lists every sample of the window, or only those with a published non-compliance. */
+    fun selectFilter(filter: TimelineFilter) {
+        if (filter == _filter.value) return
+        _filter.value = filter
+        savedState[FILTER_KEY] = filter.name
+        // Filtering the samples already on screen needs no request.
+        _state.update { if (it is TimelineUiState.Loaded) it.copy(filter = filter) else it }
     }
 
     /** Called by the Retry button only: asks Hub'Eau again. */
@@ -208,6 +277,7 @@ class TimelineViewModel(
             TimelineUiState.Loaded(
                 since,
                 samples.sortedByDescending { it.date }.map(TimelineEntry::of),
+                _filter.value,
             )
         }
     }
@@ -218,6 +288,7 @@ class TimelineViewModel(
 
     companion object {
         private const val YEARS_KEY = "years"
+        private const val FILTER_KEY = "filter"
 
         /**
          * Reads the unit from the [TimelineRoute] of the back stack entry
