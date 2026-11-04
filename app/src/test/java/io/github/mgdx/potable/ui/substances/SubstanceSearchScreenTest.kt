@@ -1,8 +1,13 @@
 package io.github.mgdx.potable.ui.substances
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
@@ -37,7 +42,10 @@ class SubstanceSearchScreenTest {
 
     private val repository = FakeSubstanceSearchRepository()
 
-    private fun show(onOpenHistory: (SubstanceMatch) -> Unit = {}) {
+    private fun show(
+        restoration: StateRestorationTester? = null,
+        onOpenHistory: (SubstanceMatch) -> Unit = {},
+    ) {
         val viewModel = SubstanceSearchViewModel(
             repository,
             FakeAppPreferences(),
@@ -46,7 +54,7 @@ class SubstanceSearchScreenTest {
             Clock.fixed(Instant.parse("2026-11-04T10:00:00Z"), ZoneOffset.UTC),
             SavedStateHandle(),
         )
-        compose.setContent {
+        val content = @Composable {
             PotableTheme {
                 SubstanceSearchScreen(
                     viewModel = viewModel,
@@ -56,6 +64,7 @@ class SubstanceSearchScreenTest {
                 )
             }
         }
+        if (restoration != null) restoration.setContent(content) else compose.setContent(content)
     }
 
     private fun search(text: String) {
@@ -90,5 +99,38 @@ class SubstanceSearchScreenTest {
         search("chlordecone")
 
         compose.waitForText(string(R.string.substance_search_other_name))
+    }
+
+    @Test
+    fun `the field has the focus when the screen opens`() {
+        show()
+
+        compose.onNode(hasSetTextAction()).assertIsFocused()
+    }
+
+    @Test
+    fun `the focus is not given again once the screen comes back`() {
+        val restoration = StateRestorationTester(compose)
+        show(restoration)
+        // The search key closes the keyboard and leaves the field.
+        compose.onNode(hasSetTextAction()).performImeAction()
+        compose.onNode(hasSetTextAction()).assertIsNotFocused()
+
+        restoration.emulateSavedInstanceStateRestore()
+
+        compose.onNode(hasSetTextAction()).assertIsNotFocused()
+    }
+
+    @Test
+    fun `clearing the field puts the focus back in it`() {
+        show()
+        // Typed, then searched: the search key leaves the field.
+        search("atrazine")
+        compose.onNode(hasSetTextAction()).assertIsNotFocused()
+
+        compose.onNode(hasContentDescription(string(R.string.action_clear_search)))
+            .performClick()
+
+        compose.onNode(hasSetTextAction()).assertIsFocused()
     }
 }

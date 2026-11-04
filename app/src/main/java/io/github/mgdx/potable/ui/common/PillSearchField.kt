@@ -15,7 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -27,7 +30,8 @@ import io.github.mgdx.potable.R
  * A rounded, filled search field: a search icon at the start, a clear button
  * at the end once something is typed. The [label] is the field's accessible
  * name. The keyboard's search key closes the keyboard (the search runs as the
- * user types), then calls [onSearch].
+ * user types), then calls [onSearch]. Clearing leaves the focus in the field,
+ * to type again; [focusRequester] lets the screen give it the focus.
  */
 @Composable
 fun PillSearchField(
@@ -36,6 +40,7 @@ fun PillSearchField(
     label: String,
     modifier: Modifier = Modifier,
     onSearch: () -> Unit = {},
+    focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
     val focusManager = LocalFocusManager.current
     val container = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -44,12 +49,18 @@ fun PillSearchField(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .focusRequester(focusRequester),
         label = { Text(label) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {
             if (value.isNotEmpty()) {
-                IconButton(onClick = { onValueChange("") }) {
+                IconButton(
+                    onClick = {
+                        onValueChange("")
+                        focusRequester.requestFocus()
+                    },
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Clear,
                         contentDescription = stringResource(R.string.action_clear_search),
