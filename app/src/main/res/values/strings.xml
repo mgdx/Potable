@@ -357,6 +357,39 @@
     <!-- %1$s: why the refresh failed, one of the error_… messages (a full sentence). -->
     <string name="timeline_refresh_failed">The history could not be updated. %1$s</string>
 
+    <!-- ===== Substance search ===== -->
+
+    <!-- Top bar title, one line, and the full-width button of the sheet that opens it, under the history button. -->
+    <string name="substance_search_title">Search for a substance</string>
+    <!-- Label of the text field. -->
+    <string name="substance_search_field">Name of the parameter</string>
+    <!-- Under the field, before anything is searched. Hub'Eau matches whole words (case and accents aside), not parts of words: keep the examples. -->
+    <string name="substance_search_hint">Type at least 3 characters: a word of the name as Hub\'Eau publishes it, in French, such as atrazine, nitrates or glyphosate. Whole words are searched: “atrazine” finds “Atrazine déséthyl”, “atra” finds nothing.</string>
+    <string name="substance_search_loading">Searching the history…</string>
+    <!-- %1$s: the words searched, as typed; %2$s: start of the period, a date formatted for the language. -->
+    <string name="substance_search_empty">No parameter whose name contains “%1$s” has been analysed on this distribution unit since %2$s.</string>
+    <!-- Under substance_search_empty. -->
+    <string name="substance_search_other_name">The substance may be published under another name (a metabolite, a sum, an abbreviation, or its French name): try another word.</string>
+    <!-- Heading of the results. %1$d: number of parameters found; %2$s: the words searched; %3$s: start of the period, a date formatted for the language. A plain count, no judgement. -->
+    <plurals name="substance_search_summary">
+        <item quantity="one">%1$d parameter whose name contains “%2$s”, analysed since %3$s</item>
+        <item quantity="other">%1$d parameters whose name contains “%2$s”, analysed since %3$s</item>
+    </plurals>
+    <!-- Above the results when the reading stopped at its bound. %1$d: measurements read (the quantity); %2$d: measurements published. -->
+    <plurals name="substance_search_partial">
+        <item quantity="one">Partial result: only the %1$d most recent measurement out of %2$d was read. The counts are incomplete, and a parameter analysed only earlier may be missing. Type a more precise name.</item>
+        <item quantity="other">Partial result: only the %1$d most recent measurements out of %2$d were read. The counts are incomplete, and a parameter analysed only earlier may be missing. Type a more precise name.</item>
+    </plurals>
+    <!-- Under the latest value of a result. %1$s: its date, formatted for the language. -->
+    <string name="substance_search_latest">Latest measurement on %1$s</string>
+    <!-- Under a result. %1$d: number of samples that measured it; %2$s: start of the period, a date formatted for the language. -->
+    <plurals name="substance_search_count">
+        <item quantity="one">Measured in %1$d sample since %2$s</item>
+        <item quantity="other">Measured in %1$d samples since %2$s</item>
+    </plurals>
+    <!-- Under error_network: nothing of the search is kept on the phone. -->
+    <string name="substance_search_offline">The search asks Hub\'Eau each time: it needs a connection.</string>
+
     <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
 
     <!-- Screen reader label of the refresh icon of the top bar. -->

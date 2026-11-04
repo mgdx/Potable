@@ -253,6 +253,32 @@
     <string name="timeline_open_report">Ouvrir le rapport</string>
     <string name="timeline_refresh_failed">Impossible de mettre à jour l’historique. %1$s</string>
 
+    <!-- ===== Substance search ===== -->
+
+    <string name="substance_search_title">Chercher une substance</string>
+    <string name="substance_search_field">Nom du paramètre</string>
+    <string name="substance_search_hint">Saisissez au moins 3 caractères : un mot du libellé tel que Hub\'Eau le publie, par exemple atrazine, nitrates ou glyphosate. La recherche porte sur des mots entiers : « atrazine » trouve « Atrazine déséthyl », « atra » ne trouve rien.</string>
+    <string name="substance_search_loading">Recherche dans l’historique…</string>
+    <string name="substance_search_empty">Aucun paramètre dont le libellé contient « %1$s » n’a été analysé sur cette unité de distribution depuis le %2$s.</string>
+    <string name="substance_search_other_name">La substance peut être publiée sous un autre nom (métabolite, somme, abréviation) : essayez un autre mot.</string>
+    <plurals name="substance_search_summary">
+        <item quantity="one">%1$d paramètre dont le libellé contient « %2$s », analysé depuis le %3$s</item>
+        <item quantity="many">%1$d paramètres dont le libellé contient « %2$s », analysés depuis le %3$s</item>
+        <item quantity="other">%1$d paramètres dont le libellé contient « %2$s », analysés depuis le %3$s</item>
+    </plurals>
+    <plurals name="substance_search_partial">
+        <item quantity="one">Résultat partiel : seule la mesure la plus récente sur %2$d a été lue (%1$d). Les nombres de mesures sont incomplets et un paramètre analysé seulement plus tôt peut manquer. Précisez le nom.</item>
+        <item quantity="many">Résultat partiel : seules les %1$d mesures les plus récentes sur %2$d ont été lues. Les nombres de mesures sont incomplets et un paramètre analysé seulement plus tôt peut manquer. Précisez le nom.</item>
+        <item quantity="other">Résultat partiel : seules les %1$d mesures les plus récentes sur %2$d ont été lues. Les nombres de mesures sont incomplets et un paramètre analysé seulement plus tôt peut manquer. Précisez le nom.</item>
+    </plurals>
+    <string name="substance_search_latest">Dernière mesure le %1$s</string>
+    <plurals name="substance_search_count">
+        <item quantity="one">Mesuré dans %1$d prélèvement depuis le %2$s</item>
+        <item quantity="many">Mesuré dans %1$d prélèvements depuis le %2$s</item>
+        <item quantity="other">Mesuré dans %1$d prélèvements depuis le %2$s</item>
+    </plurals>
+    <string name="substance_search_offline">La recherche interroge Hub\'Eau à chaque fois : elle demande une connexion.</string>
+
     <!-- ===== History of a parameter and its chart (SPEC §5 F5) ===== -->
 
     <string name="history_refresh">Actualiser</string>

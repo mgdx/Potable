@@ -70,6 +70,18 @@ data class TimelineRoute(
 )
 
 /**
+ * Search of the parameters measured on the unit [udiCode] serving
+ * [communeCode] by their label (SPEC §3), over the history window; a result
+ * opens the [ParameterHistoryRoute] of that parameter.
+ */
+@Serializable
+data class SubstanceSearchRoute(
+    val communeCode: String,
+    val udiCode: String,
+    val communeName: String = "",
+)
+
+/**
  * The history screen of one parameter (SPEC §5 F5) of the unit [udiCode]
  * serving [communeCode] (the code Hub'Eau publishes the commune under).
  *

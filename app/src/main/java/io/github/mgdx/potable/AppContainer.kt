@@ -15,8 +15,10 @@ import io.github.mgdx.potable.data.CommuneRepository
 import io.github.mgdx.potable.data.HistoryRepository
 import io.github.mgdx.potable.data.HubEauClient
 import io.github.mgdx.potable.data.RemoteSampleRepository
+import io.github.mgdx.potable.data.RemoteSubstanceSearchRepository
 import io.github.mgdx.potable.data.RemoteWaterRepository
 import io.github.mgdx.potable.data.SampleRepository
+import io.github.mgdx.potable.data.SubstanceSearchRepository
 import io.github.mgdx.potable.data.WaterRepository
 import io.github.mgdx.potable.data.alert.AlertChecker
 import io.github.mgdx.potable.data.backup.FollowsBackup
@@ -72,6 +74,9 @@ class AppContainer(context: Context) {
 
     /** History of a unit (SPEC §5 F5). */
     val history: HistoryRepository by lazy { HistoryRepository(hubEau, database, preferences) }
+
+    /** Search of a unit's history by parameter label (SPEC §3), never cached. */
+    val substances: SubstanceSearchRepository by lazy { RemoteSubstanceSearchRepository(hubEau) }
 
     /** Any sample of a unit by its code, from the history (SPEC §5 F4, F5), cached (SPEC §7). */
     val samples: SampleRepository by lazy {

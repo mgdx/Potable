@@ -33,6 +33,7 @@ import io.github.mgdx.potable.ui.navigation.SampleRoute
 import io.github.mgdx.potable.ui.navigation.SearchRoute
 import io.github.mgdx.potable.ui.navigation.SettingsRoute
 import io.github.mgdx.potable.ui.navigation.SheetRoute
+import io.github.mgdx.potable.ui.navigation.SubstanceSearchRoute
 import io.github.mgdx.potable.ui.navigation.TimelineRoute
 import io.github.mgdx.potable.ui.navigation.UdisRoute
 import io.github.mgdx.potable.ui.sample.SampleDetailScreen
@@ -47,6 +48,8 @@ import io.github.mgdx.potable.ui.settings.SettingsScreen
 import io.github.mgdx.potable.ui.settings.SettingsViewModel
 import io.github.mgdx.potable.ui.sheet.SheetScreen
 import io.github.mgdx.potable.ui.sheet.SheetViewModel
+import io.github.mgdx.potable.ui.substances.SubstanceSearchScreen
+import io.github.mgdx.potable.ui.substances.SubstanceSearchViewModel
 import io.github.mgdx.potable.ui.timeline.TimelineScreen
 import io.github.mgdx.potable.ui.timeline.TimelineViewModel
 import io.github.mgdx.potable.ui.udi.UdiScreen
@@ -298,6 +301,9 @@ fun PotableNavHost(
                 onShowHistory = {
                     navController.navigate(TimelineRoute(communeCode, udiCode, communeName))
                 },
+                onSearchSubstance = {
+                    navController.navigate(SubstanceSearchRoute(communeCode, udiCode, communeName))
+                },
                 onParameterHistory = { codes, label ->
                     navController.navigate(
                         ParameterHistoryRoute.of(communeCode, udiCode, codes, label),
@@ -342,6 +348,25 @@ fun PotableNavHost(
                             udiCode = sheetRoute.udiCode,
                             parameterCodes = historyCodes(result.parameterCode),
                             label = result.parameterLabel,
+                        ),
+                    )
+                },
+            )
+        }
+        composable<SubstanceSearchRoute> { entry ->
+            val route = entry.toRoute<SubstanceSearchRoute>()
+            SubstanceSearchScreen(
+                // The ViewModel reads its arguments from the entry's saved state.
+                viewModel = viewModel(factory = SubstanceSearchViewModel.factory(container)),
+                communeName = route.communeName,
+                onBack = { navController.navigateUp() },
+                onOpenHistory = { match ->
+                    navController.navigate(
+                        ParameterHistoryRoute.of(
+                            communeCode = route.communeCode,
+                            udiCode = route.udiCode,
+                            parameterCodes = historyCodes(match.parameterCode),
+                            label = match.label,
                         ),
                     )
                 },
