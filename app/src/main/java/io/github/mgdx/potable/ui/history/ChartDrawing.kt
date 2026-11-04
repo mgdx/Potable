@@ -11,6 +11,9 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 
+private val LINE_WIDTH = 2.dp
+private val DENSE_LINE_WIDTH = 1.dp
+
 /**
  * Draws [geometry] of [model]: grid and graduations, the quality reference
  * and limit, then the series with the [selected] measure marked. Colours come
@@ -50,13 +53,13 @@ internal fun DrawScope.drawChart(
         drawLine(
             colors.outline,
             Offset(x, geometry.plotBottom),
-            Offset(x, geometry.plotBottom + tick),
+            Offset(x, geometry.ticksBottom),
             thin,
         )
         val labelWidth = text.size.width.toFloat()
         val start = (x - labelWidth / 2).coerceIn(0f, max(0f, size.width - labelWidth))
         if (start >= lastEnd + gap) {
-            drawText(text, topLeft = Offset(start, geometry.plotBottom + tick + gap / 2))
+            drawText(text, topLeft = Offset(start, geometry.ticksBottom + gap / 2))
             lastEnd = start + labelWidth
         }
     }
@@ -91,18 +94,24 @@ internal fun DrawScope.drawChart(
 
         val series = colors.secondary
         val path = Path()
-        // Broken where a measure is not drawn ([PlotPoint.joinsPrevious]).
-        geometry.pointXs.forEachIndexed { i, x ->
+        // Through the measured values only, broken where a measure is off
+        // the line ([PlotPoint.joinsPrevious]): a bound is never joined.
+        model.points.forEachIndexed { i, point ->
+            if (point.censored) return@forEachIndexed
+            val x = geometry.pointXs[i]
             val y = geometry.pointYs[i]
-            if (model.points[i].joinsPrevious) path.lineTo(x, y) else path.moveTo(x, y)
+            if (i == 0 || !point.joinsPrevious) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        drawPath(path, series, style = Stroke(width = 2.dp.toPx()))
+        // Dense, the measured markers would cover the plot: the line alone,
+        // thinner, draws them ([ChartModel.dense]).
+        val lineWidth = if (model.dense) DENSE_LINE_WIDTH else LINE_WIDTH
+        drawPath(path, series, style = Stroke(width = lineWidth.toPx()))
         model.points.forEachIndexed { i, point ->
             val center = Offset(geometry.pointXs[i], geometry.pointYs[i])
             if (point.censored) {
                 drawCircle(colors.surface, radius, center)
                 drawCircle(series, radius, center, style = Stroke(width = 1.5.dp.toPx()))
-            } else {
+            } else if (i == selected || model.markers[i]) {
                 drawCircle(series, radius, center)
             }
             if (i == selected) {

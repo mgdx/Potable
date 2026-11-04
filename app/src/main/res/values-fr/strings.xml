@@ -474,8 +474,14 @@
         <item quantity="many">Graphique de %1$d mesures du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
         <item quantity="other">Graphique de %1$d mesures du %2$s au %3$s. Minimum : %4$s. Maximum : %5$s.</item>
     </plurals>
+    <plurals name="history_chart_bound_row">
+        <item quantity="one">%1$d mesure publiée sous une borne, %2$s, est placée sous l’axe du temps.</item>
+        <item quantity="many">%1$d mesures publiées sous une borne, jusqu’à %2$s, sont placées sous l’axe du temps.</item>
+        <item quantity="other">%1$d mesures publiées sous une borne, jusqu’à %2$s, sont placées sous l’axe du temps.</item>
+    </plurals>
     <string name="history_legend_measure">Valeur mesurée</string>
-    <string name="history_legend_censored">Marqueur creux : valeur publiée sous forme de borne, comme « &lt;0,01 » (sous une limite de détection ou de quantification). Il est placé à cette borne.</string>
+    <string name="history_legend_censored">Marqueur creux : valeur publiée sous forme de borne, comme « &lt;0,01 » (sous une limite de détection ou de quantification). Il est placé à cette borne, et la ligne ne le relie pas.</string>
+    <string name="history_legend_bound_row">Marqueur creux sous l’axe du temps : valeur publiée sous une borne plus haute que toutes les valeurs mesurées, comme « &lt;0,500 ». Il n’est pas placé à cette borne, qu’aucune mesure n’a atteinte.</string>
     <string name="history_legend_limit_above">Limite de qualité : %1$s, au-dessus de la zone affichée</string>
     <string name="history_legend_limit_below">Limite de qualité : %1$s, en dessous de la zone affichée</string>
     <string name="history_legend_limit_partly">Limite de qualité : %1$s, en partie hors de la zone affichée</string>

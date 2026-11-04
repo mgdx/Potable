@@ -582,9 +582,16 @@
         <item quantity="one">Chart of %1$d measurement from %2$s to %3$s. Lowest: %4$s. Highest: %5$s.</item>
         <item quantity="other">Chart of %1$d measurements from %2$s to %3$s. Lowest: %4$s. Highest: %5$s.</item>
     </plurals>
+    <!-- Read by screen readers after history_chart_description, when some values are in the row under the time axis. %1$d: their number; %2$s: the highest of their bounds as published, with its unit ("<0,500 µg/L"). -->
+    <plurals name="history_chart_bound_row">
+        <item quantity="one">%1$d measurement published as below a bound, %2$s, is shown under the time axis.</item>
+        <item quantity="other">%1$d measurements published as below a bound, up to %2$s, are shown under the time axis.</item>
+    </plurals>
     <!-- Legend of the chart, next to a small drawing of each mark. -->
     <string name="history_legend_measure">Measured value</string>
-    <string name="history_legend_censored">Hollow marker: published as a bound, such as “&lt;0,01” (below a detection or quantification limit). It is drawn at that bound.</string>
+    <string name="history_legend_censored">Hollow marker: published as a bound, such as “&lt;0,01” (below a detection or quantification limit). It is drawn at that bound, and the line does not join it.</string>
+    <!-- Legend of the row of hollow markers between the time axis and its dates: values published below a bound higher than every measured value. -->
+    <string name="history_legend_bound_row">Hollow marker under the time axis: published as below a bound higher than every measured value, such as “&lt;0,500”. It is not drawn at that bound, which no measurement reached.</string>
     <!-- Legend of a limit the chart range does not reach. %1$s: the quality limit as published by Hub'Eau, in French. -->
     <string name="history_legend_limit_above">Quality limit: %1$s, above the chart range</string>
     <!-- %1$s: the quality limit as published by Hub'Eau, in French. -->

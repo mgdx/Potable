@@ -174,7 +174,8 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
             }
             model == null -> {
                 // Figures may be there, too few once the `<SEUIL` sums are left out.
-                val why = if (belowSumThreshold == null) {
+                // ...or only as bounds ("<0,500"), none of them measured.
+                val why = if (belowSumThreshold == null && series.points.none { it.censored }) {
                     R.string.history_not_numeric
                 } else {
                     R.string.history_too_few_figures
@@ -262,6 +263,9 @@ private fun Legend(series: ParameterSeries, model: ChartModel, belowSumThreshold
         LegendRow(LegendMark.MEASURE, stringResource(R.string.history_legend_measure))
         if (model.hasCensored) {
             LegendRow(LegendMark.CENSORED, stringResource(R.string.history_legend_censored))
+        }
+        if (model.boundRow.isNotEmpty()) {
+            LegendRow(LegendMark.CENSORED, stringResource(R.string.history_legend_bound_row))
         }
         // `<SEUIL` gives no bound to draw at ([plotValue]): listed only.
         belowSumThreshold?.let {

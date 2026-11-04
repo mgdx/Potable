@@ -46,8 +46,10 @@ internal fun Modifier.chartGestures(
     onOpenSample: (String) -> Unit,
     haptics: HapticFeedback,
 ): Modifier {
+    // The measure nearest in date to the finger, whatever its height.
     fun visibleIndex(x: Float): Int? = geometry().let {
-        nearestVisibleIndex(it.pointXs, x, it.plotLeft, it.plotRight)
+        val shown = window()
+        nearestDayIndex(model.points, dayAt(x, it.plotLeft, it.plotRight, shown), shown)
     }
     return this
         .pointerInput(model) {

@@ -26,6 +26,8 @@ internal class ChartGeometry(
     val plotTop: Float,
     val plotRight: Float,
     val plotBottom: Float,
+    /** Where the date graduations end and their labels start: below the row of bounds. */
+    val ticksBottom: Float,
     val yLabels: List<Pair<Float, TextLayoutResult>>,
     val xLabels: List<Pair<Float, TextLayoutResult>>,
     val gridYs: List<Float>,
@@ -67,7 +69,11 @@ internal fun computeGeometry(
     val lineHeight = measurer.measure("0", style).size.height.toFloat()
 
     val plotTop = max(radius, lineHeight / 2) + gap
-    val plotBottom = height - lineHeight - tick - gap
+    // The row of bounds ([PlotPoint.inBoundRow]), when there is one, lies
+    // between the time axis and its labels, crossed by the graduations.
+    val row = if (model.boundRow.isEmpty()) 0f else radius * 2 + gap * 2
+    val plotBottom = height - lineHeight - tick - gap - row
+    val rowY = plotBottom + row / 2
     // Value labels at least two lines apart.
     val maxYTicks = ((plotBottom - plotTop) / (lineHeight * 2)).toInt() + 1
     val axis = valueAxis(model.coveredValues, maxYTicks)
@@ -98,11 +104,12 @@ internal fun computeGeometry(
         plotTop = plotTop,
         plotRight = plotRight,
         plotBottom = plotBottom,
+        ticksBottom = plotBottom + row + tick,
         yLabels = axis.ticks.zip(yTexts).map { (value, text) -> yOf(value) to text },
         xLabels = ticks.dates.map { xOf(it.toEpochDay()) to label(it, ticks.unit) },
         gridYs = axis.ticks.map(::yOf),
         pointXs = model.points.map { xOf(it.day) },
-        pointYs = model.points.map { yOf(it.value) },
+        pointYs = model.points.map { if (it.inBoundRow) rowY else yOf(it.value) },
         limitYs = model.limit.filter { it.placement == BoundPlacement.DRAWN }.map { yOf(it.value) },
         referenceYs = model.reference
             .filter { it.placement == BoundPlacement.DRAWN }
