@@ -37,3 +37,22 @@ class SystemNotificationAccess(context: Context) : NotificationAccess {
     override val canRequest: Boolean
         get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 }
+
+/** What switching an alert on takes, as [activation] reads it. */
+enum class AlertActivation {
+    /** Notifications are allowed: the alert is stored at once. */
+    ALLOWED,
+
+    /** The permission must be asked for first (Android 13+); the alert is stored once granted. */
+    REQUEST,
+
+    /** The system cannot ask: the alert stays off, the user is told why. */
+    DENIED,
+}
+
+/** Shared by the settings and the sheet's offer, so that both switch alerts on the same way. */
+fun NotificationAccess.activation(): AlertActivation = when {
+    canPost() -> AlertActivation.ALLOWED
+    canRequest -> AlertActivation.REQUEST
+    else -> AlertActivation.DENIED
+}

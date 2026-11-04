@@ -194,6 +194,17 @@ class DataStoreAppPreferencesTest {
     }
 
     @Test
+    fun `the alerts offer is made once, remembered across a restart`() = runBlocking {
+        val file = storeFile()
+        preferences(file).apply {
+            assertFalse(alertsOfferShown.first())
+            setAlertsOfferShown()
+        }
+        closeAll()
+        assertTrue(preferences(file).alertsOfferShown.first())
+    }
+
+    @Test
     fun `alert settings are remembered across a restart`() = runBlocking {
         val file = storeFile()
         preferences(file).apply {

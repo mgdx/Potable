@@ -236,6 +236,10 @@
     <string name="sheet_following">Suivie</string>
     <string name="sheet_follow_description">Suivre cette unité de distribution</string>
     <string name="sheet_unfollow_description">Suivie. Appuyez pour ne plus suivre cette unité de distribution</string>
+    <string name="sheet_alerts_offer">Être prévenu des nouvelles analyses ?</string>
+    <string name="sheet_alerts_offer_action">Activer</string>
+    <string name="sheet_alerts_denied">Notifications non autorisées : les alertes restent désactivées.</string>
+    <string name="sheet_alerts_denied_action">Paramètres</string>
     <string name="sheet_change_udi">Changer d’unité de distribution</string>
     <string name="sheet_data_from">Données téléchargées le %1$s</string>
     <string name="sheet_refresh_failed">Impossible d’actualiser — données téléchargées le %1$s</string>
@@ -497,7 +501,13 @@
     <string name="settings_alert_last_check">Dernière vérification : %1$s</string>
     <string name="settings_alert_last_check_none">Dernière vérification : pas encore effectuée</string>
     <string name="settings_alert_last_failure">La dernière tentative, le %1$s, n’a pas pu interroger Hub\'Eau pour toutes les communes. Elle sera renouvelée à la prochaine vérification.</string>
+    <string name="settings_alert_check_now">Vérifier maintenant</string>
+    <string name="settings_alert_check_waiting">En attente d’une connexion réseau…</string>
+    <string name="settings_alert_checking">Vérification…</string>
+    <string name="settings_alert_check_nothing_new">Rien de nouveau à signaler.</string>
+    <string name="settings_alert_check_failed">Impossible de joindre Hub\'Eau. Réessayez plus tard.</string>
     <string name="settings_alert_period">Vérifier les nouveaux résultats :</string>
+    <string name="settings_alert_period_off">Activez une alerte pour choisir.</string>
     <string name="settings_alert_weekly">Chaque semaine</string>
     <plurals name="settings_alert_weeks">
         <item quantity="one">Toutes les %d semaines</item>
@@ -509,6 +519,7 @@
     <string name="settings_notifications_open">Ouvrir les paramètres de notification</string>
     <string name="settings_backup_title">Sauvegarde</string>
     <string name="settings_backup_description">Enregistrez dans un fichier les communes que vous suivez et vos réglages d’affichage, pour les retrouver sur un autre téléphone. Les alertes ne sont pas sauvegardées : réactivez-les après l’importation.</string>
+    <string name="settings_backup_export_no_follows">Suivez une commune pour pouvoir l’exporter.</string>
     <string name="settings_backup_export">Exporter les communes suivies</string>
     <string name="settings_backup_import">Importer</string>
     <string name="settings_backup_exported">Communes suivies exportées.</string>

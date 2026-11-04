@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mgdx.potable.AppContainer
+import io.github.mgdx.potable.alert.AlertActivation
+import io.github.mgdx.potable.alert.NotificationAccess
+import io.github.mgdx.potable.alert.activation
 import io.github.mgdx.potable.core.PesticideCount
 import io.github.mgdx.potable.core.PesticideCounts
 import io.github.mgdx.potable.core.UnfavourableDigest
@@ -97,6 +100,15 @@ sealed interface WatchedUiState {
     ) : WatchedUiState
 }
 
+/** What the sheet says once about the alerts, in a snackbar (SPEC §5 F7). */
+enum class AlertOffer {
+    /** A unit was just followed: switch the "new analysis" alert on? Made once per install. */
+    OFFER,
+
+    /** Notifications are not allowed: the alert stayed off. */
+    DENIED,
+}
+
 /**
  * How old the data shown are, as they come from the cache (SPEC §7):
  * [fetchedAt] is the last successful request to Hub'Eau, and [refreshFailed]
@@ -137,6 +149,11 @@ class SheetViewModel(
     private val baseline: suspend (Follow) -> Unit = {},
     /** Where the sample of the latest pesticide total is read, to count its pesticides. */
     private val samples: SampleRepository? = null,
+    /**
+     * Whether notifications can be shown; without it, following never
+     * offers to switch the alerts on ([alertOffer]).
+     */
+    private val notifications: NotificationAccess? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow<SheetUiState>(SheetUiState.Loading)
     val state: StateFlow<SheetUiState> = _state.asStateFlow()
@@ -180,6 +197,19 @@ class SheetViewModel(
      * until then. Their failure never touches [state].
      */
     val watched: StateFlow<WatchedUiState?> = _watched.asStateFlow()
+
+    private val _alertOffer = MutableStateFlow<AlertOffer?>(null)
+
+    /**
+     * Due once, until [onAlertOfferShown]: kept across a rotation, never
+     * shown again once answered or dismissed.
+     */
+    val alertOffer: StateFlow<AlertOffer?> = _alertOffer.asStateFlow()
+
+    private val _permissionRequest = MutableStateFlow(false)
+
+    /** True when the screen must ask for `POST_NOTIFICATIONS`, then call [onPermissionRequested]. */
+    val permissionRequest: StateFlow<Boolean> = _permissionRequest.asStateFlow()
 
     /** The history window in years, from the setting; null until it is read. */
     private val historyYears = MutableStateFlow<Int?>(null)
@@ -282,6 +312,7 @@ class SheetViewModel(
                     follows.unfollow(follow.id)
                 } else {
                     val follow = follows.follow(communeCode, communeName, udiCode, udiName)
+                    offerAlerts()
                     // Once followed (a baseline is only kept for a followed
                     // unit): a sample published before the first check of
                     // the alerts is then announced. Best effort, never throws.
@@ -291,6 +322,73 @@ class SheetViewModel(
                 throw e
             } catch (_: Exception) {
                 // The button keeps reflecting the stored state, which did not change.
+            }
+        }
+    }
+
+    /**
+     * Once a unit is followed, offers to switch the alerts on, if none is
+     * and the offer was never made: it is marked as made before it shows,
+     * whatever the answer. Best effort, never throws.
+     */
+    private suspend fun offerAlerts() {
+        val store = recents ?: return
+        if (notifications == null) return
+        try {
+            if (store.alertsOfferShown.first()) return
+            if (store.alertNewAnalysis.first() || store.alertUnfavourable.first()) return
+            store.setAlertsOfferShown()
+            _alertOffer.value = AlertOffer.OFFER
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Unreadable or unwritable settings: no offer.
+        }
+    }
+
+    /**
+     * The action of the offer: switches the "new analysis" alert on as the
+     * settings do, asking for the permission first if needed (Android 13+).
+     */
+    fun enableAlerts() {
+        val access = notifications ?: return
+        _alertOffer.value = null
+        when (access.activation()) {
+            AlertActivation.ALLOWED -> storeAlert()
+            AlertActivation.REQUEST -> _permissionRequest.value = true
+            AlertActivation.DENIED -> _alertOffer.value = AlertOffer.DENIED
+        }
+    }
+
+    /** The permission dialog was launched: it is not asked again for this tap. */
+    fun onPermissionRequested() {
+        _permissionRequest.value = false
+    }
+
+    /** Nothing is switched on unless notifications are now allowed. */
+    fun onPermissionResult(granted: Boolean) {
+        val access = notifications ?: return
+        if (granted && access.canPost()) storeAlert() else _alertOffer.value = AlertOffer.DENIED
+    }
+
+    /** [offer] was shown, then dismissed or answered: not shown again. */
+    fun onAlertOfferShown(offer: AlertOffer) {
+        _alertOffer.compareAndSet(offer, null)
+    }
+
+    /**
+     * Stores the alert as the settings do; the scheduler then plans the
+     * check ([io.github.mgdx.potable.alert.AlertScheduler]).
+     */
+    private fun storeAlert() {
+        val store = recents ?: return
+        viewModelScope.launch {
+            try {
+                store.setAlertNewAnalysis(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Unwritable settings: the alert stays off.
             }
         }
     }
@@ -529,6 +627,7 @@ class SheetViewModel(
                     recents = container.preferences,
                     baseline = { container.alertChecker.setBaseline(it) },
                     samples = container.samples,
+                    notifications = container.notificationAccess,
                 )
             }
         }
