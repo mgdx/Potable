@@ -2,6 +2,7 @@ package io.github.mgdx.potable.ui.history
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -17,6 +18,9 @@ private val DENSE_LINE_WIDTH = 1.dp
 
 /** Width of the line through the measured values: thinner when [dense] ([ChartModel.dense]). */
 internal fun measureLineWidth(dense: Boolean): Dp = if (dense) DENSE_LINE_WIDTH else LINE_WIDTH
+
+/** Colour of the measured values, line and markers, on the chart and in its legend. */
+internal fun measureColor(colors: ColorScheme): Color = colors.secondary
 
 /**
  * Draws [geometry] of [model]: grid and graduations, the quality reference
@@ -96,7 +100,7 @@ internal fun DrawScope.drawChart(
             )
         }
 
-        val series = colors.secondary
+        val series = measureColor(colors)
         val path = Path()
         // Through the measured values only, broken where a measure is off
         // the line ([PlotPoint.joinsPrevious]): a bound is never joined.

@@ -381,6 +381,7 @@ private fun LegendRow(mark: LegendMark?, text: String, spoken: String? = null) {
 @Composable
 private fun LegendSwatch(mark: LegendMark) {
     val colors = MaterialTheme.colorScheme
+    val measure = measureColor(colors)
     Canvas(modifier = Modifier.size(24.dp, 16.dp)) {
         val y = size.height / 2
         val radius = 4.dp.toPx()
@@ -388,22 +389,22 @@ private fun LegendSwatch(mark: LegendMark) {
         when (mark) {
             LegendMark.MEASURE -> {
                 drawLine(
-                    colors.primary,
+                    measure,
                     Offset(0f, y),
                     Offset(size.width, y),
                     measureLineWidth(dense = false).toPx(),
                 )
-                drawCircle(colors.primary, radius, center)
+                drawCircle(measure, radius, center)
             }
             LegendMark.DENSE_MEASURE -> drawLine(
-                colors.primary,
+                measure,
                 Offset(0f, y),
                 Offset(size.width, y),
                 measureLineWidth(dense = true).toPx(),
             )
             LegendMark.CENSORED -> {
                 drawCircle(colors.surface, radius, center)
-                drawCircle(colors.primary, radius, center, style = Stroke(width = 1.5.dp.toPx()))
+                drawCircle(measure, radius, center, style = Stroke(width = 1.5.dp.toPx()))
             }
             LegendMark.LIMIT ->
                 drawLine(colors.onSurface, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx())

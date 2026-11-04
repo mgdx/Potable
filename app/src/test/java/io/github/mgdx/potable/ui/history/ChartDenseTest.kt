@@ -1,5 +1,6 @@
 package io.github.mgdx.potable.ui.history
 
+import androidx.compose.material3.lightColorScheme
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
 import org.junit.Assert.assertEquals
@@ -107,5 +108,11 @@ class ChartDenseTest {
         val dense = ChartModel.of(series((0..DENSE_POINT_COUNT).map { point(it, 20.0) }))!!
         assertEquals(LegendMark.DENSE_MEASURE, measureLegendMark(dense))
         assertTrue(measureLineWidth(dense = true) < measureLineWidth(dense = false))
+    }
+
+    @Test
+    fun `the measured values have one colour, on the chart and in the legend`() {
+        val colors = lightColorScheme()
+        assertEquals(colors.secondary, measureColor(colors))
     }
 }
