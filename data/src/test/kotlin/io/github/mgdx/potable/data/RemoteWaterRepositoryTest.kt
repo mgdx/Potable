@@ -245,4 +245,17 @@ class RemoteWaterRepositoryTest {
 
         repository.latestSample("45234", null)
     }
+
+    @Test
+    fun latestSamples_areGroupedOnTheComputeDispatcher() = runTest {
+        server.enqueue(response(page(2, null, rows("P1", "2026-01-02T10:00:00Z", 2))))
+        val computing = RecordingDispatcher()
+        val repository = RemoteWaterRepository(
+            HubEauClient(OkHttpClient(), server.url("/api/v1/qualite_eau_potable/")),
+            computing,
+        )
+
+        assertEquals(listOf("P1"), repository.latestSamples("45234", null).map { it.code })
+        assertEquals(1, computing.dispatches)
+    }
 }

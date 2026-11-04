@@ -5,6 +5,9 @@ import io.github.mgdx.potable.core.hubeau.HubEauFormatException
 import io.github.mgdx.potable.core.hubeau.ResultRow
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SampleSummary
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -12,10 +15,12 @@ import java.time.ZoneId
 /**
  * [HistoryRepository] straight from Hub'Eau, never cached; requests and
  * measures in `docs/hubeau-api.md` ("Historique"). [force] has no effect.
+ * Rows are grouped on [computeDispatcher], never on the caller's thread.
  */
 class RemoteHistoryRepository(
     private val client: HubEauClient,
     private val clock: Clock = Clock.systemUTC(),
+    private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : HistoryRepository {
     override suspend fun parameterSeries(
         communeCode: String,
@@ -96,10 +101,12 @@ class RemoteHistoryRepository(
         return rows
     }
 
-    private inline fun <T> formatChecked(block: () -> T): T = try {
-        block()
-    } catch (e: HubEauFormatException) {
-        throw DataError.Format(e)
+    private suspend fun <T> formatChecked(block: () -> T): T = withContext(computeDispatcher) {
+        try {
+            block()
+        } catch (e: HubEauFormatException) {
+            throw DataError.Format(e)
+        }
     }
 
     companion object {
