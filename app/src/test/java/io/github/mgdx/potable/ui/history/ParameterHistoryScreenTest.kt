@@ -5,13 +5,19 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import io.github.mgdx.potable.R
 import io.github.mgdx.potable.core.model.ParameterSeries
 import io.github.mgdx.potable.core.model.SeriesPoint
 import io.github.mgdx.potable.ui.ComposeHostRegistration
+import io.github.mgdx.potable.ui.string
 import io.github.mgdx.potable.ui.theme.PotableTheme
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +26,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-/** The history screen: the selected measure of the chart. */
+/** The history screen: a long list of measures, and the selected one of the chart. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class ParameterHistoryScreenTest {
@@ -42,6 +48,44 @@ class ParameterHistoryScreenTest {
         limit = null,
         reference = null,
     )
+
+    /** One measure a day, its value (1000 + i) unique and found by its text. */
+    private val long = series(
+        "mg/L",
+        (0 until 5_000).map { i ->
+            val value = 1_000 + i
+            SeriesPoint(
+                start.plus(i.toLong(), ChronoUnit.DAYS),
+                "s-$i",
+                value.toDouble(),
+                value.toString(),
+                false,
+            )
+        },
+    )
+
+    @Test
+    fun `a long list composes only the measures in view`() {
+        compose.setContent {
+            PotableTheme {
+                LoadedHistory(long, years = 10, onSelectYears = {}, refreshFailed = false) {}
+            }
+        }
+        val show = hasText(string(R.string.history_show_list))
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(show)
+        compose.onNode(show).performClick()
+        // Newest first: the newest measure is at the top of the list...
+        compose.onNode(hasScrollToNodeAction())
+            .performScrollToNode(hasText("5999 mg/L", substring = true))
+        // ...and a measure of ten years ago is not composed until scrolled to.
+        val old = hasText("1010 mg/L", substring = true)
+        compose.onAllNodes(old).assertCountEquals(0)
+        val rows = compose.onAllNodesWithText(" mg/L", substring = true)
+            .fetchSemanticsNodes().size
+        assertTrue("$rows rows composed", rows < 100)
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(old)
+        compose.onNode(old).assertExists()
+    }
 
     private fun showSelected(point: SeriesPoint) {
         val series = series(
