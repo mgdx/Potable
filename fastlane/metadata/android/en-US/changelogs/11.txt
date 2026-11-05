@@ -1,0 +1,9 @@
+• Search a substance in a unit's whole history.
+• Timeline: "Non-compliances" filter.
+• Same-day samples with the same conclusion shown once.
+• Charts: values below a quantification limit no longer draw false peaks; long series stay readable.
+• Hardness also in °dH and mmol/L.
+• TalkBack reads units and limits in words.
+• Alerts: offer on first follow, "Check now" button.
+• Commune with no distribution unit: possible causes and regional health agency.
+• Department shown in search results.

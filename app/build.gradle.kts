@@ -24,8 +24,8 @@ android {
         applicationId = "io.github.mgdx.potable"
         minSdk = 26
         targetSdk = 37
-        versionCode = 10
-        versionName = "1.0.1"
+        versionCode = 11
+        versionName = "1.1.0"
     }
 
     // The app has no native code, but two dependencies ship prebuilt .so

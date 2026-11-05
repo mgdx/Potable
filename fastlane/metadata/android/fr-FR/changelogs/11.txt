@@ -1,0 +1,9 @@
+• Chercher une substance dans tout l’historique d’une unité.
+• Historique : filtre « Non-conformités ».
+• Même jour, même conclusion : affichée une fois.
+• Graphiques : plus de faux pics dus aux valeurs sous un seuil ; longues séries lisibles.
+• Dureté aussi en °dH et mmol/L.
+• TalkBack lit unités et limites en toutes lettres.
+• Alertes : proposées au premier suivi, bouton « Vérifier maintenant ».
+• Commune sans unité de distribution : causes possibles et ARS.
+• Département dans la recherche.
