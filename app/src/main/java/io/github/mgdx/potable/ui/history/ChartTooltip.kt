@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.mgdx.potable.ui.common.bidiWrap
+import io.github.mgdx.potable.ui.common.spokenAs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -59,9 +60,12 @@ internal fun SelectionStrip(
     }
 }
 
-/** The selected measure: its date, and its value as one left-to-right block. */
+/**
+ * The selected measure: its date, and its value as published, as one
+ * left-to-right block; screen readers say [spoken] instead, when given.
+ */
 @Composable
-internal fun Tooltip(date: String, value: String) {
+internal fun Tooltip(date: String, value: String, spoken: String? = null) {
     Surface(
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.inverseSurface,
@@ -72,6 +76,7 @@ internal fun Tooltip(date: String, value: String) {
             Text(
                 text = bidiWrap(value),
                 style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Ltr),
+                modifier = Modifier.spokenAs(spoken),
             )
         }
     }

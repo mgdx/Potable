@@ -100,14 +100,16 @@ fun HistoryChart(
         model.points.getOrNull(it)
     }?.let { series.points[it.index] }
     val selectedDate = selectedPoint?.let { mediumDate(publishedDate(it.date), locale) }
-    // Read by screen readers only: in words ("12 milligrams per litre").
+    // Shown in the tooltip as published ("<0,500 µg/L").
     val selectedValue = selectedPoint?.let {
-        spokenResult(it.text, it.value, series.unit)
-            ?: pointValueText(it, series.unit, locale)
-            ?: stringResource(R.string.sample_no_value)
+        pointValueText(it, series.unit, locale) ?: stringResource(R.string.sample_no_value)
     }
-    val selectedState = if (selectedDate != null && selectedValue != null) {
-        stringResource(R.string.history_selected_point, selectedDate, bidiWrap(selectedValue))
+    // Read by screen readers only: in words ("12 milligrams per litre").
+    val selectedSpoken = selectedPoint?.let {
+        spokenResult(it.text, it.value, series.unit) ?: selectedValue
+    }
+    val selectedState = if (selectedDate != null && selectedSpoken != null) {
+        stringResource(R.string.history_selected_point, selectedDate, bidiWrap(selectedSpoken))
     } else {
         null
     }
@@ -169,7 +171,7 @@ fun HistoryChart(
                     uiDirection = uiDirection,
                 ) {
                     if (selectedDate != null && selectedValue != null) {
-                        Tooltip(selectedDate, selectedValue)
+                        Tooltip(selectedDate, selectedValue, selectedSpoken)
                     } else {
                         Text(
                             text = stringResource(R.string.history_touch_hint),

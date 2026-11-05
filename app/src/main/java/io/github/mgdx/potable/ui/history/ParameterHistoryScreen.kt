@@ -10,8 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,9 +50,9 @@ import io.github.mgdx.potable.ui.common.EmptyState
 import io.github.mgdx.potable.ui.common.ErrorState
 import io.github.mgdx.potable.ui.common.LoadingState
 import io.github.mgdx.potable.ui.common.PeriodSelector
+import io.github.mgdx.potable.ui.common.ReadableInsetBox
 import io.github.mgdx.potable.ui.common.SectionCard
 import io.github.mgdx.potable.ui.common.bidiWrap
-import io.github.mgdx.potable.ui.common.readableWidth
 import io.github.mgdx.potable.ui.common.spokenAs
 import io.github.mgdx.potable.ui.common.spokenResult
 import io.github.mgdx.potable.ui.common.spokenThreshold
@@ -108,30 +109,56 @@ fun ParameterHistoryScreen(
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .readableWidth(),
-            ) {
-                PeriodSelector(years, viewModel::selectYears)
-                Text(
-                    text = stringResource(R.string.sample_official_labels),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            when (val current = state) {
+                // A list of its own, so that its scroll position is saved
+                // with the series, not clamped while it loads again.
+                is HistoryUiState.Loaded -> LoadedHistory(
+                    series = current.series,
+                    years = years,
+                    onSelectYears = viewModel::selectYears,
+                    refreshFailed = refreshError != null,
+                    onOpenSample = onOpenSample,
                 )
-                refreshError?.let { RefreshFailed() }
-                when (val current = state) {
-                    HistoryUiState.Loading ->
-                        LoadingState(stringResource(R.string.history_loading), slow = isSlow)
-                    is HistoryUiState.Error -> ErrorState(current.error, viewModel::retry)
-                    HistoryUiState.Empty -> EmptyState(stringResource(R.string.history_empty))
-                    is HistoryUiState.Loaded -> HistoryContent(current.series, onOpenSample)
+                else -> ReadableInsetBox(modifier = Modifier.fillMaxSize()) { inset ->
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = inset, end = inset),
+                    ) {
+                        historyHeader(years, viewModel::selectYears, refreshError != null)
+                        item(key = "state") {
+                            when (current) {
+                                HistoryUiState.Loading -> LoadingState(
+                                    stringResource(R.string.history_loading),
+                                    slow = isSlow,
+                                )
+                                is HistoryUiState.Error ->
+                                    ErrorState(current.error, viewModel::retry)
+                                else -> EmptyState(stringResource(R.string.history_empty))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+/** What comes above any state: the period, the note on the labels, a failed refresh. */
+private fun LazyListScope.historyHeader(
+    years: Int?,
+    onSelectYears: (Int) -> Unit,
+    refreshFailed: Boolean,
+) {
+    item(key = "period") { PeriodSelector(years, onSelectYears) }
+    item(key = "labels") {
+        Text(
+            text = stringResource(R.string.sample_official_labels),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+    }
+    if (refreshFailed) item(key = "refresh-failed") { RefreshFailed() }
 }
 
 @Composable
@@ -144,15 +171,54 @@ private fun RefreshFailed() {
     )
 }
 
+/**
+ * The loaded history, as one lazy list: thousands of measures over ten years
+ * are composed only as they scroll into view, sorted once per series.
+ */
 @Composable
-private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Unit) {
+internal fun LoadedHistory(
+    series: ParameterSeries,
+    years: Int?,
+    onSelectYears: (Int) -> Unit,
+    refreshFailed: Boolean,
+    onOpenSample: (String) -> Unit,
+) {
     val model = remember(series) { ChartModel.of(series) }
-    var selected by rememberSaveable(series) { mutableStateOf<Int?>(null) }
     var showList by rememberSaveable { mutableStateOf(false) }
-    Column(
-        modifier = Modifier.padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    // Every measure, newest first: the accessible alternative to the chart.
+    val newestFirst = remember(series) { series.points.sortedByDescending { it.date } }
+    val listShown = series.points.size > 1 && (model == null || showList)
+    ReadableInsetBox(modifier = Modifier.fillMaxSize()) { inset ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = inset, end = inset, bottom = 16.dp),
+        ) {
+            historyHeader(years, onSelectYears, refreshFailed)
+            item(key = "content") {
+                HistoryContent(series, model, showList, { showList = !showList }, onOpenSample)
+            }
+            if (listShown) {
+                item(key = "values-title") { MeasureListTitle() }
+                itemsIndexed(newestFirst, key = { index, _ -> index }) { _, point ->
+                    MeasureRow(point, series.unit)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
+            }
+        }
+    }
+}
+
+/** Everything of the loaded history above the list of the measures. */
+@Composable
+private fun HistoryContent(
+    series: ParameterSeries,
+    model: ChartModel?,
+    showList: Boolean,
+    onToggleList: () -> Unit,
+    onOpenSample: (String) -> Unit,
+) {
+    var selected by rememberSaveable(series) { mutableStateOf<Int?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Under the title, whatever the measures: the ANSES classification of
         // a metabolite is read alongside them, never against them (SPEC §14).
         MetaboliteRelevanceNote(
@@ -184,7 +250,7 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                 }
                 Paragraph(stringResource(why))
                 PublishedThresholds(series)
-                MeasureList(series)
+                // Then the list of the measures ([LoadedHistory]).
             }
             else -> {
                 // The chart, what its marks stand for and how to use it, as one block.
@@ -205,14 +271,13 @@ private fun HistoryContent(series: ParameterSeries, onOpenSample: (String) -> Un
                 }
                 // The label starts at the content edge, like the texts above.
                 TextButton(
-                    onClick = { showList = !showList },
+                    onClick = onToggleList,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(vertical = 8.dp),
                 ) {
                     val hide = R.string.history_hide_list
                     Text(stringResource(if (showList) hide else R.string.history_show_list))
                 }
-                if (showList) MeasureList(series)
             }
         }
     }
@@ -419,23 +484,17 @@ private fun LegendSwatch(mark: LegendMark) {
     }
 }
 
-/** Every measure, newest first: the accessible alternative to the chart. */
+/** The heading of the list of the measures, 8 dp below the content above it. */
 @Composable
-private fun MeasureList(series: ParameterSeries) {
-    Column {
-        Text(
-            text = stringResource(R.string.history_values_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
-                .semantics { heading() },
-        )
-        series.points.sortedByDescending { it.date }.forEach { point ->
-            MeasureRow(point, series.unit)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        }
-    }
+private fun MeasureListTitle() {
+    Text(
+        text = stringResource(R.string.history_values_title),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
+            .semantics { heading() },
+    )
 }
 
 /** One measure: its date, then its value as published, as one left-to-right block. */
